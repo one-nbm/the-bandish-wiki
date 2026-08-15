@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: var(--font-google-sans);
+}
+
+body {
+  font-variation-settings: "ROND" 50;
+}
+
+@keyframes slideUpFade {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-card {
+  opacity: 0; 
+  animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* --- NEW MODAL ANIMATIONS --- */
+@keyframes backdropEnter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes backdropExit {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes modalEnter {
+  from { opacity: 0; transform: scale(0.95) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes modalExit {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.95) translateY(10px); }
+}
+
+/* Entrance classes */
+.animate-backdrop-enter { animation: backdropEnter 0.4s ease-out forwards; }
+.animate-modal-enter { animation: modalEnter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+/* Exit classes */
+.animate-backdrop-exit { animation: backdropExit 0.3s ease-in forwards; }
+.animate-modal-exit { animation: modalExit 0.3s cubic-bezier(0.4, 0, 1, 1) forwards; }
