@@ -257,7 +257,7 @@
     "raag": "Shree",
     "title": "Sun Sun Ri Eri Sakhi Aaj",
     "taal": "Tintal Dhrut",
-    "composer": "Pandit C. R. Vyas 'Guni Jaan",
+    "composer": "Pandit C. R. Vyas 'Guni Jaan'",
     "lyrics": {
       "english": "sun sun ri eri sakhi aaj\nmai na ghar aau toraa\npiyaa paradesi achaanaka aaye\nbhar bhar aanand rahe ghar more",
       "devanagari": "सुन सुन री एरी सखी आज\nमैं नगर आऊं तोरा\nपीया परदेसी अचानक आये\nभर भर आनंद रहे घर मोरे"
@@ -268,7 +268,7 @@
     "raag": "Shree",
     "title": "Chain Gavaa",
     "taal": "Jhoomra Vilambit",
-    "composer": "Pandit C. R. Vyas 'Guni Jaan",
+    "composer": "Pandit C. R. Vyas 'Guni Jaan'",
     "lyrics": {
       "english": "chain gawaaye ham saban ki\njab taj deenho iha dunee ko mero gunavantaa\ndaas gunijaan jab te sumirat\n tab te nain jharat neer\nnaad duni ke dhanvantaa",
       "devanagari": "चैन गवाये हम सबन की\nजब ताज दीन्हो इह दुनि को मेरो गुनवंता\nदास गुनीजान जब ते सुमिरत\nतब ते झरत नीर\nनाद दुनि के धनवंता "
@@ -279,7 +279,7 @@
     "raag": "Vrindavani Sarang",
     "title": "Tum Rab Tum Saheb",
     "taal": "Jhaptal Madhyalay",
-    "composer": "unknown",
+    "composer": "Miyan Tansen",
     "lyrics": {
       "english": "tuma raba tuma saaheba\ntuma hi karataar\nghata ghata poorana\njala thala bhaye bhaar\nkaahe piyaa taansena\ntuma hi aapa\ntuma hi karata sakala\njaba ko bhaye bhaala",
       "devanagari": "तुम रब तुम साहेब\nदम ही करतार\nघट घट पूरन\nजल थल भये भाल\nकाहे पिया तानसेन\nतुम ही आप\nतुम ही करत सकल\nजब को भये भाल"
@@ -883,7 +883,7 @@
     "id": "0082",
     "raag": "Hamsadhwani",
     "title": "Laagila Gana",
-    "taal": "Tintalmadhyalay",
+    "taal": "Tintal Madhyalay",
     "composer": "Ustad Aman Ali Khan 'Amarpiya'",
     "lyrics": {
       "english": "laagi lagan sakhi pati san\nparama sukha ata anandana\naaye nayemadana kaman joban bana\nanga sugandha chanda maathe tilak dhare\ndriganayana anjana phabana pe\namara ho nita pati kaaje sajana",
@@ -1273,6 +1273,39 @@
     "lyrics": {
       "english": "moraa laadalaa\nnaahi gunan mome\nkaahe karat mose nehaa\nkahat gunidaas\nsun ho gunijaan\njaawo jahaa vidyadhan paayo\nputrasamaan tero\nsaacho guru rajaram",
       "devanagari": "मोरा लाडला\nनाही गुनन मोमे\nकाहे करत मोसे नेहा\nकहत गुनीदास\nसुन हो गुनीजान\nजावो जहा विद्यधन पायो\nपुत्रसमान तेरो\nसाचो गुरु राजाराम ।"
+    }
+  },
+  {
+    "id": "0118",
+    "raag": "Chhayanat",
+    "title": "Maane Naa Jiyaa",
+    "taal": "Tintal Madhyalay",
+    "composer": "Pandit C. R. Vyas 'Guni Jaan'",
+    "lyrics": {
+      "english": "maane naa jiyaa moraa unbin\nsamajhat naahi kaise samajhaaun\ndaasguni bhaye paradesa\ngyaan ki pyaasa kaise bujhaaun",
+      "devanagari": "माने ना जिया मोरा उनबिन\nसमझत नाही कैसे समझाऊँ\nदासगुनी भये परदेस\nग्यानकी प्यास कैसे बुझाऊँ"
+    }
+  },
+  {
+    "id": "0119",
+    "raag": "Chhayanat",
+    "title": "Balamaa Tori Preet Jaanee",
+    "taal": "Ektal Dhrut",
+    "composer": "Pandit C. R. Vyas 'Guni Jaan'",
+    "lyrics": {
+      "english": "balamaa tori preet jaanee\nroko naa nazar mope\njaaso mohe laaj aave\ntumharee milankee aas\nkabahi se jaanat hoon\nkaise kar aaun paas\nghadi pal chin chain naave",
+      "devanagari": "बलमा तोरी प्रीत जानी\nरोको ना नजर मोपे\nजासों मोहे लाज आबे\nतुम्हरी मिलनकी आस\nकबहीसे जानत हूँ\nकैसे कर आऊँ पास\nघडी पल छिन चैन नावे"
+    }
+  },
+  {
+    "id": "0120",
+    "raag": "Chhayanat",
+    "title": "Jhanana Jhanana",
+    "taal": "Tintal Madhyalay",
+    "composer": "Ustad Inayat Hussain Khan 'Inayat Piya'",
+    "lyrics": {
+      "english": "jhanana jhanana jhana nananana nananana\nbaaje bichhuvaa baaje\npiyaa ke milana ko chali jaat\napne mandara so maai\npoojaa karan ko nikasi ghara so\ne akeli naar\njhoom ke inayat baar baar maai",
+      "devanagari": "झनन झनन झन नननन नननन\nबाजे बिछुवा बाजे\nपिया के मिलन को चली जात\nअपने मंदर सो माई\nपूजा करन को निकसी घर सो\nए अकेली नार\nझूम के इनायत बार बार माई"
     }
   }
 ]

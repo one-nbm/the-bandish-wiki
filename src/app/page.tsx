@@ -13,8 +13,13 @@ export default function Home() {
   const [baseData, setBaseData] = useState(bandishesData);
   const [isMounted, setIsMounted] = useState(false);
 
+  // Bandish Modal States
   const [selectedBandish, setSelectedBandish] = useState<any | null>(null);
   const [isClosing, setIsClosing] = useState(false); 
+
+  // NEW: Info Modal States
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isInfoClosing, setIsInfoClosing] = useState(false);
 
   useEffect(() => {
     const shuffled = [...bandishesData];
@@ -26,8 +31,9 @@ export default function Home() {
     setIsMounted(true);
   }, []);
 
+  // UPDATED: Locks background for BOTH the Bandish Modal and the Info Modal
   useEffect(() => {
-    if (selectedBandish) {
+    if (selectedBandish || isInfoOpen) {
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.paddingRight = `${scrollbarWidth}px`;
       document.body.style.overflow = "hidden";
@@ -39,13 +45,22 @@ export default function Home() {
       document.body.style.paddingRight = "";
       document.body.style.overflow = ""; 
     };
-  }, [selectedBandish]);
+  }, [selectedBandish, isInfoOpen]);
 
   const closeModal = () => {
     setIsClosing(true);
     setTimeout(() => {
       setSelectedBandish(null);
       setIsClosing(false);
+    }, 300);
+  };
+
+  // NEW: Function to close the Info Modal smoothly
+  const closeInfoModal = () => {
+    setIsInfoClosing(true);
+    setTimeout(() => {
+      setIsInfoOpen(false);
+      setIsInfoClosing(false);
     }, 300);
   };
 
@@ -90,18 +105,32 @@ export default function Home() {
         <div className="max-w-4xl mx-auto space-y-8">
 
           {/* --- HERO SEARCH SECTION --- */}
-          <div className="bg-[#EADDFF] dark:bg-[#332D41] rounded-[2.5rem] p-8 md:p-12 transition-colors duration-500">
-            <h1 className="text-4xl md:text-5xl font-bold text-[#21005D] dark:text-[#D0BCFF] mb-2 tracking-tight">
-              The Bandish Wiki
-            </h1>
+          <div className="relative bg-[#EADDFF] dark:bg-[#332D41] rounded-[2.5rem] p-8 md:p-12 transition-colors duration-500">
             
-            <p className="text-[#4F378B] dark:text-[#CAC4D0] mb-8 font-medium transition-all duration-300">
-              Showing <span className="font-bold">{bandishCount}</span> bandish{bandishCount !== 1 ? "es" : ""} across <span className="font-bold">{uniqueRaagsCount}</span> raag{uniqueRaagsCount !== 1 ? "s" : ""}
-            </p>
+            {/* UPDATED: The Info Button moved to top-right */}
+            <div className="absolute top-6 right-6 md:top-8 md:right-8">
+              <button
+                onClick={() => setIsInfoOpen(true)}
+                className="group flex items-center justify-center p-2 bg-[#F3EDF7]/50 dark:bg-[#1D1B20]/40 hover:bg-[#F3EDF7] dark:hover:bg-[#4A4458] text-[#4F378B] dark:text-[#D0BCFF] rounded-full transition-all duration-300 hover:scale-105 active:scale-95"
+                title="How to use the wiki"
+              >
+                <span className="material-symbols-rounded text-[1.5rem]">info</span>
+              </button>
+            </div>
+
+            {/* UPDATED: Removed left margin, added right padding so title avoids the icon */}
+            <div className="pr-12 md:pr-16">
+              <h1 className="text-4xl md:text-5xl font-bold text-[#21005D] dark:text-[#D0BCFF] mb-2 tracking-tight">
+                The Bandish Wiki
+              </h1>
+              
+              <p className="text-[#4F378B] dark:text-[#CAC4D0] mb-8 font-medium transition-all duration-300">
+                Showing <span className="font-bold">{bandishCount}</span> bandish{bandishCount !== 1 ? "es" : ""} across <span className="font-bold">{uniqueRaagsCount}</span> raag{uniqueRaagsCount !== 1 ? "s" : ""}
+              </p>
+            </div>
             
             <div className="relative mb-6 group">
               <div className="absolute inset-y-0 left-0 flex items-center pl-6 pointer-events-none transition-transform duration-300 group-focus-within:scale-110 group-focus-within:text-[#6750A4]">
-                {/* Updated Icon Class */}
                 <span className="material-symbols-rounded text-[#1D1B20] dark:text-[#CAC4D0] transition-colors duration-300">
                   search
                 </span>
@@ -134,7 +163,6 @@ export default function Home() {
                         className="flex items-center justify-center hover:rotate-90 hover:bg-white/20 dark:hover:bg-black/10 rounded-full p-0.5 ml-1 transition-all duration-300"
                         aria-label="Remove filter"
                       >
-                        {/* Updated Icon Class */}
                         <span className="material-symbols-rounded text-[1.1rem]">close</span>
                       </button>
                     </div>
@@ -181,7 +209,6 @@ export default function Home() {
                 onClick={() => setIsDarkMode(!isDarkMode)}
                 className="group flex items-center justify-center gap-2 bg-[#D0BCFF]/30 dark:bg-[#1D1B20]/50 text-[#21005D] dark:text-[#D0BCFF] px-5 py-2 rounded-full text-sm font-bold border border-[#6750A4]/20 dark:border-[#4A4458] hover:bg-[#D0BCFF]/50 dark:hover:bg-[#4A4458]/50 transition-all duration-300 hover:scale-105 active:scale-95"
               >
-                {/* Updated Icon Class */}
                 <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>
                   {isDarkMode ? "light_mode" : "dark_mode"}
                 </span>
@@ -243,7 +270,6 @@ export default function Home() {
                   
                   <div className="mt-auto pt-2 flex items-center text-[#6750A4] dark:text-[#D0BCFF] text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <span>Read Full Bandish</span>
-                    {/* Updated Icon Class */}
                     <span className="material-symbols-rounded text-[1.2rem] ml-1">arrow_forward</span>
                   </div>
                 </div>
@@ -254,16 +280,76 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- THE EXPANDED MODAL --- */}
+      {/* --- NEW: THE INFO MODAL --- */}
+      {isInfoOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+          onClick={closeInfoModal} 
+        >
+          <div className={`absolute inset-0 bg-[#21005D]/20 dark:bg-black/60 backdrop-blur-sm ${isInfoClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
+
+          <div 
+            className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#FEF7FF] dark:bg-[#1D1B20] rounded-[2.5rem] p-8 md:p-12 border border-[#EADDFF] dark:border-[#332D41] m3-scrollbar ${isInfoClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`}
+            onClick={(e) => e.stopPropagation()} 
+          >
+            <div className="absolute top-6 right-6 md:top-8 md:right-8">
+              <button 
+                onClick={closeInfoModal}
+                className="flex items-center justify-center p-2 bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] rounded-full transition-colors duration-200"
+              >
+                <span className="material-symbols-rounded">close</span>
+              </button>
+            </div>
+
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="material-symbols-rounded text-[2.5rem] text-[#6750A4] dark:text-[#D0BCFF]">info</span>
+                <h2 className="text-3xl md:text-4xl font-bold text-[#1D1B20] dark:text-[#E6E0E9]">
+                  How to use this Wiki
+                </h2>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-[#F3EDF7] dark:bg-[#2B2930] p-6 rounded-3xl border border-[#EADDFF]/50 dark:border-[#332D41]/50">
+                  <h3 className="font-bold text-xl text-[#21005D] dark:text-[#D0BCFF] flex items-center gap-2 mb-3">
+                    <span className="material-symbols-rounded">search</span> Smart Search
+                  </h3>
+                  <p className="text-[#4F378B] dark:text-[#CAC4D0] leading-relaxed text-lg">
+                    Type anything in the search bar! The engine automatically searches through titles, raags, taals, and composers. It will even handle small spelling mistakes gracefully.
+                  </p>
+                </div>
+
+                <div className="bg-[#F3EDF7] dark:bg-[#2B2930] p-6 rounded-3xl border border-[#EADDFF]/50 dark:border-[#332D41]/50">
+                  <h3 className="font-bold text-xl text-[#21005D] dark:text-[#D0BCFF] flex items-center gap-2 mb-3">
+                    <span className="material-symbols-rounded">filter_list</span> Tag Filters
+                  </h3>
+                  <p className="text-[#4F378B] dark:text-[#CAC4D0] leading-relaxed text-lg">
+                    Click any pill-shaped tag (like the Raag or Taal) on a bandish card to instantly filter the entire wiki to show only matching compositions. You can layer multiple filters together!
+                  </p>
+                </div>
+
+                <div className="bg-[#F3EDF7] dark:bg-[#2B2930] p-6 rounded-3xl border border-[#EADDFF]/50 dark:border-[#332D41]/50">
+                  <h3 className="font-bold text-xl text-[#21005D] dark:text-[#D0BCFF] flex items-center gap-2 mb-3">
+                    <span className="material-symbols-rounded">translate</span> Language Toggle
+                  </h3>
+                  <p className="text-[#4F378B] dark:text-[#CAC4D0] leading-relaxed text-lg">
+                    Use the switch below the search bar to swap the home grid between English transliteration and native Devanagari script.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- THE EXPANDED BANDISH MODAL --- */}
       {selectedBandish && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
           onClick={closeModal} 
         >
-          {/* Dynamic Backdrop class checks isClosing */}
           <div className={`absolute inset-0 bg-[#21005D]/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
 
-          {/* Added the m3-scrollbar class right here! */}
           <div 
             className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[#FEF7FF] dark:bg-[#1D1B20] rounded-[2.5rem] p-8 md:p-12 border border-[#EADDFF] dark:border-[#332D41] m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`}
             onClick={(e) => e.stopPropagation()} 
