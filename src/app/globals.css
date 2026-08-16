@@ -45,3 +45,43 @@ body {
 /* Exit classes */
 .animate-backdrop-exit { animation: backdropExit 0.3s ease-in forwards; }
 .animate-modal-exit { animation: modalExit 0.3s cubic-bezier(0.4, 0, 1, 1) forwards; }
+
+/* --- CUSTOM M3 SCROLLBAR --- */
+.m3-scrollbar::-webkit-scrollbar {
+  /* 1. Make the scrollbar wider so we have room for the invisible borders */
+  width: 16px; 
+}
+
+.m3-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  /* Keep it safely away from the curved top and bottom corners */
+  margin-top: 24px; 
+  margin-bottom: 24px;
+}
+
+.m3-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #D0BCFF;
+  border-radius: 20px;
+  /* 2. Create a thick, completely transparent border around the thumb */
+  border: 5px solid rgba(0, 0, 0, 0); 
+  /* 3. The Magic Line: This forces the purple color to stay INSIDE the transparent border, creating a floating pill! */
+  background-clip: padding-box; 
+}
+
+/* Dark Mode Overrides */
+.dark .m3-scrollbar::-webkit-scrollbar-thumb {
+  /* Use your soft expressive dark mode purple */
+  background-color: #4A4458; 
+  border: 5px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+}
+
+/* Firefox Support (Firefox uses its own slim, trackless rendering automatically) */
+.m3-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #D0BCFF transparent;
+}
+
+.dark .m3-scrollbar {
+  scrollbar-color: #4A4458 transparent;
+}

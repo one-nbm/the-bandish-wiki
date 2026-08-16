@@ -9,8 +9,8 @@ const googleSans = Google_Sans_Flex({
 });
 
 export const metadata: Metadata = {
-  title: "Raag Archive",
-  description: "Material 3 Expressive Bandish Wiki",
+  title: "The Bandish Wiki",
+  description: "A catalogue of Bandishes",
 };
 
 export default function RootLayout({

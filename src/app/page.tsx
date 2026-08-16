@@ -217,19 +217,19 @@ export default function Home() {
                   <div className="flex flex-wrap gap-2 mb-5">
                     <button 
                       onClick={(e) => { e.stopPropagation(); toggleFilter("raag", bandish.raag); }}
-                      className="bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] px-3 py-1.5 rounded-lg text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+                      className="bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
                     >
                       {bandish.raag}
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); toggleFilter("taal", bandish.taal); }}
-                      className="bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] px-3 py-1.5 rounded-lg text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+                      className="bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
                     >
                       {bandish.taal}
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); toggleFilter("composer", bandish.composer); }}
-                      className="bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#6750A4] dark:text-[#D0BCFF] px-3 py-1.5 rounded-lg text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+                      className="bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#6750A4] dark:text-[#D0BCFF] px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
                     >
                       {bandish.composer}
                     </button>
@@ -260,10 +260,12 @@ export default function Home() {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
           onClick={closeModal} 
         >
+          {/* Dynamic Backdrop class checks isClosing */}
           <div className={`absolute inset-0 bg-[#21005D]/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
 
+          {/* Added the m3-scrollbar class right here! */}
           <div 
-            className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[#FEF7FF] dark:bg-[#1D1B20] rounded-[2.5rem] p-8 md:p-12 border border-[#EADDFF] dark:border-[#332D41] ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`}
+            className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[#FEF7FF] dark:bg-[#1D1B20] rounded-[2.5rem] p-8 md:p-12 border border-[#EADDFF] dark:border-[#332D41] m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`}
             onClick={(e) => e.stopPropagation()} 
           >
             <div className="absolute top-6 right-6 md:top-8 md:right-8">
@@ -271,7 +273,6 @@ export default function Home() {
                 onClick={closeModal}
                 className="flex items-center justify-center p-2 bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] rounded-full transition-colors duration-200"
               >
-                {/* Updated Icon Class */}
                 <span className="material-symbols-rounded">close</span>
               </button>
             </div>
@@ -282,13 +283,13 @@ export default function Home() {
               </h2>
               
               <div className="flex flex-wrap gap-2">
-                <span className="bg-[#EADDFF] dark:bg-[#4A4458] text-[#21005D] dark:text-[#D0BCFF] px-4 py-2 rounded-xl text-sm font-bold tracking-wide">
+                <span className="bg-[#EADDFF] dark:bg-[#4A4458] text-[#21005D] dark:text-[#D0BCFF] px-4 py-2 rounded-full text-sm font-bold tracking-wide">
                   {selectedBandish.raag}
                 </span>
-                <span className="bg-[#EADDFF] dark:bg-[#4A4458] text-[#21005D] dark:text-[#D0BCFF] px-4 py-2 rounded-xl text-sm font-bold tracking-wide">
+                <span className="bg-[#EADDFF] dark:bg-[#4A4458] text-[#21005D] dark:text-[#D0BCFF] px-4 py-2 rounded-full text-sm font-bold tracking-wide">
                   {selectedBandish.taal}
                 </span>
-                <span className="bg-[#EADDFF] dark:bg-[#4A4458] text-[#21005D] dark:text-[#D0BCFF] px-4 py-2 rounded-xl text-sm font-bold tracking-wide">
+                <span className="bg-[#EADDFF] dark:bg-[#4A4458] text-[#21005D] dark:text-[#D0BCFF] px-4 py-2 rounded-full text-sm font-bold tracking-wide">
                   {selectedBandish.composer}
                 </span>
               </div>
