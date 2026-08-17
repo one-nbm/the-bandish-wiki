@@ -1,37 +1,52 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import Fuse from "fuse.js";
-import bandishesData from "@/data/parsed-bandishes.json";
+import { supabase } from "@/lib/supabase";
+import { useTheme } from "./ThemeProvider"; 
 
 export default function Home() {
+  const { isDarkMode, toggleDarkMode } = useTheme(); // <-- Pulling from Global State!
+  
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState("english");
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [activeFilters, setActiveFilters] = useState<{key: string, value: string}[]>([]);
   
-  const [baseData, setBaseData] = useState(bandishesData);
+  const [baseData, setBaseData] = useState<any[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Bandish Modal States
+  // Modal States
   const [selectedBandish, setSelectedBandish] = useState<any | null>(null);
   const [isClosing, setIsClosing] = useState(false); 
-
-  // NEW: Info Modal States
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isInfoClosing, setIsInfoClosing] = useState(false);
 
   useEffect(() => {
-    const shuffled = [...bandishesData];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    setBaseData(shuffled);
-    setIsMounted(true);
+    const fetchBandishes = async () => {
+      const { data, error } = await supabase
+        .from('bandishes')
+        .select('*');
+
+      if (error) {
+        console.error("Error fetching data:", error);
+        return;
+      }
+
+      if (data) {
+        const shuffled = [...data];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        setBaseData(shuffled);
+      }
+      setIsMounted(true);
+    };
+
+    fetchBandishes();
   }, []);
 
-  // UPDATED: Locks background for BOTH the Bandish Modal and the Info Modal
   useEffect(() => {
     if (selectedBandish || isInfoOpen) {
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -55,7 +70,6 @@ export default function Home() {
     }, 300);
   };
 
-  // NEW: Function to close the Info Modal smoothly
   const closeInfoModal = () => {
     setIsInfoClosing(true);
     setTimeout(() => {
@@ -100,15 +114,24 @@ export default function Home() {
   const uniqueRaagsCount = new Set(processedData.map((b) => b.raag)).size;
 
   return (
-    <main className={`${isDarkMode ? "dark" : ""} min-h-screen bg-[#FDF8FD] dark:bg-[#141218] transition-colors duration-500 relative`}>
+    // Removed the dynamic `${isDarkMode ? "dark" : ""}` because ThemeProvider handles it now!
+    <main className="min-h-screen bg-[#FDF8FD] dark:bg-[#141218] transition-colors duration-500 relative">
       <div className="p-4 md:p-8 text-gray-900 dark:text-[#E6E0E9] font-sans">
         <div className="max-w-4xl mx-auto space-y-8">
 
           {/* --- HERO SEARCH SECTION --- */}
           <div className="relative bg-[#EADDFF] dark:bg-[#332D41] rounded-[2.5rem] p-8 md:p-12 transition-colors duration-500">
             
-            {/* UPDATED: The Info Button moved to top-right */}
-            <div className="absolute top-6 right-6 md:top-8 md:right-8">
+            <div className="absolute top-6 right-6 md:top-8 md:right-8 flex items-center gap-2 md:gap-3">
+              <Link
+                href="/add"
+                className="group flex items-center justify-center px-4 py-2 bg-[#6750A4] hover:bg-[#4F378B] dark:bg-[#D0BCFF] dark:hover:bg-[#EADDFF] text-white dark:text-[#381E72] rounded-full transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm"
+                title="Add a new Bandish"
+              >
+                <span className="material-symbols-rounded text-[1.25rem]">add</span>
+                <span className="hidden md:block font-bold text-sm ml-1">Add Bandish</span>
+              </Link>
+
               <button
                 onClick={() => setIsInfoOpen(true)}
                 className="group flex items-center justify-center p-2 bg-[#F3EDF7]/50 dark:bg-[#1D1B20]/40 hover:bg-[#F3EDF7] dark:hover:bg-[#4A4458] text-[#4F378B] dark:text-[#D0BCFF] rounded-full transition-all duration-300 hover:scale-105 active:scale-95"
@@ -118,8 +141,7 @@ export default function Home() {
               </button>
             </div>
 
-            {/* UPDATED: Removed left margin, added right padding so title avoids the icon */}
-            <div className="pr-12 md:pr-16">
+            <div className="pr-12 md:pr-48">
               <h1 className="text-4xl md:text-5xl font-bold text-[#21005D] dark:text-[#D0BCFF] mb-2 tracking-tight">
                 The Bandish Wiki
               </h1>
@@ -151,7 +173,7 @@ export default function Home() {
             >
               <div className="overflow-hidden">
                 <div className="flex flex-wrap justify-center gap-3 pt-2 pb-6">
-                  {activeFilters.map((filter, index) => (
+                  {activeFilters.map((filter) => (
                     <div 
                       key={`${filter.key}-${filter.value}`}
                       className="inline-flex items-center gap-2 bg-[#21005D] dark:bg-[#D0BCFF] text-white dark:text-[#381E72] px-4 py-1.5 rounded-full text-sm font-bold transition-transform duration-300 hover:scale-105"
@@ -206,7 +228,7 @@ export default function Home() {
               </div>
 
               <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
+                onClick={toggleDarkMode} // <-- Calls the global toggle!
                 className="group flex items-center justify-center gap-2 bg-[#D0BCFF]/30 dark:bg-[#1D1B20]/50 text-[#21005D] dark:text-[#D0BCFF] px-5 py-2 rounded-full text-sm font-bold border border-[#6750A4]/20 dark:border-[#4A4458] hover:bg-[#D0BCFF]/50 dark:hover:bg-[#4A4458]/50 transition-all duration-300 hover:scale-105 active:scale-95"
               >
                 <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>
@@ -262,7 +284,8 @@ export default function Home() {
                     </button>
                   </div>
 
-                  <p className="text-gray-700 dark:text-[#CAC4D0] leading-relaxed mb-4 whitespace-pre-wrap flex-grow text-[1.05rem] transition-colors duration-300 line-clamp-4">
+                  {/* Removed flex-grow to fix text slicing issue */}
+                  <p className="text-gray-700 dark:text-[#CAC4D0] leading-relaxed mb-4 whitespace-pre-wrap text-[1.05rem] transition-colors duration-300 line-clamp-4">
                     {language === "english" 
                       ? bandish.lyrics.english 
                       : (bandish.lyrics.devanagari || "Devanagari lyrics not available")}
@@ -280,7 +303,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- NEW: THE INFO MODAL --- */}
+      {/* --- THE INFO MODAL --- */}
       {isInfoOpen && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
@@ -354,13 +377,25 @@ export default function Home() {
             className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[#FEF7FF] dark:bg-[#1D1B20] rounded-[2.5rem] p-8 md:p-12 border border-[#EADDFF] dark:border-[#332D41] m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`}
             onClick={(e) => e.stopPropagation()} 
           >
-            <div className="absolute top-6 right-6 md:top-8 md:right-8">
+            {/* UPDATED: Changed to flex-col to stack buttons vertically */}
+            <div className="absolute top-6 right-6 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3">
+              
+              {/* The Close Button (Moved to the top) */}
               <button 
                 onClick={closeModal}
-                className="flex items-center justify-center p-2 bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] rounded-full transition-colors duration-200"
+                className="flex items-center justify-center p-2 bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
               >
-                <span className="material-symbols-rounded">close</span>
+                <span className="material-symbols-rounded text-[1.4rem]">close</span>
               </button>
+
+              {/* The Edit Button (Now safely underneath) */}
+              <Link 
+                href={`/edit/${selectedBandish.id}`}
+                className="flex items-center justify-center p-2 bg-[#EADDFF]/50 dark:bg-[#4A4458]/50 hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#6750A4] dark:text-[#D0BCFF] rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
+                title="Edit Bandish"
+              >
+                <span className="material-symbols-rounded text-[1.4rem]">edit</span>
+              </Link>
             </div>
 
             <div className="pr-12 mb-8">
