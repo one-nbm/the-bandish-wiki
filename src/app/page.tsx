@@ -7,11 +7,15 @@ import { supabase } from "@/lib/supabase";
 import { useTheme } from "./ThemeProvider"; 
 
 export default function Home() {
-  const { isDarkMode, toggleDarkMode } = useTheme(); // <-- Pulling from Global State!
+  const { isDarkMode, toggleDarkMode } = useTheme();
   
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState("english");
   const [activeFilters, setActiveFilters] = useState<{key: string, value: string}[]>([]);
+  
+  // NEW: Favorites State
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   
   const [baseData, setBaseData] = useState<any[]>([]);
   const [isMounted, setIsMounted] = useState(false);
@@ -22,17 +26,14 @@ export default function Home() {
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isInfoClosing, setIsInfoClosing] = useState(false);
 
+  // 1. Fetch Data & Load Favorites from Local Storage
   useEffect(() => {
     const fetchBandishes = async () => {
-      const { data, error } = await supabase
-        .from('bandishes')
-        .select('*');
-
+      const { data, error } = await supabase.from('bandishes').select('*');
       if (error) {
         console.error("Error fetching data:", error);
         return;
       }
-
       if (data) {
         const shuffled = [...data];
         for (let i = shuffled.length - 1; i > 0; i--) {
@@ -44,9 +45,16 @@ export default function Home() {
       setIsMounted(true);
     };
 
+    // Load saved favorites from the browser memory
+    const savedFavs = localStorage.getItem("wiki-favorites");
+    if (savedFavs) {
+      try { setFavorites(JSON.parse(savedFavs)); } catch (e) {}
+    }
+
     fetchBandishes();
   }, []);
 
+  // Locks background scrolling for Modals
   useEffect(() => {
     if (selectedBandish || isInfoOpen) {
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -81,16 +89,30 @@ export default function Home() {
   const toggleFilter = (key: string, value: string) => {
     setActiveFilters((prev) => {
       const isAlreadyActive = prev.some((f) => f.key === key && f.value === value);
-      if (isAlreadyActive) {
-        return prev.filter((f) => !(f.key === key && f.value === value));
-      } else {
-        return [...prev, { key, value }];
-      }
+      if (isAlreadyActive) return prev.filter((f) => !(f.key === key && f.value === value));
+      return [...prev, { key, value }];
     });
   };
 
+  // NEW: Function to handle clicking the Heart icon
+  const toggleFavorite = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // Prevents the bandish modal from opening when you just want to click the heart
+    setFavorites((prev) => {
+      const newFavs = prev.includes(id) ? prev.filter((favId) => favId !== id) : [...prev, id];
+      localStorage.setItem("wiki-favorites", JSON.stringify(newFavs)); // Save to memory!
+      return newFavs;
+    });
+  };
+
+  // --- DATA PROCESSING (Filtering & Searching) ---
   let processedData = baseData;
 
+  // Apply "Favorites Only" toggle
+  if (showFavoritesOnly) {
+    processedData = processedData.filter((bandish) => favorites.includes(bandish.id));
+  }
+
+  // Apply Tag Filters
   if (activeFilters.length > 0) {
     processedData = processedData.filter((bandish) => {
       return activeFilters.every((filter) => {
@@ -102,6 +124,7 @@ export default function Home() {
     });
   }
 
+  // Apply Search Query
   if (query) {
     const fuse = new Fuse(processedData, {
       keys: ["title", "raag", "composer", "taal"],
@@ -114,7 +137,6 @@ export default function Home() {
   const uniqueRaagsCount = new Set(processedData.map((b) => b.raag)).size;
 
   return (
-    // Removed the dynamic `${isDarkMode ? "dark" : ""}` because ThemeProvider handles it now!
     <main className="min-h-screen bg-[#FDF8FD] dark:bg-[#141218] transition-colors duration-500 relative">
       <div className="p-4 md:p-8 text-gray-900 dark:text-[#E6E0E9] font-sans">
         <div className="max-w-4xl mx-auto space-y-8">
@@ -141,7 +163,8 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="pr-12 md:pr-48">
+            {/* UPDATED: Changed pr-12 to pr-32 to create a larger invisible bumper on mobile */}
+            <div className="pr-32 md:pr-48">
               <h1 className="text-4xl md:text-5xl font-bold text-[#21005D] dark:text-[#D0BCFF] mb-2 tracking-tight">
                 The Bandish Wiki
               </h1>
@@ -202,7 +225,10 @@ export default function Home() {
               </div>
             </div>
 
+            {/* --- CONTROLS ROW --- */}
             <div className="flex flex-wrap justify-center gap-4 items-center">
+              
+              {/* Language Toggle */}
               <div className="relative flex items-center bg-[#D0BCFF]/30 dark:bg-[#1D1B20]/50 p-1 rounded-full border border-[#6750A4]/20 dark:border-[#4A4458]">
                 <div 
                   className={`absolute top-1 bottom-1 w-[105px] rounded-full bg-[#21005D] dark:bg-[#D0BCFF] transition-transform duration-500 ease-out ${
@@ -227,14 +253,34 @@ export default function Home() {
                 </button>
               </div>
 
+              {/* NEW: Show Favorites Toggle */}
               <button
-                onClick={toggleDarkMode} // <-- Calls the global toggle!
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                className={`group flex items-center justify-center gap-2 px-5 py-2 rounded-full text-sm font-bold border transition-all duration-300 hover:scale-105 active:scale-95 ${
+                  showFavoritesOnly 
+                    ? "bg-[#FF3366] text-white border-[#FF3366] dark:bg-[#FF7597] dark:text-[#1D1B20] dark:border-[#FF7597]" 
+                    : "bg-[#D0BCFF]/30 dark:bg-[#1D1B20]/50 text-[#21005D] dark:text-[#D0BCFF] border-[#6750A4]/20 dark:border-[#4A4458] hover:bg-[#D0BCFF]/50 dark:hover:bg-[#4A4458]/50"
+                }`}
+              >
+                {/* UPDATED: Uses the inline style to perfectly toggle the FILL axis! */}
+                <span 
+                  className="material-symbols-rounded text-[1.25rem] transition-all duration-300"
+                  style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}
+                >
+                  favorite
+                </span>
+                <span>{showFavoritesOnly ? "Favorites Only" : "All Bandishes"}</span>
+              </button>
+
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={toggleDarkMode}
                 className="group flex items-center justify-center gap-2 bg-[#D0BCFF]/30 dark:bg-[#1D1B20]/50 text-[#21005D] dark:text-[#D0BCFF] px-5 py-2 rounded-full text-sm font-bold border border-[#6750A4]/20 dark:border-[#4A4458] hover:bg-[#D0BCFF]/50 dark:hover:bg-[#4A4458]/50 transition-all duration-300 hover:scale-105 active:scale-95"
               >
                 <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>
                   {isDarkMode ? "light_mode" : "dark_mode"}
                 </span>
-                <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
+                <span className="hidden sm:inline">{isDarkMode ? "Light" : "Dark"}</span>
               </button>
             </div>
           </div>
@@ -245,58 +291,82 @@ export default function Home() {
           ) : processedData.length === 0 ? (
             <div className="text-center py-16 animate-card">
               <p className="text-lg text-gray-400 dark:text-[#635f69] font-medium tracking-wide">
-                no bandishes found for the given criteria
+                {showFavoritesOnly ? "You haven't saved any favorites yet!" : "no bandishes found for the given criteria"}
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {processedData.map((bandish, index) => (
-                <div 
-                  key={bandish.id} 
-                  onClick={() => setSelectedBandish(bandish)}
-                  className="group animate-card bg-white dark:bg-[#211F26] hover:bg-[#F7F2FA] dark:hover:bg-[#2B2930] p-6 rounded-3xl border border-gray-100 dark:border-[#332D41] flex flex-col h-full transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <h2 className="text-2xl font-bold text-[#1D1B20] dark:text-[#E6E0E9] transition-colors duration-300">
-                      {bandish.title}
-                    </h2>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2 mb-5">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); toggleFilter("raag", bandish.raag); }}
-                      className="bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+              {processedData.map((bandish, index) => {
+                const isFavorited = favorites.includes(bandish.id);
+                
+                return (
+                  <div 
+                    key={bandish.id} 
+                    onClick={() => setSelectedBandish(bandish)}
+                    className="group relative animate-card bg-white dark:bg-[#211F26] hover:bg-[#F7F2FA] dark:hover:bg-[#2B2930] p-6 rounded-3xl border border-gray-100 dark:border-[#332D41] flex flex-col h-full transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    
+                    {/* Heart Button */}
+                    <button
+                      onClick={(e) => toggleFavorite(e, bandish.id)}
+                      className={`absolute top-5 right-5 w-11 h-11 flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-90 ${
+                        isFavorited 
+                          ? "text-[#FF3366] dark:text-[#FF7597] bg-[#FF3366]/10 dark:bg-[#FF7597]/20" 
+                          : "text-gray-400 dark:text-[#635f69] hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                      aria-label="Toggle Favorite"
                     >
-                      {bandish.raag}
+                      {/* UPDATED: Forced the FILL axis using inline styles so it perfectly fills! */}
+                      <span 
+                        className="material-symbols-rounded text-[1.4rem] transition-all duration-300"
+                        style={{ fontVariationSettings: isFavorited ? '"FILL" 1' : '"FILL" 0' }}
+                      >
+                        favorite
+                      </span>
                     </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); toggleFilter("taal", bandish.taal); }}
-                      className="bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
-                    >
-                      {bandish.taal}
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); toggleFilter("composer", bandish.composer); }}
-                      className="bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#6750A4] dark:text-[#D0BCFF] px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
-                    >
-                      {bandish.composer}
-                    </button>
-                  </div>
 
-                  {/* Removed flex-grow to fix text slicing issue */}
-                  <p className="text-gray-700 dark:text-[#CAC4D0] leading-relaxed mb-4 whitespace-pre-wrap text-[1.05rem] transition-colors duration-300 line-clamp-4">
-                    {language === "english" 
-                      ? bandish.lyrics.english 
-                      : (bandish.lyrics.devanagari || "Devanagari lyrics not available")}
-                  </p>
-                  
-                  <div className="mt-auto pt-2 flex items-center text-[#6750A4] dark:text-[#D0BCFF] text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span>Read Full Bandish</span>
-                    <span className="material-symbols-rounded text-[1.2rem] ml-1">arrow_forward</span>
+                    {/* UPDATED: Changed pr-10 to pr-16 to add a larger "bumper" so long text avoids the heart */}
+                    <div className="flex justify-between items-start mb-3 pr-16 md:pr-20">
+                      <h2 className="text-2xl font-bold text-[#1D1B20] dark:text-[#E6E0E9] transition-colors duration-300 leading-tight">
+                        {bandish.title}
+                      </h2>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 mb-5">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); toggleFilter("raag", bandish.raag); }}
+                        className="bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+                      >
+                        {bandish.raag}
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); toggleFilter("taal", bandish.taal); }}
+                        className="bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+                      >
+                        {bandish.taal}
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); toggleFilter("composer", bandish.composer); }}
+                        className="bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#6750A4] dark:text-[#D0BCFF] px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+                      >
+                        {bandish.composer}
+                      </button>
+                    </div>
+
+                    <p className="text-gray-700 dark:text-[#CAC4D0] leading-relaxed mb-4 whitespace-pre-wrap text-[1.05rem] transition-colors duration-300 line-clamp-4">
+                      {language === "english" 
+                        ? bandish.lyrics.english 
+                        : (bandish.lyrics.devanagari || "Devanagari lyrics not available")}
+                    </p>
+                    
+                    <div className="mt-auto pt-2 flex items-center text-[#6750A4] dark:text-[#D0BCFF] text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <span>Read Full Bandish</span>
+                      <span className="material-symbols-rounded text-[1.2rem] ml-1">arrow_forward</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -353,10 +423,10 @@ export default function Home() {
 
                 <div className="bg-[#F3EDF7] dark:bg-[#2B2930] p-6 rounded-3xl border border-[#EADDFF]/50 dark:border-[#332D41]/50">
                   <h3 className="font-bold text-xl text-[#21005D] dark:text-[#D0BCFF] flex items-center gap-2 mb-3">
-                    <span className="material-symbols-rounded">translate</span> Language Toggle
+                    <span className="material-symbols-rounded">favorite</span> Personal Favorites
                   </h3>
                   <p className="text-[#4F378B] dark:text-[#CAC4D0] leading-relaxed text-lg">
-                    Use the switch below the search bar to swap the home grid between English transliteration and native Devanagari script.
+                    Click the heart icon on any bandish to save it to your local browser memory. Use the toggle at the top to quickly filter your personal repertoire!
                   </p>
                 </div>
               </div>
@@ -377,18 +447,13 @@ export default function Home() {
             className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[#FEF7FF] dark:bg-[#1D1B20] rounded-[2.5rem] p-8 md:p-12 border border-[#EADDFF] dark:border-[#332D41] m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`}
             onClick={(e) => e.stopPropagation()} 
           >
-            {/* UPDATED: Changed to flex-col to stack buttons vertically */}
             <div className="absolute top-6 right-6 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3">
-              
-              {/* The Close Button (Moved to the top) */}
               <button 
                 onClick={closeModal}
                 className="flex items-center justify-center p-2 bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 <span className="material-symbols-rounded text-[1.4rem]">close</span>
               </button>
-
-              {/* The Edit Button (Now safely underneath) */}
               <Link 
                 href={`/edit/${selectedBandish.id}`}
                 className="flex items-center justify-center p-2 bg-[#EADDFF]/50 dark:bg-[#4A4458]/50 hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#6750A4] dark:text-[#D0BCFF] rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
