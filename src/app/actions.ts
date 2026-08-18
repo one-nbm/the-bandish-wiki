@@ -52,3 +52,28 @@ export async function updateBandishSecurely(id: string, updatedBandish: any, use
 
   return { success: true };
 }
+
+export async function bulkAddBandishesSecurely(bandishesArray: any[], userPasscode: string) {
+  // 1. Check the password
+  if (userPasscode !== process.env.ADMIN_PASSCODE) {
+    return { success: false, error: "Incorrect admin passcode." };
+  }
+
+  // 2. Create the ADMIN client
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  // 3. Insert the entire array at once!
+  const { error } = await supabaseAdmin
+    .from('bandishes')
+    .insert(bandishesArray);
+
+  if (error) {
+    console.error("Bulk insert error:", error);
+    return { success: false, error: "Failed to bulk upload to database." };
+  }
+
+  return { success: true };
+}
