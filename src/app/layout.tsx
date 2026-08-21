@@ -6,7 +6,7 @@ import "./globals.css";
 const googleSans = Google_Sans_Flex({
   variable: "--font-google-sans",
   subsets: ["latin"],
-  axes: ["ROND"],
+  axes: ["ROND", "wdth"],
 });
 
 export const metadata: Metadata = {

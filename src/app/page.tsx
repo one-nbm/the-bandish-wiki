@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Fuse from "fuse.js";
 import { supabase } from "@/lib/supabase";
-import { useTheme } from "./ThemeProvider"; 
+import { useTheme } from "./ThemeProvider";
+import { M3LoadingIndicator } from "@alerix/m3-loading-indicator/react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -71,11 +73,7 @@ export default function Home() {
   }, [selectedBandish, isInfoOpen]);
 
   const closeModal = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setSelectedBandish(null);
-      setIsClosing(false);
-    }, 300);
+    setSelectedBandish(null);
   };
 
   const closeInfoModal = () => {
@@ -164,8 +162,12 @@ export default function Home() {
             </div>
 
             {/* UPDATED: Changed pr-12 to pr-32 to create a larger invisible bumper on mobile */}
+            {/* UPDATED: Added inline style for max wdth and kept ROND 25 */}
             <div className="pr-32 md:pr-48">
-              <h1 className="text-4xl md:text-5xl font-bold text-[#21005D] dark:text-[#D0BCFF] mb-2 tracking-tight">
+              <h1 
+                className="text-4xl md:text-5xl font-bold text-[#21005D] dark:text-[#D0BCFF] mb-2 tracking-tight"
+                style={{ fontVariationSettings: '"wdth" 131, "ROND" 25, "wght" 800' }}
+              >
                 The Bandish Wiki
               </h1>
               
@@ -174,18 +176,23 @@ export default function Home() {
               </p>
             </div>
             
-            <div className="relative mb-6 group">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-6 pointer-events-none transition-transform duration-300 group-focus-within:scale-110 group-focus-within:text-[#6750A4]">
-                <span className="material-symbols-rounded text-[#1D1B20] dark:text-[#CAC4D0] transition-colors duration-300">
+            {/* UPDATED: Spring animation wrapper, removed borders, fixed icon colors */}
+            <div className="relative mb-6 group mx-0 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] focus-within:-mx-2 md:focus-within:-mx-4">
+              
+              {/* Added z-10 and moved the focus-within text colors directly to the span to fix the override bug */}
+              <div className="absolute inset-y-0 left-0 flex items-center pl-6 pointer-events-none z-10 transition-transform duration-500 group-focus-within:scale-110">
+                <span className="material-symbols-rounded transition-colors duration-300 text-[#1D1B20] dark:text-[#CAC4D0] group-focus-within:text-[#6750A4] dark:group-focus-within:text-[#D0BCFF]">
                   search
                 </span>
               </div>
+              
               <input
                 type="text"
                 placeholder="Search by text..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full bg-[#FEF7FF] dark:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] text-lg pl-[4.25rem] pr-6 py-5 rounded-full focus:outline-none transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 focus:-translate-y-1 ring-0 focus:ring-4 ring-[#6750A4]/30 focus:bg-white dark:focus:bg-[#4f495e]"
+                // Removed ring/border classes and the vertical translation
+                className="w-full bg-[#FEF7FF] dark:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] text-lg pl-[4.25rem] pr-6 py-5 rounded-full focus:outline-none transition-colors duration-300 placeholder-gray-500 dark:placeholder-gray-400 focus:bg-white dark:focus:bg-[#3f394d]"
               />
             </div>
 
@@ -287,7 +294,15 @@ export default function Home() {
 
           {/* --- BANDISH GRID --- */}
           {!isMounted ? (
-            <div className="min-h-[50vh]"></div>
+            <div className="min-h-[50vh] flex flex-col items-center justify-center gap-6">
+              {/* UPDATED: MD3 Expressive morphing shape indicator */}
+              <M3LoadingIndicator 
+                size={48} 
+                contained={true} 
+                color={isDarkMode ? "#D0BCFF" : "#6750A4"}
+                containerColor={isDarkMode ? "#4A4458" : "#EADDFF"}
+              />
+            </div>
           ) : processedData.length === 0 ? (
             <div className="text-center py-16 animate-card">
               <p className="text-lg text-gray-400 dark:text-[#635f69] font-medium tracking-wide">
@@ -295,16 +310,19 @@ export default function Home() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="columns-1 md:columns-2 gap-4">
               {processedData.map((bandish, index) => {
                 const isFavorited = favorites.includes(bandish.id);
                 
                 return (
-                  <div 
+                  <motion.div 
+                    layoutId={`card-${bandish.id}`}
                     key={bandish.id} 
                     onClick={() => setSelectedBandish(bandish)}
-                    className="group relative animate-card bg-white dark:bg-[#211F26] hover:bg-[#F7F2FA] dark:hover:bg-[#2B2930] p-6 rounded-3xl border border-gray-100 dark:border-[#332D41] flex flex-col h-full transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                    style={{ animationDelay: `${index * 50}ms` }}
+                    // Removed the old CSS hover translation/animation, Framer handles it now
+                    className="group relative bg-white dark:bg-[#211F26] hover:bg-[#F7F2FA] dark:hover:bg-[#2B2930] p-6 rounded-3xl border border-gray-100 dark:border-[#332D41] flex flex-col cursor-pointer break-inside-avoid mb-4"
+                    whileHover={{ y: -4 }} // Smooth hover float
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }} // MD3 Spring physics
                   >
                     
                     {/* Heart Button */}
@@ -328,7 +346,7 @@ export default function Home() {
 
                     {/* UPDATED: Changed pr-10 to pr-16 to add a larger "bumper" so long text avoids the heart */}
                     <div className="flex justify-between items-start mb-3 pr-16 md:pr-20">
-                      <h2 className="text-2xl font-bold text-[#1D1B20] dark:text-[#E6E0E9] transition-colors duration-300 leading-tight">
+                      <h2 className="text-2xl font-bold text-[#1D1B20] dark:text-[#E6E0E9] leading-tight">
                         {bandish.title}
                       </h2>
                     </div>
@@ -360,11 +378,11 @@ export default function Home() {
                         : (bandish.lyrics.devanagari || "Devanagari lyrics not available")}
                     </p>
                     
-                    <div className="mt-auto pt-2 flex items-center text-[#6750A4] dark:text-[#D0BCFF] text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <span>Read Full Bandish</span>
-                      <span className="material-symbols-rounded text-[1.2rem] ml-1">arrow_forward</span>
-                    </div>
-                  </div>
+                    <div className="mt-2 pt-2 flex items-center text-[#6750A4] dark:text-[#D0BCFF] text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span>Read Full Bandish</span>
+                        <span className="material-symbols-rounded text-[1.2rem] ml-1">arrow_forward</span>
+                      </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -436,76 +454,99 @@ export default function Home() {
       )}
 
       {/* --- THE EXPANDED BANDISH MODAL --- */}
-      {selectedBandish && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
-          onClick={closeModal} 
-        >
-          <div className={`absolute inset-0 bg-[#21005D]/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
-
+      <AnimatePresence>
+        {selectedBandish && (
           <div 
-            className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[#FEF7FF] dark:bg-[#1D1B20] rounded-[2.5rem] p-8 md:p-12 border border-[#EADDFF] dark:border-[#332D41] m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`}
-            onClick={(e) => e.stopPropagation()} 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+            onClick={closeModal} 
           >
-            <div className="absolute top-6 right-6 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3">
-              <button 
-                onClick={closeModal}
-                className="flex items-center justify-center p-2 bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
-              >
-                <span className="material-symbols-rounded text-[1.4rem]">close</span>
-              </button>
-              <Link 
-                href={`/edit/${selectedBandish.id}`}
-                className="flex items-center justify-center p-2 bg-[#EADDFF]/50 dark:bg-[#4A4458]/50 hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#6750A4] dark:text-[#D0BCFF] rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
-                title="Edit Bandish"
-              >
-                <span className="material-symbols-rounded text-[1.4rem]">edit</span>
-              </Link>
-            </div>
+            {/* The Backdrop (Fades in/out smoothly) */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-[#21005D]/20 dark:bg-black/60 backdrop-blur-sm"
+            ></motion.div>
 
-            <div className="pr-12 mb-8">
-              <h2 className="text-3xl md:text-5xl font-bold text-[#1D1B20] dark:text-[#E6E0E9] mb-6 transition-colors duration-300">
-                {selectedBandish.title}
-              </h2>
+            {/* The Modal Container (Morphs dynamically from the small grid card!) */}
+            <motion.div 
+              layoutId={`card-${selectedBandish.id}`}
+              className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[#FEF7FF] dark:bg-[#1D1B20] rounded-[2.5rem] p-8 md:p-12 border border-[#EADDFF] dark:border-[#332D41] m3-scrollbar shadow-2xl"
+              onClick={(e) => e.stopPropagation()} 
+              transition={{ 
+                type: "tween", 
+                ease: [0.2, 0, 0, 1], // This is the official MD3 Emphasized Decelerate curve
+                duration: 0.4 
+              }}
+            >
               
-              <div className="flex flex-wrap gap-2">
-                <span className="bg-[#EADDFF] dark:bg-[#4A4458] text-[#21005D] dark:text-[#D0BCFF] px-4 py-2 rounded-full text-sm font-bold tracking-wide">
-                  {selectedBandish.raag}
-                </span>
-                <span className="bg-[#EADDFF] dark:bg-[#4A4458] text-[#21005D] dark:text-[#D0BCFF] px-4 py-2 rounded-full text-sm font-bold tracking-wide">
-                  {selectedBandish.taal}
-                </span>
-                <span className="bg-[#EADDFF] dark:bg-[#4A4458] text-[#21005D] dark:text-[#D0BCFF] px-4 py-2 rounded-full text-sm font-bold tracking-wide">
-                  {selectedBandish.composer}
-                </span>
+              {/* Top Right Action Buttons */}
+              <div className="absolute top-6 right-6 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3">
+                <button 
+                  onClick={closeModal}
+                  className="flex items-center justify-center p-2 bg-[#F3EDF7] dark:bg-[#332D41] hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#1D1B20] dark:text-[#E6E0E9] rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
+                >
+                  <span className="material-symbols-rounded text-[1.4rem]">close</span>
+                </button>
+                <Link 
+                  href={`/edit/${selectedBandish.id}`}
+                  className="flex items-center justify-center p-2 bg-[#EADDFF]/50 dark:bg-[#4A4458]/50 hover:bg-[#EADDFF] dark:hover:bg-[#4A4458] text-[#6750A4] dark:text-[#D0BCFF] rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
+                  title="Edit Bandish"
+                >
+                  <span className="material-symbols-rounded text-[1.4rem]">edit</span>
+                </Link>
               </div>
-            </div>
 
-            <div className="space-y-8 md:space-y-10">
-              {selectedBandish.lyrics.devanagari && (
+              {/* Header Section */}
+              <div className="pr-12 mb-8 mt-2">
+                {/* The Title (Flies from the small card size to the large size!) */}
+                <motion.h2 
+                  layoutId={`title-${selectedBandish.id}`}
+                  className="text-3xl md:text-5xl font-bold text-[#1D1B20] dark:text-[#E6E0E9] mb-6"
+                >
+                  {selectedBandish.title}
+                </motion.h2>
+                
+                <div className="flex flex-wrap gap-2">
+                  <span className="bg-[#EADDFF] dark:bg-[#4A4458] text-[#21005D] dark:text-[#D0BCFF] px-4 py-2 rounded-full text-sm font-bold tracking-wide">
+                    {selectedBandish.raag}
+                  </span>
+                  <span className="bg-[#EADDFF] dark:bg-[#4A4458] text-[#21005D] dark:text-[#D0BCFF] px-4 py-2 rounded-full text-sm font-bold tracking-wide">
+                    {selectedBandish.taal}
+                  </span>
+                  <span className="bg-[#EADDFF] dark:bg-[#4A4458] text-[#21005D] dark:text-[#D0BCFF] px-4 py-2 rounded-full text-sm font-bold tracking-wide">
+                    {selectedBandish.composer}
+                  </span>
+                </div>
+              </div>
+
+              {/* Lyrics Section */}
+              <div className="space-y-8 md:space-y-10">
+                {selectedBandish.lyrics.devanagari && (
+                  <div>
+                    <h3 className="text-sm font-bold text-[#6750A4] dark:text-[#D0BCFF] uppercase tracking-wider mb-3 transition-colors duration-300">
+                      Devanagari
+                    </h3>
+                    <p className="text-[#1D1B20] dark:text-[#E6E0E9] text-xl md:text-2xl leading-relaxed whitespace-pre-wrap font-medium transition-colors duration-300">
+                      {selectedBandish.lyrics.devanagari}
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <h3 className="text-sm font-bold text-[#6750A4] dark:text-[#D0BCFF] uppercase tracking-wider mb-3 transition-colors duration-300">
-                    Devanagari
+                    Transliteration
                   </h3>
                   <p className="text-[#1D1B20] dark:text-[#E6E0E9] text-xl md:text-2xl leading-relaxed whitespace-pre-wrap font-medium transition-colors duration-300">
-                    {selectedBandish.lyrics.devanagari}
+                    {selectedBandish.lyrics.english}
                   </p>
                 </div>
-              )}
-
-              <div>
-                <h3 className="text-sm font-bold text-[#6750A4] dark:text-[#D0BCFF] uppercase tracking-wider mb-3 transition-colors duration-300">
-                  Transliteration
-                </h3>
-                <p className="text-[#1D1B20] dark:text-[#E6E0E9] text-xl md:text-2xl leading-relaxed whitespace-pre-wrap font-medium transition-colors duration-300">
-                  {selectedBandish.lyrics.english}
-                </p>
               </div>
-            </div>
 
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </main>
   );
 }
