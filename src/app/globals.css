@@ -1,4 +1,29 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Add this brand new theme block to register your MD3 colors! */
+@theme {
+  --color-m3-primary: #6750A4;
+  --color-m3-primary-dark: #D0BCFF;
+  
+  --color-m3-secondary: #7D5260;
+  --color-m3-secondary-dark: #EFB8C8;
+  
+  --color-m3-tertiary: #7D5700;
+  --color-m3-tertiary-dark: #DCAE5A;
+  
+  --color-m3-surface: #FEF7FF;
+  --color-m3-surface-dark: #141218;
+  
+  --color-m3-surface-container: #F3EDF7;
+  --color-m3-surface-container-dark: #211F26;
+  
+  --color-m3-surface-high: #EADDFF;
+  --color-m3-surface-high-dark: #332D41;
+  
+  --color-m3-error: #BA1A1A;
+  --color-m3-error-dark: #FFB4AB;
+}
 
 @custom-variant dark (&:where(.dark, .dark *));
 
