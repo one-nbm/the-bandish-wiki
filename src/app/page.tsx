@@ -109,18 +109,28 @@ export default function Home() {
 
   const handleFormSubmit = async (e: React.FormEvent, isEdit: boolean) => {
     e.preventDefault();
-    console.log("📍 1. Form submit triggered!");
 
     // CHANGE "secret123" to your actual password!
-    if (adminPasscode !== "kala-manthan-2026") {
+    if (adminPasscode !== "secret123") {
       alert("Incorrect Admin Passcode!");
       return;
     }
 
-    console.log("📍 2. Passcode accepted. Starting submission...");
     setIsSubmitting(true);
 
-    const payload = {
+    // --- NEW LOGIC: Calculate the next sequential ID ---
+    let nextId = "";
+    if (!isEdit) {
+      // Look at all existing IDs, convert them to numbers, and find the highest one
+      const currentIds = baseData.map(b => parseInt(b.id, 10)).filter(n => !isNaN(n));
+      const maxId = currentIds.length > 0 ? Math.max(...currentIds) : 0;
+      
+      // Add 1, and pad it with leading zeros to maintain the "0001" format
+      nextId = String(maxId + 1).padStart(4, '0');
+    }
+
+    // Prepare the data for Supabase
+    const payload: any = {
       title: formTitle,
       raag: formRaag,
       taal: formTaal,
@@ -131,32 +141,40 @@ export default function Home() {
       },
     };
 
-    console.log("📍 3. Payload prepared:", payload);
+    // If it's a completely new bandish, attach our freshly generated ID!
+    if (!isEdit) {
+      payload.id = nextId;
+    }
 
     try {
       if (isEdit && editingBandish) {
-        console.log("📍 4a. Attempting to update bandish ID:", editingBandish.id);
         const { data, error } = await supabase
           .from("bandishes")
           .update(payload)
           .eq("id", editingBandish.id)
-          .select(); // Forces Supabase to return the updated row
+          .select();
 
         if (error) throw error;
-        console.log("✅ 5a. Update successful!", data);
+        
+        // INSTANT UI UPDATE
+        if (data && data.length > 0) {
+          setBaseData(prev => prev.map(b => b.id === editingBandish.id ? data[0] : b));
+        }
       } else {
-        console.log("📍 4b. Attempting to insert new bandish...");
         const { data, error } = await supabase
           .from("bandishes")
           .insert([payload])
-          .select(); // Forces Supabase to return the new row
+          .select();
 
         if (error) throw error;
-        console.log("✅ 5b. Insert successful!", data);
+        
+        // INSTANT UI UPDATE
+        if (data && data.length > 0) {
+          setBaseData(prev => [data[0], ...prev]);
+        }
       }
 
       isEdit ? closeEditModal() : closeAddModal();
-      window.location.reload(); 
 
     } catch (error: any) {
       console.error("❌ SUPABASE ERROR:", error);
