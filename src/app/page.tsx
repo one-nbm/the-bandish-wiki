@@ -108,7 +108,7 @@ export default function Home() {
     setSelectedBandish(null); 
   };
 
-  const handleFormSubmit = async (e: React.FormEvent, isEdit: boolean) => {
+  const handleFormSubmit = async (e: React.FormEvent, isEdit: boolean, action: 'save' | 'delete' = 'save') => {
     e.preventDefault();
 
     // CHANGE "secret123" to your actual password!
@@ -118,6 +118,26 @@ export default function Home() {
     }
 
     setIsSubmitting(true);
+
+    if (action === 'delete') {
+      try {
+        const { error } = await supabase
+          .from("bandishes")
+          .delete()
+          .eq("id", editingBandish.id);
+        
+        if (error) throw error;
+        
+        setBaseData(prev => prev.filter(b => b.id !== editingBandish.id));
+        closeEditModal();
+      } catch (error: any) {
+        console.error("❌ SUPABASE ERROR:", error);
+        alert(`Database Error: ${error.message || "Check console for details"}`);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
 
     // --- NEW LOGIC: Calculate the next sequential ID ---
     let nextId = "";
@@ -384,10 +404,27 @@ export default function Home() {
           </label>
           <input type="password" required placeholder="Enter the secret password to publish" value={adminPasscode} onChange={(e) => setAdminPasscode(e.target.value)} className="w-full bg-m3-error/10 dark:bg-m3-error-dark/10 text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-error dark:focus:ring-m3-error-dark transition-all duration-300 placeholder-m3-error/50 dark:placeholder-m3-error-dark/50" />
         </div>
-        <button type="submit" disabled={isSubmitting} className="w-full md:w-auto shrink-0 flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
-          <span className="material-symbols-rounded text-[1.4rem]">{isEdit ? 'save' : 'publish'}</span>
-          {isSubmitting ? (isEdit ? "Saving..." : "Publishing...") : (isEdit ? "Save Changes" : "Publish Bandish")}
-        </button>
+        <div className="flex gap-3 w-full md:w-auto shrink-0">
+          {isEdit && (
+            <button 
+              type="button" 
+              onClick={(e) => {
+                if (confirm("Are you sure you want to delete this bandish?")) {
+                  handleFormSubmit(e as unknown as React.FormEvent, true, 'delete');
+                }
+              }}
+              disabled={isSubmitting} 
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+            >
+              <span className="material-symbols-rounded text-[1.4rem]">delete</span>
+              <span className="md:hidden lg:inline">Delete</span>
+            </button>
+          )}
+          <button type="submit" disabled={isSubmitting} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
+            <span className="material-symbols-rounded text-[1.4rem]">{isEdit ? 'save' : 'publish'}</span>
+            <span className="whitespace-nowrap">{isSubmitting ? (isEdit ? "Saving..." : "Publishing...") : (isEdit ? "Save Changes" : "Publish")}</span>
+          </button>
+        </div>
       </div>
     </form>
   );

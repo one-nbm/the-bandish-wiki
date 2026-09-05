@@ -58,7 +58,7 @@ export default function EditRaagModal({ raag }: { raag: any }) {
     }, 300);
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent, action: 'save' | 'delete' = 'save') => {
     e.preventDefault();
 
     if (adminPasscode !== "kalamanthan") {
@@ -67,6 +67,25 @@ export default function EditRaagModal({ raag }: { raag: any }) {
     }
 
     setIsSubmitting(true);
+
+    if (action === 'delete') {
+      try {
+        const { error } = await supabase
+          .from("raags")
+          .delete()
+          .eq("slug", raag.slug);
+        
+        if (error) throw error;
+        
+        // Redirect to home since this raag is gone
+        router.push("/");
+      } catch (error: any) {
+        console.error("❌ SUPABASE ERROR:", error);
+        alert(`Database Error: ${error.message || "Check console for details"}`);
+        setIsSubmitting(false);
+      }
+      return;
+    }
 
     const payload = {
       name: formName,
@@ -134,7 +153,7 @@ export default function EditRaagModal({ raag }: { raag: any }) {
               <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Make corrections to <span className="font-bold">{raag.name}</span>.</p>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="space-y-6 md:space-y-8">
+            <form onSubmit={(e) => handleFormSubmit(e, 'save')} className="space-y-6 md:space-y-8">
               <div>
                 <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Name</label>
                 <input type="text" required placeholder="e.g. Yaman" value={formName} onChange={(e) => setFormName(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
@@ -180,17 +199,32 @@ export default function EditRaagModal({ raag }: { raag: any }) {
 
               <hr className="border-gray-200 dark:border-m3-surface-high-dark my-2" />
               
-              <div className="flex flex-col md:flex-row gap-6 items-end">
+              <div className="flex flex-col md:flex-row gap-4 items-end">
                 <div className="w-full">
                   <label className="flex items-center gap-1.5 text-xs font-bold text-m3-error dark:text-m3-error-dark uppercase tracking-wider mb-2">
                     <span className="material-symbols-rounded text-[1.1rem]">lock</span> Admin Passcode
                   </label>
                   <input type="password" required placeholder="Enter the secret password to publish" value={adminPasscode} onChange={(e) => setAdminPasscode(e.target.value)} className="w-full bg-m3-error/10 dark:bg-m3-error-dark/10 text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-error dark:focus:ring-m3-error-dark transition-all duration-300 placeholder-m3-error/50 dark:placeholder-m3-error-dark/50" />
                 </div>
-                <button type="submit" disabled={isSubmitting} className="w-full md:w-auto shrink-0 flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
-                  <span className="material-symbols-rounded text-[1.4rem]">save</span>
-                  {isSubmitting ? "Saving..." : "Save Changes"}
-                </button>
+                <div className="flex gap-3 w-full md:w-auto shrink-0">
+                  <button 
+                    type="button" 
+                    onClick={(e) => {
+                      if (confirm("Are you sure you want to delete this raag?")) {
+                        handleFormSubmit(e as unknown as React.FormEvent, 'delete');
+                      }
+                    }}
+                    disabled={isSubmitting} 
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                  >
+                    <span className="material-symbols-rounded text-[1.4rem]">delete</span>
+                    <span className="md:hidden lg:inline">Delete</span>
+                  </button>
+                  <button type="submit" disabled={isSubmitting} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
+                    <span className="material-symbols-rounded text-[1.4rem]">save</span>
+                    <span className="whitespace-nowrap">{isSubmitting ? "Saving..." : "Save Changes"}</span>
+                  </button>
+                </div>
               </div>
 
             </form>
