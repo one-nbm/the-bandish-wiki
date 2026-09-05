@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useDeferredValue } from "react";
+import Link from "next/link";
 import Fuse from "fuse.js";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "./ThemeProvider";
@@ -111,7 +112,7 @@ export default function Home() {
     e.preventDefault();
 
     // CHANGE "secret123" to your actual password!
-    if (adminPasscode !== "secret123") {
+    if (adminPasscode !== "kalamanthan") {
       alert("Incorrect Admin Passcode!");
       return;
     }
@@ -263,9 +264,28 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">Looking for Raag {suggestedRaag}?</h2>
             </div>
             <p className="text-gray-700 dark:text-gray-300 mb-6 text-[1.05rem]">Switch to a tag filter to see a clean list of all bandishes in this raag.</p>
-            <button onClick={() => { toggleFilter("raag", suggestedRaag); setQuery(""); }} className="flex items-center gap-2 bg-m3-secondary hover:bg-m3-secondary/90 dark:bg-m3-secondary-dark dark:hover:bg-m3-secondary-dark/90 text-white dark:text-gray-900 px-6 py-3 rounded-full font-bold transition-all duration-300 hover:scale-105 active:scale-95">
-              <span className="material-symbols-rounded text-[1.2rem]">filter_list</span> Filter by {suggestedRaag}
+            {/* Action Buttons Container */}
+          <div className="flex flex-wrap gap-3 mt-1">
+            
+            {/* 1. Existing Filter Button */}
+            <button 
+              onClick={() => { toggleFilter("raag", suggestedRaag); setQuery(""); }}
+              className="flex items-center gap-2 bg-m3-secondary hover:bg-m3-secondary/90 dark:bg-m3-secondary-dark dark:hover:bg-m3-secondary-dark/90 text-white dark:text-gray-900 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 hover:scale-105 active:scale-95"
+            >
+              <span className="material-symbols-rounded text-[1.2rem]">filter_list</span>
+              Filter by {suggestedRaag}
             </button>
+
+            {/* 2. NEW: Dedicated Raag Page Button */}
+            <Link 
+              href={`/raag/${suggestedRaag.toLowerCase().replace(/\s+/g, '-')}`}
+              className="flex items-center gap-2 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 hover:scale-105 active:scale-95 group"
+            >
+              <span className="material-symbols-rounded text-[1.2rem] transition-transform group-hover:scale-110">menu_book</span>
+              Read Raag Wiki
+            </Link>
+            
+          </div>
           </div>
         )}
 
@@ -436,7 +456,7 @@ export default function Home() {
           {/* --- BANDISH GRID --- */}
           {!isMounted ? (
             <div className="min-h-[50vh] flex flex-col items-center justify-center gap-6">
-              <M3LoadingIndicator size={48} contained={true} color={isDarkMode ? "#D0BCFF" : "#6750A4"} containerColor={isDarkMode ? "#211F26" : "#F3EDF7"} />
+              <M3LoadingIndicator size={96} contained={true} color={isDarkMode ? "#D0BCFF" : "#6750A4"} containerColor={isDarkMode ? "#211F26" : "#F3EDF7"} />
             </div>
           ) : memoizedGrid}
         </div>
@@ -528,11 +548,17 @@ export default function Home() {
                 {selectedBandish.title}
               </h2>
               
-              <div className="flex flex-wrap gap-2">
-                {/* UPDATED: These also now use secondary/10 to match the grid styling */}
-                <span className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-4 py-2 rounded-full text-sm font-bold tracking-wide">
+              <div className="flex flex-wrap gap-3">
+                {/* UPDATED: Clickable Raag Link */}
+                <Link 
+                  href={`/raag/${selectedBandish.raag.toLowerCase().replace(/\s+/g, '-')}`}
+                  className="group flex items-center gap-1.5 bg-m3-secondary/10 hover:bg-m3-secondary/20 dark:bg-m3-secondary-dark/10 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-4 py-2 rounded-full text-sm font-bold tracking-wide transition-all duration-300"
+                >
                   {selectedBandish.raag}
-                </span>
+                  <span className="material-symbols-rounded text-[1rem] transition-transform group-hover:translate-x-1 group-hover:-translate-y-1">arrow_outward</span>
+                </Link>
+                
+                {/* Static Taal and Composer Tags */}
                 <span className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-4 py-2 rounded-full text-sm font-bold tracking-wide">
                   {selectedBandish.taal}
                 </span>
@@ -551,6 +577,17 @@ export default function Home() {
               <div>
                 <h3 className="text-sm font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-3 transition-colors duration-300">Transliteration</h3>
                 <p className="text-gray-900 dark:text-white text-xl md:text-2xl leading-relaxed whitespace-pre-wrap font-medium transition-colors duration-300">{selectedBandish.lyrics.english}</p>
+              </div>
+
+              {/* NEW: Open Full View Button */}
+              <div className="pt-4 flex justify-end">
+                <Link 
+                  href={`/bandish/${selectedBandish.id}`}
+                  className="flex items-center gap-2 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark px-6 py-3 rounded-full text-sm font-bold transition-all duration-300 hover:scale-105 active:scale-95"
+                >
+                  <span>Open Full View</span>
+                  <span className="material-symbols-rounded text-[1.2rem]">arrow_outward</span>
+                </Link>
               </div>
             </div>
           </div>
