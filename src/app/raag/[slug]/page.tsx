@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import EditRaagModal from "./EditRaagModal";
 
 export default async function RaagPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -26,18 +27,21 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
     <main className="min-h-screen bg-m3-surface dark:bg-m3-surface-container-dark transition-colors duration-500 p-6 md:p-12">
       <div className="max-w-4xl mx-auto mt-4 md:mt-8">
         
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-m3-primary dark:text-m3-primary-dark font-bold mb-10 hover:opacity-80 transition-opacity"
-        >
-          <span className="material-symbols-rounded text-[1.2rem]">arrow_back</span>
-          Back to Wiki
-        </Link>
+        <div className="flex items-center justify-between mb-10">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-2 text-m3-primary dark:text-m3-primary-dark font-bold hover:opacity-80 transition-opacity"
+          >
+            <span className="material-symbols-rounded text-[1.2rem]">arrow_back</span>
+            Back to Wiki
+          </Link>
+          <EditRaagModal raag={raag} />
+        </div>
 
         {/* Raag Header */}
         <div className="mb-12">
           <h1 
-            className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight"
+            className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight"
             style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
           >
             Raag {raag.name}
@@ -51,6 +55,14 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
             <div className="bg-white dark:bg-m3-surface-dark p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
               <div className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase mb-1">Samay (Time)</div>
               <div className="font-semibold text-gray-900 dark:text-gray-100">{raag.samay || "Unknown"}</div>
+            </div>
+            <div className="bg-white dark:bg-m3-surface-dark p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+              <div className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase mb-1">Vadi</div>
+              <div className="font-semibold text-gray-900 dark:text-gray-100">{raag.vadi || "Unknown"}</div>
+            </div>
+            <div className="bg-white dark:bg-m3-surface-dark p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+              <div className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase mb-1">Samvadi</div>
+              <div className="font-semibold text-gray-900 dark:text-gray-100">{raag.samvadi || "Unknown"}</div>
             </div>
           </div>
         </div>
