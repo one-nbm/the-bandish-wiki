@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Google_Sans_Flex } from "next/font/google";
 import { ThemeProvider } from "./ThemeProvider";
+import AuthButton from "@/components/AuthButton";
+import Navbar from "@/components/Navbar";
 import "./globals.css";
 
 const googleSans = Google_Sans_Flex({
@@ -31,11 +33,15 @@ export default function RootLayout({
       
       {/* ADDED: inline style to force the ROND variable axis to max (100) */}
       <body 
-        className={`${googleSans.variable} font-sans min-h-screen flex flex-col antialiased`}
+        className={`${googleSans.variable} font-sans min-h-screen flex flex-col antialiased relative`}
         style={{ fontVariationSettings: '"ROND" 25' }}
       >
         {/* ADDED: The ThemeProvider to fix the Dark Mode state across pages! */}
         <ThemeProvider>
+          <Navbar>
+            <AuthButton />
+          </Navbar>
+          
           {children}
         </ThemeProvider>
       </body>

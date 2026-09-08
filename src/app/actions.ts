@@ -77,3 +77,15 @@ export async function bulkAddBandishesSecurely(bandishesArray: any[], userPassco
 
   return { success: true };
 }
+import { createClient as createServerClient } from '@/utils/supabase/server';
+
+export async function checkIsAdmin() {
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const adminEmailsString = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "";
+  const adminEmails = adminEmailsString.split(',').map(e => e.trim().toLowerCase()).filter(e => e !== "");
+  
+  if (adminEmails.length === 0) return false;
+  return adminEmails.includes(user.email?.toLowerCase() || "");
+}

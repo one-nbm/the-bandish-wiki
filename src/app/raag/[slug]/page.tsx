@@ -1,10 +1,11 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EditRaagModal from "./EditRaagModal";
 
 export default async function RaagPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const supabase = await createClient();
 
   // 1. Fetch the Raag details
   const { data: raag, error: raagError } = await supabase
@@ -23,6 +24,9 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
     .select("id, title, taal, composer")
     .eq("raag", raag.name);
 
+  const { data: { user } } = await supabase.auth.getUser();
+  const isSignedIn = !!user;
+
   return (
     <main className="min-h-screen bg-m3-surface dark:bg-m3-surface-container-dark transition-colors duration-500 p-6 md:p-12">
       <div className="max-w-4xl mx-auto mt-4 md:mt-8">
@@ -35,7 +39,7 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
             <span className="material-symbols-rounded text-[1.2rem]">arrow_back</span>
             Back to Wiki
           </Link>
-          <EditRaagModal raag={raag} />
+          {isSignedIn && <EditRaagModal raag={raag} />}
         </div>
 
         {/* Raag Header */}

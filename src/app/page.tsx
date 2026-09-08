@@ -3,11 +3,14 @@
 import { useState, useEffect, useMemo, useDeferredValue } from "react";
 import Link from "next/link";
 import Fuse from "fuse.js";
-import { supabase } from "@/lib/supabase";
+import CopyButton from "@/components/CopyButton";
+import { createClient } from "@/utils/supabase/client";
 import { useTheme } from "./ThemeProvider";
 import { M3LoadingIndicator } from "@alerix/m3-loading-indicator/react";
+import { checkIsAdmin } from "./actions";
 
 export default function Home() {
+  const supabase = createClient();
   const { isDarkMode, toggleDarkMode } = useTheme();
 
   // --- 1. SEARCH & FILTER STATES ---
@@ -21,6 +24,8 @@ export default function Home() {
   // --- 2. DATA STATES ---
   const [baseData, setBaseData] = useState<any[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
   // --- 3. MODAL VISIBILITY STATES ---
   const [selectedBandish, setSelectedBandish] = useState<any | null>(null);
@@ -44,6 +49,11 @@ export default function Home() {
 
   // --- 5. EFFECTS ---
   useEffect(() => {
+    const fetchAdminStatus = async () => {
+      const adminStatus = await checkIsAdmin();
+      setIsAdmin(adminStatus);
+    };
+
     const fetchBandishes = async () => {
       const { data, error } = await supabase.from('bandishes').select('*');
       if (error) { console.error("Error fetching data:", error); return; }
@@ -58,9 +68,27 @@ export default function Home() {
       setIsMounted(true);
     };
 
-    const savedFavs = localStorage.getItem("wiki-favorites");
-    if (savedFavs) { try { setFavorites(JSON.parse(savedFavs)); } catch (e) {} }
+    const fetchUserAndFavorites = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setIsSignedIn(true);
+        const userFavs = session.user.user_metadata?.favorites;
+        if (Array.isArray(userFavs)) {
+          setFavorites(userFavs);
+        } else {
+          // fallback to local storage if no user metadata yet
+          const savedFavs = localStorage.getItem("wiki-favorites");
+          if (savedFavs) { try { setFavorites(JSON.parse(savedFavs)); } catch (e) {} }
+        }
+      } else {
+        setIsSignedIn(false);
+        const savedFavs = localStorage.getItem("wiki-favorites");
+        if (savedFavs) { try { setFavorites(JSON.parse(savedFavs)); } catch (e) {} }
+      }
+    };
 
+    fetchAdminStatus();
+    fetchUserAndFavorites();
     fetchBandishes();
   }, []);
 
@@ -213,13 +241,25 @@ export default function Home() {
     });
   };
 
-  const toggleFavorite = (e: React.MouseEvent, id: string) => {
+  const toggleFavorite = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    setFavorites((prev) => {
-      const newFavs = prev.includes(id) ? prev.filter((favId) => favId !== id) : [...prev, id];
+    
+    // First calculate the new state
+    const newFavs = favorites.includes(id) 
+      ? favorites.filter((favId) => favId !== id) 
+      : [...favorites, id];
+    
+    // Update local state immediately for snappy UI
+    setFavorites(newFavs);
+    
+    // Sync with storage based on auth state
+    if (isSignedIn) {
+      await supabase.auth.updateUser({
+        data: { favorites: newFavs }
+      });
+    } else {
       localStorage.setItem("wiki-favorites", JSON.stringify(newFavs));
-      return newFavs;
-    });
+    }
   };
 
   // --- 7. DATA PROCESSING ---
@@ -278,45 +318,43 @@ export default function Home() {
     return (
       <div className="columns-1 md:columns-2 gap-4">
         {suggestedRaag && (
-          <div className="group relative bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 p-6 md:p-8 rounded-3xl border border-m3-secondary/20 flex flex-col items-start break-inside-avoid mb-4 transition-all duration-300 hover:-translate-y-1 shadow-sm">
+          <div className="group relative bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 p-6 md:p-8 rounded-3xl border border-m3-secondary/20 flex flex-col items-start break-inside-avoid mb-4 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01]">
             <div className="flex items-center gap-3 mb-4">
               <span className="material-symbols-rounded text-[2rem] text-m3-secondary dark:text-m3-secondary-dark">manage_search</span>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">Looking for Raag {suggestedRaag}?</h2>
             </div>
             <p className="text-gray-700 dark:text-gray-300 mb-6 text-[1.05rem]">Switch to a tag filter to see a clean list of all bandishes in this raag.</p>
             {/* Action Buttons Container */}
-          <div className="flex flex-wrap gap-3 mt-1">
-            
-            {/* 1. Existing Filter Button */}
-            <button 
-              onClick={() => { toggleFilter("raag", suggestedRaag); setQuery(""); }}
-              className="flex items-center gap-2 bg-m3-secondary hover:bg-m3-secondary/90 dark:bg-m3-secondary-dark dark:hover:bg-m3-secondary-dark/90 text-white dark:text-gray-900 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 hover:scale-105 active:scale-95"
-            >
-              <span className="material-symbols-rounded text-[1.2rem]">filter_list</span>
-              Filter by {suggestedRaag}
-            </button>
+            <div className="flex flex-wrap gap-3 mt-1">
+              {/* 1. Existing Filter Button */}
+              <button 
+                onClick={() => { toggleFilter("raag", suggestedRaag); setQuery(""); }}
+                className="flex items-center gap-2 bg-m3-secondary hover:bg-m3-secondary/90 dark:bg-m3-secondary-dark dark:hover:bg-m3-secondary-dark/90 text-white dark:text-gray-900 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95"
+              >
+                <span className="material-symbols-rounded text-[1.2rem]">filter_list</span>
+                Filter by {suggestedRaag}
+              </button>
 
-            {/* 2. NEW: Dedicated Raag Page Button */}
-            <Link 
-              href={`/raag/${suggestedRaag.toLowerCase().replace(/\s+/g, '-')}`}
-              className="flex items-center gap-2 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 hover:scale-105 active:scale-95 group"
-            >
-              <span className="material-symbols-rounded text-[1.2rem] transition-transform group-hover:scale-110">menu_book</span>
-              Read Raag Wiki
-            </Link>
-            
-          </div>
+              {/* 2. Dedicated Raag Page Button */}
+              <Link 
+                href={`/raag/${suggestedRaag.toLowerCase().replace(/\s+/g, '-')}`}
+                className="flex items-center gap-2 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 group"
+              >
+                <span className="material-symbols-rounded text-[1.2rem] transition-transform group-hover:scale-110">menu_book</span>
+                Read Raag Wiki
+              </Link>
+            </div>
           </div>
         )}
 
         {suggestedComposer && (
-          <div className="group relative bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 p-6 md:p-8 rounded-3xl border border-m3-tertiary/20 flex flex-col items-start break-inside-avoid mb-4 transition-all duration-300 hover:-translate-y-1 shadow-sm">
+          <div className="group relative bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 p-6 md:p-8 rounded-3xl border border-m3-tertiary/20 flex flex-col items-start break-inside-avoid mb-4 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01]">
             <div className="flex items-center gap-3 mb-4">
               <span className="material-symbols-rounded text-[2rem] text-m3-tertiary dark:text-m3-tertiary-dark">person_search</span>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">Looking for {suggestedComposer}?</h2>
             </div>
             <p className="text-gray-700 dark:text-gray-300 mb-6 text-[1.05rem]">Switch to a tag filter to see a clean list of all bandishes by this composer.</p>
-            <button onClick={() => { toggleFilter("composer", suggestedComposer); setQuery(""); }} className="flex items-center gap-2 bg-m3-tertiary hover:bg-m3-tertiary/90 dark:bg-m3-tertiary-dark dark:hover:bg-m3-tertiary-dark/90 text-white dark:text-gray-900 px-6 py-3 rounded-full font-bold transition-all duration-300 hover:scale-105 active:scale-95">
+            <button onClick={() => { toggleFilter("composer", suggestedComposer); setQuery(""); }} className="flex items-center gap-2 bg-m3-tertiary hover:bg-m3-tertiary/90 dark:bg-m3-tertiary-dark dark:hover:bg-m3-tertiary-dark/90 text-white dark:text-gray-900 px-6 py-3 rounded-full font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95">
               <span className="material-symbols-rounded text-[1.2rem]">filter_list</span> Filter by {suggestedComposer}
             </button>
           </div>
@@ -325,7 +363,7 @@ export default function Home() {
         {processedData.map((bandish, index) => {
           const isFavorited = favorites.includes(bandish.id);
           return (
-            <div key={bandish.id} onClick={() => setSelectedBandish(bandish)} className="group relative animate-card bg-white dark:bg-m3-surface-container-dark hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col transition-all duration-300 hover:-translate-y-1 cursor-pointer break-inside-avoid mb-4" style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}>
+            <div key={bandish.id} onClick={() => setSelectedBandish(bandish)} className="group relative animate-card bg-white dark:bg-m3-surface-container-dark hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01] cursor-pointer break-inside-avoid mb-4" style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}>
               <button onClick={(e) => toggleFavorite(e, bandish.id)} className={`absolute top-5 right-5 w-11 h-11 flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-90 ${isFavorited ? "text-m3-error dark:text-m3-error-dark bg-m3-error/10 dark:bg-m3-error-dark/20" : "text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`} aria-label="Toggle Favorite">
                 <span className="material-symbols-rounded text-[1.4rem] transition-all duration-300" style={{ fontVariationSettings: isFavorited ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
               </button>
@@ -414,13 +452,13 @@ export default function Home() {
                 }
               }}
               disabled={isSubmitting} 
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
             >
               <span className="material-symbols-rounded text-[1.4rem]">delete</span>
               <span className="md:hidden lg:inline">Delete</span>
             </button>
           )}
-          <button type="submit" disabled={isSubmitting} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
+          <button type="submit" disabled={isSubmitting} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
             <span className="material-symbols-rounded text-[1.4rem]">{isEdit ? 'save' : 'publish'}</span>
             <span className="whitespace-nowrap">{isSubmitting ? (isEdit ? "Saving..." : "Publishing...") : (isEdit ? "Save Changes" : "Publish")}</span>
           </button>
@@ -436,11 +474,13 @@ export default function Home() {
           {/* --- HERO SEARCH SECTION --- */}
           <div className="relative bg-m3-surface-high dark:bg-m3-surface-high-dark rounded-3xl md:rounded-[2.5rem] p-5 sm:p-8 md:p-12 transition-colors duration-500">
             <div className="absolute top-5 right-5 sm:top-6 sm:right-6 md:top-8 md:right-8 flex items-center gap-2 md:gap-3">
-              <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="group flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm" title="Add a new Bandish">
-                <span className="material-symbols-rounded text-[1.25rem]">add</span>
-                <span className="hidden md:block font-bold text-sm ml-1">Add Bandish</span>
-              </button>
-              <button onClick={() => setIsInfoOpen(true)} className="group flex items-center justify-center w-10 h-10 p-0 bg-m3-surface-container/50 dark:bg-m3-surface-dark/40 hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-300 hover:scale-105 active:scale-95" title="How to use the wiki">
+              {isAdmin && (
+                <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="group flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95" title="Add a new Bandish">
+                  <span className="material-symbols-rounded text-[1.25rem]">add</span>
+                  <span className="hidden md:block font-bold text-sm ml-1">Add Bandish</span>
+                </button>
+              )}
+              <button onClick={() => setIsInfoOpen(true)} className="group flex items-center justify-center w-10 h-10 p-0 bg-m3-surface-container/50 dark:bg-m3-surface-dark/40 hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95" title="How to use the wiki">
                 <span className="material-symbols-rounded text-[1.5rem]">info</span>
               </button>
             </div>
@@ -529,7 +569,7 @@ export default function Home() {
       {isAddOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" onClick={closeAddModal}>
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isAddClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
-          <div className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar shadow-2xl ${isAddClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
+          <div className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isAddClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
             <div className="absolute top-6 right-6 md:top-8 md:right-8">
               <button onClick={closeAddModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
                 <span className="material-symbols-rounded">close</span>
@@ -548,7 +588,7 @@ export default function Home() {
       {editingBandish && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" onClick={closeEditModal}>
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isEditClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
-          <div className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar shadow-2xl ${isEditClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
+          <div className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isEditClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
             <div className="absolute top-6 right-6 md:top-8 md:right-8">
               <button onClick={closeEditModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
                 <span className="material-symbols-rounded">close</span>
@@ -567,14 +607,16 @@ export default function Home() {
       {selectedBandish && !editingBandish && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" onClick={closeModal}>
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
-          <div className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar shadow-2xl ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
+          <div className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
             <div className="absolute top-6 right-6 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3">
               <button onClick={closeModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-all duration-200 hover:scale-105 active:scale-95">
                 <span className="material-symbols-rounded text-[1.4rem]">close</span>
               </button>
-              <button onClick={() => openEditModal(selectedBandish)} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-200 hover:scale-105 active:scale-95" title="Edit Bandish">
-                <span className="material-symbols-rounded text-[1.4rem]">edit</span>
-              </button>
+              {isSignedIn && (
+                <button onClick={() => openEditModal(selectedBandish)} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-200 hover:scale-105 active:scale-95" title="Edit Bandish">
+                  <span className="material-symbols-rounded text-[1.4rem]">edit</span>
+                </button>
+              )}
             </div>
             <div className="pr-12 mb-8 mt-2">
               {/* UPDATED: Added your custom fontVariationSettings to perfectly match the edit screen */}
@@ -607,12 +649,18 @@ export default function Home() {
             <div className="space-y-8 md:space-y-10">
               {selectedBandish.lyrics.devanagari && (
                 <div>
-                  <h3 className="text-sm font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-3 transition-colors duration-300">Devanagari</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider transition-colors duration-300">Devanagari</h3>
+                    <CopyButton textToCopy={selectedBandish.lyrics.devanagari} />
+                  </div>
                   <p className="text-gray-900 dark:text-white text-xl md:text-2xl leading-relaxed whitespace-pre-wrap font-medium transition-colors duration-300">{selectedBandish.lyrics.devanagari}</p>
                 </div>
               )}
               <div>
-                <h3 className="text-sm font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-3 transition-colors duration-300">Transliteration</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider transition-colors duration-300">Transliteration</h3>
+                  <CopyButton textToCopy={selectedBandish.lyrics.english} />
+                </div>
                 <p className="text-gray-900 dark:text-white text-xl md:text-2xl leading-relaxed whitespace-pre-wrap font-medium transition-colors duration-300">{selectedBandish.lyrics.english}</p>
               </div>
 

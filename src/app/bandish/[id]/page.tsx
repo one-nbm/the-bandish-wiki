@@ -1,11 +1,13 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AddRenditionModal from "./AddRenditionModal";
 import EditRenditionModal from "./EditRenditionModal";
+import CopyButton from "@/components/CopyButton";
 
 export default async function BandishPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const supabase = await createClient();
 
   const { data: bandish, error } = await supabase
     .from("bandishes")
@@ -19,6 +21,8 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
 
   // Helper to create clean URLs
   const raagSlug = bandish.raag.toLowerCase().replace(/\s+/g, '-');
+  const { data: { user } } = await supabase.auth.getUser();
+  const isSignedIn = !!user;
 
   return (
     <main className="min-h-screen bg-m3-surface dark:bg-m3-surface-container-dark transition-colors duration-500 relative overflow-hidden">
@@ -39,7 +43,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
         {/* Title & Tags */}
         <div className="mb-12">
           <h1 
-            className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight leading-tight"
+            className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight leading-tight"
             style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
           >
             {bandish.title}
@@ -67,7 +71,10 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
         <div className="space-y-12 max-w-4xl mt-12">
           {bandish.lyrics.devanagari && (
             <div>
-              <h3 className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-widest mb-5 opacity-80">Devanagari</h3>
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-widest opacity-80">Devanagari</h3>
+                <CopyButton textToCopy={bandish.lyrics.devanagari} />
+              </div>
               <p className="text-gray-900 dark:text-white text-2xl md:text-3xl leading-[1.8] whitespace-pre-wrap font-medium">
                 {bandish.lyrics.devanagari}
               </p>
@@ -75,7 +82,10 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
           )}
           
           <div>
-            <h3 className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-widest mb-5 opacity-80">Transliteration</h3>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-widest opacity-80">Transliteration</h3>
+              <CopyButton textToCopy={bandish.lyrics.english} />
+            </div>
             <p className="text-gray-900 dark:text-white text-2xl md:text-3xl leading-[1.8] whitespace-pre-wrap font-medium">
               {bandish.lyrics.english}
             </p>
@@ -89,7 +99,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
               <span className="material-symbols-rounded text-rose-400 text-[1.8rem]">play_circle</span>
               Notable Renditions
             </h3>
-            <AddRenditionModal bandish={bandish} />
+            {isSignedIn && <AddRenditionModal bandish={bandish} />}
           </div>
           
           {bandish.youtube_renditions && bandish.youtube_renditions.length > 0 ? (
@@ -140,7 +150,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                     </a>
                     
                     <div className="flex items-center gap-1">
-                      <EditRenditionModal bandish={bandish} index={index} />
+                      {isSignedIn && <EditRenditionModal bandish={bandish} index={index} />}
                       <a href={video.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center p-2 text-gray-300 dark:text-gray-600 group-hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-full transition-colors duration-200">
                         <span className="material-symbols-rounded text-[1.2rem]">open_in_new</span>
                       </a>
