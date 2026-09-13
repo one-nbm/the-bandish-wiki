@@ -21,7 +21,6 @@ export default function EditRaagModal({ raag }: { raag: any }) {
   const [formAvaroh, setFormAvaroh] = useState(raag.avaroh || "");
   const [formDescription, setFormDescription] = useState(raag.description || "");
   
-  const [adminPasscode, setAdminPasscode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Lock Background Scrolling
@@ -54,7 +53,6 @@ export default function EditRaagModal({ raag }: { raag: any }) {
       setFormAaroh(raag.aaroh || "");
       setFormAvaroh(raag.avaroh || "");
       setFormDescription(raag.description || "");
-      setAdminPasscode("");
     }, 300);
   };
 
@@ -65,7 +63,7 @@ export default function EditRaagModal({ raag }: { raag: any }) {
 
     if (action === 'delete') {
       try {
-        const result = await deleteRaagSecurely(raag.slug, adminPasscode);
+        const result = await deleteRaagSecurely(raag.slug);
         
         if (!result.success) {
           throw new Error(result.error);
@@ -93,7 +91,7 @@ export default function EditRaagModal({ raag }: { raag: any }) {
     };
 
     try {
-      const result = await updateRaagSecurely(raag.slug, payload, adminPasscode);
+      const result = await updateRaagSecurely(raag.slug, payload);
       
       if (!result.success) {
         throw new Error(result.error);
@@ -104,7 +102,6 @@ export default function EditRaagModal({ raag }: { raag: any }) {
       setTimeout(() => {
         setIsOpen(false);
         setIsClosing(false);
-        setAdminPasscode("");
         
         // Refresh page to show new data
         router.refresh();
@@ -191,14 +188,7 @@ export default function EditRaagModal({ raag }: { raag: any }) {
 
               <hr className="border-gray-200 dark:border-m3-surface-high-dark my-2" />
               
-              <div className="flex flex-col md:flex-row gap-4 items-end">
-                <div className="w-full">
-                  <label className="flex items-center gap-1.5 text-xs font-bold text-m3-error dark:text-m3-error-dark uppercase tracking-wider mb-2">
-                    <span className="material-symbols-rounded text-[1.1rem]">lock</span> Admin Passcode
-                  </label>
-                  <input type="password" required placeholder="Enter the secret password to publish" value={adminPasscode} onChange={(e) => setAdminPasscode(e.target.value)} className="w-full bg-m3-error/10 dark:bg-m3-error-dark/10 text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-error dark:focus:ring-m3-error-dark transition-all duration-300 placeholder-m3-error/50 dark:placeholder-m3-error-dark/50" />
-                </div>
-                <div className="flex gap-3 w-full md:w-auto shrink-0">
+              <div className="flex gap-3 justify-end">
                   <button 
                     type="button" 
                     onClick={(e) => {
@@ -207,16 +197,15 @@ export default function EditRaagModal({ raag }: { raag: any }) {
                       }
                     }}
                     disabled={isSubmitting} 
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                    className="flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                   >
                     <span className="material-symbols-rounded text-[1.4rem]">delete</span>
-                    <span className="md:hidden lg:inline">Delete</span>
+                    Delete
                   </button>
-                  <button type="submit" disabled={isSubmitting} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
+                  <button type="submit" disabled={isSubmitting} className="flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
                     <span className="material-symbols-rounded text-[1.4rem]">save</span>
                     <span className="whitespace-nowrap">{isSubmitting ? "Saving..." : "Save Changes"}</span>
                   </button>
-                </div>
               </div>
 
             </form>

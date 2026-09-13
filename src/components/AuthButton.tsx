@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { checkIsAdmin } from "@/app/actions";
+import { checkIsEditor } from "@/app/actions";
 import UserAccountMenu from "./UserAccountMenu";
 import SignInModal from "./SignInModal";
 
@@ -11,7 +11,7 @@ export default async function AuthButton() {
     return <SignInModal />;
   }
 
-  const isAdmin = await checkIsAdmin();
+  const isAdmin = await checkIsEditor();
 
   return <UserAccountMenu email={user.email || "User"} isAdmin={isAdmin} />;
 }

@@ -7,7 +7,7 @@ import CopyButton from "@/components/CopyButton";
 import { createClient } from "@/utils/supabase/client";
 import { useTheme } from "./ThemeProvider";
 import { M3LoadingIndicator } from "@alerix/m3-loading-indicator/react";
-import { checkIsAdmin, addBandishSecurely, updateBandishSecurely, deleteBandishSecurely } from "./actions";
+import { checkIsEditor, addBandishSecurely, updateBandishSecurely, deleteBandishSecurely } from "./actions";
 
 export default function Home() {
   const supabase = createClient();
@@ -51,7 +51,7 @@ export default function Home() {
   // --- 5. EFFECTS ---
   useEffect(() => {
     const fetchAdminStatus = async () => {
-      const adminStatus = await checkIsAdmin();
+      const adminStatus = await checkIsEditor();
       setIsAdmin(adminStatus);
     };
 
@@ -147,7 +147,7 @@ export default function Home() {
 
     if (action === 'delete') {
       try {
-        const result = await deleteBandishSecurely(editingBandish.id, adminPasscode);
+        const result = await deleteBandishSecurely(editingBandish.id);
         if (!result.success) throw new Error(result.error);
         
         setBaseData(prev => prev.filter(b => b.id !== editingBandish.id));
@@ -188,7 +188,7 @@ export default function Home() {
 
     try {
       if (isEdit && editingBandish) {
-        const result = await updateBandishSecurely(editingBandish.id, payload, adminPasscode);
+        const result = await updateBandishSecurely(editingBandish.id, payload);
         if (!result.success) throw new Error(result.error);
         
         // INSTANT UI UPDATE
@@ -196,7 +196,7 @@ export default function Home() {
           setBaseData(prev => prev.map(b => b.id === editingBandish.id ? result.data[0] : b));
         }
       } else {
-        const result = await addBandishSecurely(payload, adminPasscode);
+        const result = await addBandishSecurely(payload);
         if (!result.success) throw new Error(result.error);
         
         // INSTANT UI UPDATE

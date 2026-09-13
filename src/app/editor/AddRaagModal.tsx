@@ -29,7 +29,6 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
   const [formAvaroh, setFormAvaroh] = useState("");
   const [formDescription, setFormDescription] = useState("");
   
-  const [adminPasscode, setAdminPasscode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Lock Background Scrolling
@@ -62,7 +61,6 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
       setFormAaroh("");
       setFormAvaroh("");
       setFormDescription("");
-      setAdminPasscode("");
     }, 300);
   };
 
@@ -108,7 +106,7 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
         contributor: contributorName,
       };
 
-      const result = await addRaagSecurely(payload, adminPasscode);
+      const result = await addRaagSecurely(payload);
       if (!result.success) throw new Error(result.error);
 
       // Close modal first
@@ -116,7 +114,6 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
       setTimeout(() => {
         setIsOpen(false);
         setIsClosing(false);
-        setAdminPasscode("");
         
         // Navigate to new raag
         router.push(`/raag/${slug}`);
@@ -274,42 +271,29 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
               </form>
             </div>
 
-            {/* Footer with Passcode & Submit */}
+            {/* Footer with Submit */}
             <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#1A181E] rounded-b-3xl shrink-0">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex-1 w-full">
-                  <input 
-                    type="password" 
-                    placeholder="Admin Passcode"
-                    value={adminPasscode}
-                    onChange={(e) => setAdminPasscode(e.target.value)}
-                    required
-                    form="add-raag-form"
-                    className="w-full sm:max-w-xs px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-m3-surface-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
-                  />
-                </div>
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <button 
-                    type="button"
-                    onClick={closeModal}
-                    className="flex-1 sm:flex-none px-6 py-2.5 font-bold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit"
-                    form="add-raag-form"
-                    disabled={isSubmitting}
-                    className="flex-1 sm:flex-none px-8 py-2.5 bg-m3-primary hover:bg-m3-primary/90 text-white rounded-xl font-bold shadow-sm transition-transform active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
-                  >
-                    {isSubmitting ? (
-                      <span className="material-symbols-rounded animate-spin text-[1.2rem]">sync</span>
-                    ) : (
-                      <span className="material-symbols-rounded text-[1.2rem]">add_circle</span>
-                    )}
-                    {isSubmitting ? 'Creating...' : 'Create Raag'}
-                  </button>
-                </div>
+              <div className="flex items-center justify-end gap-3">
+                <button 
+                  type="button"
+                  onClick={closeModal}
+                  className="px-6 py-2.5 font-bold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  form="add-raag-form"
+                  disabled={isSubmitting}
+                  className="px-8 py-2.5 bg-m3-primary hover:bg-m3-primary/90 text-white rounded-xl font-bold shadow-sm transition-transform active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <span className="material-symbols-rounded animate-spin text-[1.2rem]">sync</span>
+                  ) : (
+                    <span className="material-symbols-rounded text-[1.2rem]">add_circle</span>
+                  )}
+                  {isSubmitting ? 'Creating...' : 'Create Raag'}
+                </button>
               </div>
             </div>
 

@@ -37,7 +37,7 @@ export default function BulkUpload() {
   const handleBulkUpload = async () => {
     setStatus("Uploading...");
     
-    const response = await bulkAddBandishesSecurely(myBulkData, passcode);
+    const response = await bulkAddBandishesSecurely(myBulkData);
     
     if (response.success) {
       setStatus(`Success! Added ${myBulkData.length} bandishes.`);

@@ -1,10 +1,10 @@
-import { checkIsAdmin } from "@/app/actions";
+import { checkIsEditor } from "@/app/actions";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import EditorDashboard from "./EditorDashboard";
 
 export default async function EditorPage() {
-  const isAdmin = await checkIsAdmin();
+  const isAdmin = await checkIsEditor();
   if (!isAdmin) {
     redirect("/");
   }
