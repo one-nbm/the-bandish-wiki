@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { addRaagSecurely } from "@/app/actions";
 
 function generateSlug(name: string) {
   return name
@@ -68,10 +69,7 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (adminPasscode !== "kalamanthan") {
-      alert("Incorrect Admin Passcode!");
-      return;
-    }
+
 
     if (!formName.trim()) {
       alert("Raag Name is required.");
@@ -110,16 +108,8 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
         contributor: contributorName,
       };
 
-      const { error } = await supabase
-        .from("raags")
-        .insert([payload]);
-
-      if (error) {
-        if (error.code === '23505') {
-          throw new Error("A Raag with this name/slug already exists.");
-        }
-        throw error;
-      }
+      const result = await addRaagSecurely(payload, adminPasscode);
+      if (!result.success) throw new Error(result.error);
 
       // Close modal first
       setIsClosing(true);

@@ -7,7 +7,7 @@ import CopyButton from "@/components/CopyButton";
 import { createClient } from "@/utils/supabase/client";
 import { useTheme } from "./ThemeProvider";
 import { M3LoadingIndicator } from "@alerix/m3-loading-indicator/react";
-import { checkIsAdmin } from "./actions";
+import { checkIsAdmin, addBandishSecurely, updateBandishSecurely, deleteBandishSecurely } from "./actions";
 
 export default function Home() {
   const supabase = createClient();
@@ -143,22 +143,12 @@ export default function Home() {
   const handleFormSubmit = async (e: React.FormEvent, isEdit: boolean, action: 'save' | 'delete' = 'save') => {
     e.preventDefault();
 
-    // CHANGE "secret123" to your actual password!
-    if (adminPasscode !== "kalamanthan") {
-      alert("Incorrect Admin Passcode!");
-      return;
-    }
-
     setIsSubmitting(true);
 
     if (action === 'delete') {
       try {
-        const { error } = await supabase
-          .from("bandishes")
-          .delete()
-          .eq("id", editingBandish.id);
-        
-        if (error) throw error;
+        const result = await deleteBandishSecurely(editingBandish.id, adminPasscode);
+        if (!result.success) throw new Error(result.error);
         
         setBaseData(prev => prev.filter(b => b.id !== editingBandish.id));
         closeEditModal();
@@ -174,11 +164,8 @@ export default function Home() {
     // --- NEW LOGIC: Calculate the next sequential ID ---
     let nextId = "";
     if (!isEdit) {
-      // Look at all existing IDs, convert them to numbers, and find the highest one
       const currentIds = baseData.map(b => parseInt(b.id, 10)).filter(n => !isNaN(n));
       const maxId = currentIds.length > 0 ? Math.max(...currentIds) : 0;
-      
-      // Add 1, and pad it with leading zeros to maintain the "0001" format
       nextId = String(maxId + 1).padStart(4, '0');
     }
 
@@ -195,36 +182,26 @@ export default function Home() {
       contributor: contributorName,
     };
 
-    // If it's a completely new bandish, attach our freshly generated ID!
     if (!isEdit) {
       payload.id = nextId;
     }
 
     try {
       if (isEdit && editingBandish) {
-        const { data, error } = await supabase
-          .from("bandishes")
-          .update(payload)
-          .eq("id", editingBandish.id)
-          .select();
-
-        if (error) throw error;
+        const result = await updateBandishSecurely(editingBandish.id, payload, adminPasscode);
+        if (!result.success) throw new Error(result.error);
         
         // INSTANT UI UPDATE
-        if (data && data.length > 0) {
-          setBaseData(prev => prev.map(b => b.id === editingBandish.id ? data[0] : b));
+        if (result.data && result.data.length > 0) {
+          setBaseData(prev => prev.map(b => b.id === editingBandish.id ? result.data[0] : b));
         }
       } else {
-        const { data, error } = await supabase
-          .from("bandishes")
-          .insert([payload])
-          .select();
-
-        if (error) throw error;
+        const result = await addBandishSecurely(payload, adminPasscode);
+        if (!result.success) throw new Error(result.error);
         
         // INSTANT UI UPDATE
-        if (data && data.length > 0) {
-          setBaseData(prev => [data[0], ...prev]);
+        if (result.data && result.data.length > 0) {
+          setBaseData(prev => [result.data[0], ...prev]);
         }
       }
 

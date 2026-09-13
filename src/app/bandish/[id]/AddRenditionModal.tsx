@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { updateBandishSecurely } from "@/app/actions";
 
 export default function AddRenditionModal({ bandish }: { bandish: any }) {
   const router = useRouter();
@@ -51,11 +52,6 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (adminPasscode !== "kalamanthan") {
-      alert("Incorrect Admin Passcode!");
-      return;
-    }
-
     setIsSubmitting(true);
 
     const newRendition = {
@@ -68,12 +64,8 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
     const updatedRenditions = [...currentRenditions, newRendition];
 
     try {
-      const { error } = await supabase
-        .from("bandishes")
-        .update({ youtube_renditions: updatedRenditions })
-        .eq("id", bandish.id);
-
-      if (error) throw error;
+      const result = await updateBandishSecurely(bandish.id, { youtube_renditions: updatedRenditions }, adminPasscode);
+      if (!result.success) throw new Error(result.error);
 
       // Close modal first
       setIsClosing(true);
