@@ -109,10 +109,10 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any, i
       {/* Edit Button */}
       <button 
         onClick={() => setIsOpen(true)} 
-        className="flex items-center justify-center p-2 text-gray-400 hover:text-m3-primary hover:bg-m3-surface-container dark:hover:bg-m3-surface-container-dark rounded-full transition-colors duration-200"
+        className="flex items-center justify-center p-2.5 text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100 hover:text-m3-primary dark:hover:text-white hover:bg-m3-primary/10 dark:hover:bg-white/10 rounded-full transition-all duration-300"
         title="Edit Rendition"
       >
-        <span className="material-symbols-rounded text-[1.2rem]">edit</span>
+        <span className="material-symbols-rounded text-[1.1rem]">edit</span>
       </button>
 
       {/* Modal */}

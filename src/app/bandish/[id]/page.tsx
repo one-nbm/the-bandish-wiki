@@ -103,56 +103,64 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
           </div>
           
           {bandish.youtube_renditions && bandish.youtube_renditions.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {bandish.youtube_renditions.map((video: { artist: string; url: string; title?: string }, index: number) => {
-                // Extract the 11-character YouTube video ID from standard or shortened URLs
                 const videoIdMatch = video.url.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=))([^"&?\/\s]{11})/i);
                 const videoId = videoIdMatch ? videoIdMatch[1] : null;
 
                 return (
-                  <div 
+                  <div
                     key={index}
-                    className="group relative bg-white dark:bg-m3-surface-dark p-3 rounded-2xl border border-gray-200 dark:border-gray-800 hover:border-rose-300 dark:hover:border-rose-900/50 transition-colors flex items-center justify-between"
+                    className="group relative bg-m3-surface-container dark:bg-m3-surface-container-dark rounded-3xl overflow-hidden dark:ring-1 dark:ring-white/15 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-1 hover:scale-[1.02] flex items-stretch min-h-[5rem]"
                   >
-                    <a 
+                    {/* Full-bleed thumbnail */}
+                    {videoId && (
+                      <img
+                        src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 w-full h-full object-cover brightness-110 opacity-55 dark:brightness-75 dark:opacity-75"
+                      />
+                    )}
+
+                    {/* Gradient: white wash left in light mode (lightens thumbnail), transparent in dark; fades to card bg on right */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/55 dark:from-transparent via-m3-surface-container/95 dark:via-m3-surface-container-dark/95 via-[45%] to-m3-surface-container dark:to-m3-surface-container-dark" />
+
+                    {/* Play button */}
+                    <a
                       href={video.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-4 flex-1 min-w-0"
+                      className="relative z-10 w-20 sm:w-24 shrink-0 flex items-center justify-center"
                     >
-                      {/* Thumbnail Container */}
-                      <div className="relative w-28 h-16 shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                        {videoId ? (
-                          <img 
-                            src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`} 
-                            alt={`${video.artist} rendition`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-rose-50 dark:bg-rose-900/10">
-                            <span className="material-symbols-rounded text-rose-300">music_note</span>
-                          </div>
-                        )}
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-                           <span className="material-symbols-rounded text-white drop-shadow-md">play_arrow</span>
-                        </div>
-                      </div>
-                      
-                      {/* Text */}
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-rose-500 dark:group-hover:text-rose-400 transition-colors line-clamp-1">
-                          {video.artist}
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate pr-2">
-                          {video.title || "Watch on YouTube"}
-                        </p>
-                      </div>
+                      <span className="material-symbols-rounded text-m3-primary dark:text-white text-[1.6rem] drop-shadow-lg transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-125">play_arrow</span>
                     </a>
-                    
-                    <div className="flex items-center gap-1">
+
+                    {/* Text */}
+                    <a
+                      href={video.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative z-10 flex flex-col justify-center flex-1 min-w-0 py-3 pl-1 pr-2"
+                    >
+                      <h4 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base line-clamp-1 leading-snug">
+                        {video.artist}
+                      </h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2 leading-snug">
+                        {video.title || "Watch on YouTube"}
+                      </p>
+                    </a>
+
+                    {/* Action buttons */}
+                    <div className="relative z-10 flex flex-col items-center justify-center gap-1 px-2 shrink-0">
                       {isSignedIn && <EditRenditionModal bandish={bandish} index={index} />}
-                      <a href={video.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center p-2 text-gray-300 dark:text-gray-600 group-hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-full transition-colors duration-200">
-                        <span className="material-symbols-rounded text-[1.2rem]">open_in_new</span>
+                      <a
+                        href={video.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center p-2.5 text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100 hover:text-m3-primary dark:hover:text-white hover:bg-m3-primary/10 dark:hover:bg-white/10 rounded-full transition-all duration-300"
+                      >
+                        <span className="material-symbols-rounded text-[1.1rem]">open_in_new</span>
                       </a>
                     </div>
                   </div>

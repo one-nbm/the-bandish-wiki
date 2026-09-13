@@ -26,6 +26,7 @@ export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [contributorName, setContributorName] = useState("Neil Lote");
 
   // --- 3. MODAL VISIBILITY STATES ---
   const [selectedBandish, setSelectedBandish] = useState<any | null>(null);
@@ -72,6 +73,9 @@ export default function Home() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setIsSignedIn(true);
+        if (session.user.user_metadata?.contributor_name) {
+          setContributorName(session.user.user_metadata.contributor_name);
+        }
         const userFavs = session.user.user_metadata?.favorites;
         if (Array.isArray(userFavs)) {
           setFavorites(userFavs);
@@ -188,6 +192,7 @@ export default function Home() {
         english: formEnglish,
         devanagari: formDevanagari || "",
       },
+      contributor: contributorName,
     };
 
     // If it's a completely new bandish, attach our freshly generated ID!
