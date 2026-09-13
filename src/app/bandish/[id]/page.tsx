@@ -25,10 +25,10 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
   const isSignedIn = !!user;
 
   return (
-    <main className="min-h-screen bg-m3-surface dark:bg-m3-surface-container-dark transition-colors duration-500 relative overflow-hidden">
+    <main className="min-h-screen bg-transparent relative">
       
-      {/* Ambient Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-m3-primary/20 dark:bg-m3-primary-dark/10 blur-[100px] rounded-full pointer-events-none opacity-50" />
+      {/* Ambient Background Glow (Pulled up to bleed behind the transparent navbar) */}
+      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-m3-primary/20 dark:bg-m3-primary-dark/10 blur-[100px] rounded-full pointer-events-none opacity-50" />
 
       <div className="max-w-5xl mx-auto p-6 md:p-12 relative z-10 mt-4 md:mt-8">
         

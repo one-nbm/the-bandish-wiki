@@ -28,8 +28,12 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
   const isSignedIn = !!user;
 
   return (
-    <main className="min-h-screen bg-m3-surface dark:bg-m3-surface-container-dark transition-colors duration-500 p-6 md:p-12">
-      <div className="max-w-4xl mx-auto mt-4 md:mt-8">
+    <main className="min-h-screen bg-transparent relative transition-colors duration-500">
+      
+      {/* Ambient Background Glow (Pulled up to bleed behind the transparent navbar) */}
+      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-m3-primary/20 dark:bg-m3-primary-dark/10 blur-[100px] rounded-full pointer-events-none opacity-50" />
+
+      <div className="max-w-5xl mx-auto mt-4 md:mt-8 p-6 md:p-12 relative z-10">
         
         <div className="flex items-center justify-between mb-10">
           <Link 
@@ -45,7 +49,7 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
         {/* Raag Header */}
         <div className="mb-12">
           <h1 
-            className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight"
+            className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight leading-tight"
             style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
           >
             Raag {raag.name}

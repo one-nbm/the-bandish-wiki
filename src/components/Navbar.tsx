@@ -9,7 +9,7 @@ export default function Navbar({ children }: { children: React.ReactNode }) {
   const isLoginPage = pathname === "/login";
 
   return (
-    <header className="relative w-full z-30 bg-m3-surface dark:bg-m3-surface-dark transition-colors duration-500">
+    <header className="relative w-full z-30 bg-transparent transition-colors duration-500">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-3.5 sm:py-4 flex items-center justify-between gap-3">
         <Link
           href="/"

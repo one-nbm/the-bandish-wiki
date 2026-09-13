@@ -41,7 +41,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
       {/* This wrapper automatically applies 'dark' to every page! */}
-      <div className={`${isDarkMode ? "dark" : ""} w-full min-h-screen`}>
+      <div className={`${isDarkMode ? "dark" : ""} w-full min-h-screen bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white transition-colors duration-500`}>
         {children}
       </div>
     </ThemeContext.Provider>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef, useEffect } from "react";
 import SignOutButton from "./SignOutButton";
@@ -62,7 +62,18 @@ export default function UserAccountMenu({ email }: UserAccountMenuProps) {
               {email}
             </p>
           </div>
-          <SignOutButton />
+          <div className="flex flex-col gap-1.5">
+            <a 
+              href="https://forms.gle/taJagb1bbn6iarQV6"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 whitespace-nowrap"
+            >
+              <span className="material-symbols-rounded text-[1.25rem]">edit_document</span>
+              <span>Become an Editor</span>
+            </a>
+            <SignOutButton />
+          </div>
         </div>
       )}
     </div>

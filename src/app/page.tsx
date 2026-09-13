@@ -468,17 +468,28 @@ export default function Home() {
   );
 
   return (
-    <main className="min-h-screen bg-m3-surface dark:bg-m3-surface-dark transition-colors duration-500 relative">
+    <main className="min-h-screen bg-transparent transition-colors duration-500 relative">
       <div className="p-3 sm:p-4 md:p-8 font-sans">
         <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
           {/* --- HERO SEARCH SECTION --- */}
           <div className="relative bg-m3-surface-high dark:bg-m3-surface-high-dark rounded-3xl md:rounded-[2.5rem] p-5 sm:p-8 md:p-12 transition-colors duration-500">
             <div className="absolute top-5 right-5 sm:top-6 sm:right-6 md:top-8 md:right-8 flex items-center gap-2 md:gap-3">
-              {isAdmin && (
+              {isAdmin ? (
                 <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="group flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95" title="Add a new Bandish">
                   <span className="material-symbols-rounded text-[1.25rem]">add</span>
                   <span className="hidden md:block font-bold text-sm ml-1">Add Bandish</span>
                 </button>
+              ) : (
+                <a
+                  href="https://forms.gle/sTqp5q4Ym6JLzaSA9"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 bg-m3-surface-container/50 dark:bg-m3-surface-dark/40 hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95"
+                  title="Submit a Bandish"
+                >
+                  <span className="material-symbols-rounded text-[1.25rem]">add</span>
+                  <span className="hidden md:block font-bold text-sm ml-1">Submit Bandish</span>
+                </a>
               )}
               <button onClick={() => setIsInfoOpen(true)} className="group flex items-center justify-center w-10 h-10 p-0 bg-m3-surface-container/50 dark:bg-m3-surface-dark/40 hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95" title="How to use the wiki">
                 <span className="material-symbols-rounded text-[1.5rem]">info</span>
@@ -520,11 +531,11 @@ export default function Home() {
                 <button onClick={() => setLanguage("english")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "english" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>English</button>
                 <button onClick={() => setLanguage("devanagari")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "devanagari" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>Devanagari</button>
               </div>
-              <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`group flex items-center justify-center gap-2 px-5 py-2 rounded-full text-sm font-bold border transition-all duration-300 hover:scale-105 active:scale-95 ${showFavoritesOnly ? "bg-m3-error dark:bg-m3-error-dark text-white dark:text-gray-900 border-transparent" : "bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-m3-surface-high dark:hover:bg-m3-surface-high-dark"}`}>
+              <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`group flex items-center justify-center gap-2 px-5 py-2 rounded-full text-sm font-bold border transition-all duration-300 hover:scale-105 active:scale-95 ${showFavoritesOnly ? "bg-m3-error dark:bg-m3-error-dark text-white dark:text-gray-900 border-transparent" : "bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20"}`}>
                 <span className="material-symbols-rounded text-[1.25rem] transition-all duration-300" style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
                 <span>{showFavoritesOnly ? "Favorites Only" : "All Bandishes"}</span>
               </button>
-              <button onClick={toggleDarkMode} className="group flex items-center justify-center gap-2 bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 px-5 py-2 rounded-full text-sm font-bold border border-gray-200 dark:border-gray-700 hover:bg-m3-surface-high dark:hover:bg-m3-surface-high-dark transition-all duration-300 hover:scale-105 active:scale-95">
+              <button onClick={toggleDarkMode} className="group flex items-center justify-center gap-2 bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 px-5 py-2 rounded-full text-sm font-bold border border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300 hover:scale-105 active:scale-95">
                 <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>{isDarkMode ? "light_mode" : "dark_mode"}</span>
                 <span className="hidden sm:inline">{isDarkMode ? "Light" : "Dark"}</span>
               </button>
@@ -543,27 +554,73 @@ export default function Home() {
       {isInfoOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" onClick={closeInfoModal}>
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isInfoClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
-          <div className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar ${isInfoClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
+          <div className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar ${isInfoClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
             <div className="absolute top-6 right-6 md:top-8 md:right-8">
               <button onClick={closeInfoModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
                 <span className="material-symbols-rounded">close</span>
               </button>
             </div>
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <span className="material-symbols-rounded text-[2.5rem] text-m3-primary dark:text-m3-primary-dark">info</span>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">How to use this Wiki</h2>
+            <div className="mb-4">
+              <div className="flex items-center gap-3 mb-6 pr-14">
+                <span className="material-symbols-rounded text-[2.5rem] text-m3-primary dark:text-m3-primary-dark shrink-0">info</span>
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>How to use this Wiki</h2>
               </div>
-              <div className="space-y-6">
-                <div className="bg-m3-surface-container dark:bg-m3-surface-container-dark p-6 rounded-3xl border border-m3-surface-high dark:border-m3-surface-high-dark">
-                  <h3 className="font-bold text-xl text-m3-primary dark:text-m3-primary-dark flex items-center gap-2 mb-3"><span className="material-symbols-rounded">search</span> Smart Search</h3>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">Type anything in the search bar! The engine automatically searches through titles, raags, taals, and composers.</p>
+              <div className="space-y-4 md:space-y-5">
+                <div className="bg-m3-surface-container dark:bg-m3-surface-container-dark p-5 sm:p-6 rounded-3xl border border-m3-surface-high dark:border-m3-surface-high-dark">
+                  <h3 className="font-bold text-lg sm:text-xl text-m3-primary dark:text-m3-primary-dark flex items-center gap-2 mb-2">
+                    <span className="material-symbols-rounded text-[1.4rem]">search</span>
+                    Smart Search & Suggestions
+                  </h3>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base">
+                    Type anything in the search bar! The engine fuzzy-searches titles, raags, taals, and composers simultaneously, and surfaces intelligent suggestion banners when you search for specific raags or artists.
+                  </p>
+                </div>
+
+                <div className="bg-m3-surface-container dark:bg-m3-surface-container-dark p-5 sm:p-6 rounded-3xl border border-m3-surface-high dark:border-m3-surface-high-dark">
+                  <h3 className="font-bold text-lg sm:text-xl text-m3-primary dark:text-m3-primary-dark flex items-center gap-2 mb-2">
+                    <span className="material-symbols-rounded text-[1.4rem]">filter_list</span>
+                    Tag Filtering & Raag Wiki Pages
+                  </h3>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base">
+                    Tap any badge on a bandish card (Raag, Taal, Composer) to instantly filter the library. Click through dedicated Raag links to explore full theoretical details like Thaat, Samay, Vadi, Samvadi, and Aaroh/Avaroh.
+                  </p>
+                </div>
+
+                <div className="bg-m3-surface-container dark:bg-m3-surface-container-dark p-5 sm:p-6 rounded-3xl border border-m3-surface-high dark:border-m3-surface-high-dark">
+                  <h3 className="font-bold text-lg sm:text-xl text-m3-primary dark:text-m3-primary-dark flex items-center gap-2 mb-2">
+                    <span className="material-symbols-rounded text-[1.4rem]">translate</span>
+                    Dual-Script Lyrics
+                  </h3>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base">
+                    Toggle seamlessly between English phonetics and Devanagari script using the header pill. You can also view lyrics in both formats inside any bandish card and copy them with one click.
+                  </p>
+                </div>
+
+                <div className="bg-m3-surface-container dark:bg-m3-surface-container-dark p-5 sm:p-6 rounded-3xl border border-m3-surface-high dark:border-m3-surface-high-dark">
+                  <h3 className="font-bold text-lg sm:text-xl text-m3-primary dark:text-m3-primary-dark flex items-center gap-2 mb-2">
+                    <span className="material-symbols-rounded text-[1.4rem]">favorite</span>
+                    Favorites & Cloud Sync
+                  </h3>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base">
+                    Tap the heart icon on any bandish to bookmark it. Use the &ldquo;Favorites Only&rdquo; toggle to view your curated collection. When you sign in, your favorites are securely saved to your account across all your devices.
+                  </p>
+                </div>
+
+                <div className="bg-m3-surface-container dark:bg-m3-surface-container-dark p-5 sm:p-6 rounded-3xl border border-m3-surface-high dark:border-m3-surface-high-dark">
+                  <h3 className="font-bold text-lg sm:text-xl text-m3-primary dark:text-m3-primary-dark flex items-center gap-2 mb-2">
+                    <span className="material-symbols-rounded text-[1.4rem]">edit_note</span>
+                    Contributing & Editor Access
+                  </h3>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base">
+                    Signed-in users can add and edit notable audio/video renditions. If you would like to contribute new bandishes or revise musical notations, click your account menu and choose &ldquo;Become an Editor&rdquo;!
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
+
 
       {/* --- ADD MODAL --- */}
       {isAddOpen && (
