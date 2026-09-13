@@ -20,7 +20,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
   }
 
   // Helper to create clean URLs
-  const raagSlug = bandish.raag.toLowerCase().replace(/\s+/g, '-');
+  const raagSlug = bandish.raag.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
   const { data: { user } } = await supabase.auth.getUser();
   const isSignedIn = !!user;
 
