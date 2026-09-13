@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { updateBandishSecurely } from "@/app/actions";
 
@@ -15,6 +16,11 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
   const [formTitle, setFormTitle] = useState(rendition.title || "");
   const [formUrl, setFormUrl] = useState(rendition.url || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -82,7 +88,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
         <span className="material-symbols-rounded text-[1.1rem]">edit</span>
       </button>
 
-      {isOpen && (
+      {isOpen && mounted && createPortal(
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 text-left" onClick={closeModal}>
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`} />
           <div
@@ -138,7 +144,8 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
