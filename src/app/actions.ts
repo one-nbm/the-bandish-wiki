@@ -2,6 +2,52 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+export async function deleteRaagSecurely(slug: string, userPasscode: string) {
+  if (userPasscode !== process.env.ADMIN_PASSCODE) {
+    return { success: false, error: "Incorrect admin passcode." };
+  }
+
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { error } = await supabaseAdmin
+    .from('raags')
+    .delete()
+    .eq('slug', slug);
+
+  if (error) {
+    console.error("Delete error:", error);
+    return { success: false, error: "Failed to delete from database." };
+  }
+
+  return { success: true };
+}
+
+export async function updateRaagSecurely(slug: string, updatedRaag: any, userPasscode: string) {
+  if (userPasscode !== process.env.ADMIN_PASSCODE) {
+    return { success: false, error: "Incorrect admin passcode." };
+  }
+
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { error } = await supabaseAdmin
+    .from('raags')
+    .update(updatedRaag)
+    .eq('slug', slug);
+
+  if (error) {
+    console.error("Database error:", error);
+    return { success: false, error: "Failed to update database." };
+  }
+
+  return { success: true };
+}
+
 export async function addBandishSecurely(newBandish: any, userPasscode: string) {
   // 1. Check the password!
   if (userPasscode !== process.env.ADMIN_PASSCODE) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { updateRaagSecurely, deleteRaagSecurely } from "@/app/actions";
 
 export default function EditRaagModal({ raag }: { raag: any }) {
   const router = useRouter();
@@ -61,21 +61,15 @@ export default function EditRaagModal({ raag }: { raag: any }) {
   const handleFormSubmit = async (e: React.FormEvent, action: 'save' | 'delete' = 'save') => {
     e.preventDefault();
 
-    if (adminPasscode !== "kalamanthan") {
-      alert("Incorrect Admin Passcode!");
-      return;
-    }
-
     setIsSubmitting(true);
 
     if (action === 'delete') {
       try {
-        const { error } = await supabase
-          .from("raags")
-          .delete()
-          .eq("slug", raag.slug);
+        const result = await deleteRaagSecurely(raag.slug, adminPasscode);
         
-        if (error) throw error;
+        if (!result.success) {
+          throw new Error(result.error);
+        }
         
         // Redirect to home since this raag is gone
         router.push("/");
@@ -99,12 +93,11 @@ export default function EditRaagModal({ raag }: { raag: any }) {
     };
 
     try {
-      const { error } = await supabase
-        .from("raags")
-        .update(payload)
-        .eq("slug", raag.slug);
-
-      if (error) throw error;
+      const result = await updateRaagSecurely(raag.slug, payload, adminPasscode);
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
 
       // Close modal first
       setIsClosing(true);
@@ -113,14 +106,13 @@ export default function EditRaagModal({ raag }: { raag: any }) {
         setIsClosing(false);
         setAdminPasscode("");
         
-        // Refresh page to load new data
+        // Refresh page to show new data
         router.refresh();
       }, 300);
 
     } catch (error: any) {
       console.error("❌ SUPABASE ERROR:", error);
       alert(`Database Error: ${error.message || "Check console for details"}`);
-    } finally {
       setIsSubmitting(false);
     }
   };
