@@ -124,6 +124,13 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
 
+        {/* Contributor Footer */}
+        <div className="mt-16 pt-8 text-center border-t border-gray-100 dark:border-gray-800">
+          <p className="text-sm font-medium text-gray-400 dark:text-gray-500">
+            Contributed by: {raag.contributor || "Anonymous"}
+          </p>
+        </div>
+
       </div>
     </main>
   );

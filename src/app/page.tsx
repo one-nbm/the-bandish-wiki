@@ -26,7 +26,7 @@ export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
-  const [contributorName, setContributorName] = useState("Neil Lote");
+  const [contributorName, setContributorName] = useState("Anonymous");
 
   // --- 3. MODAL VISIBILITY STATES ---
   const [selectedBandish, setSelectedBandish] = useState<any | null>(null);
