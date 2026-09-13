@@ -5,6 +5,8 @@ import AddRenditionModal from "./AddRenditionModal";
 import EditRenditionModal from "./EditRenditionModal";
 import CopyButton from "@/components/CopyButton";
 
+import { checkIsEditor } from "@/app/actions";
+
 export default async function BandishPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
@@ -21,8 +23,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
 
   // Helper to create clean URLs
   const raagSlug = bandish.raag.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
-  const { data: { user } } = await supabase.auth.getUser();
-  const isSignedIn = !!user;
+  const isAdmin = await checkIsEditor();
 
   return (
     <main className="min-h-screen bg-transparent relative">
@@ -99,7 +100,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
               <span className="material-symbols-rounded text-rose-400 text-[1.8rem]">play_circle</span>
               Notable Renditions
             </h3>
-            {isSignedIn && <AddRenditionModal bandish={bandish} />}
+            {isAdmin && <AddRenditionModal bandish={bandish} />}
           </div>
           
           {bandish.youtube_renditions && bandish.youtube_renditions.length > 0 ? (
@@ -153,7 +154,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
 
                     {/* Action buttons */}
                     <div className="relative z-10 flex flex-col items-center justify-center gap-1 px-2 shrink-0">
-                      {isSignedIn && <EditRenditionModal bandish={bandish} index={index} />}
+                      {isAdmin && <EditRenditionModal bandish={bandish} index={index} />}
                       <a
                         href={video.url}
                         target="_blank"

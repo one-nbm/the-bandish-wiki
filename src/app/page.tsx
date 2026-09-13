@@ -651,7 +651,7 @@ export default function Home() {
               <button onClick={closeModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-all duration-200 hover:scale-105 active:scale-95">
                 <span className="material-symbols-rounded text-[1.4rem]">close</span>
               </button>
-              {isSignedIn && (
+              {isAdmin && (
                 <button onClick={() => openEditModal(selectedBandish)} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-200 hover:scale-105 active:scale-95" title="Edit Bandish">
                   <span className="material-symbols-rounded text-[1.4rem]">edit</span>
                 </button>
