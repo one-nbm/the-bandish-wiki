@@ -81,20 +81,35 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
     setIsSubmitting(true);
     const slug = generateSlug(formName);
 
-    const payload = {
-      name: formName,
-      slug,
-      thaat: formThaat,
-      samay: formSamay,
-      vadi: formVadi,
-      samvadi: formSamvadi,
-      aaroh: formAaroh,
-      avaroh: formAvaroh,
-      description: formDescription,
-      contributor: contributorName,
-    };
-
     try {
+      // 1. Manually calculate the next sequential ID for the raags table
+      const { data: existingRaags, error: fetchError } = await supabase
+        .from("raags")
+        .select("id");
+        
+      if (fetchError) throw fetchError;
+
+      // Look at all existing IDs, convert them to numbers, and find the highest one
+      const currentIds = (existingRaags || []).map(r => parseInt(r.id, 10)).filter(n => !isNaN(n));
+      const maxId = currentIds.length > 0 ? Math.max(...currentIds) : 0;
+      
+      // Add 1, and pad it with leading zeros to maintain the "0001" format
+      const nextId = String(maxId + 1).padStart(4, '0');
+
+      const payload = {
+        id: nextId,
+        name: formName,
+        slug,
+        thaat: formThaat,
+        samay: formSamay,
+        vadi: formVadi,
+        samvadi: formSamvadi,
+        aaroh: formAaroh,
+        avaroh: formAvaroh,
+        description: formDescription,
+        contributor: contributorName,
+      };
+
       const { error } = await supabase
         .from("raags")
         .insert([payload]);
