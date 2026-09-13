@@ -178,5 +178,4 @@ export async function checkIsEditor(): Promise<boolean> {
   return !error && !!data;
 }
 
-// Keep the old name as an alias so existing callers don't break during migration
-export { checkIsEditor as checkIsAdmin };
+
