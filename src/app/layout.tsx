@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Google_Sans_Flex } from "next/font/google";
 import { ThemeProvider } from "./ThemeProvider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import AuthButton from "@/components/AuthButton";
 import Navbar from "@/components/Navbar";
 import "./globals.css";
@@ -43,6 +44,7 @@ export default function RootLayout({
           </Navbar>
           
           {children}
+          <SpeedInsights />
         </ThemeProvider>
       </body>
     </html>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, useDeferredValue } from "react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import Link from "next/link";
 import Fuse from "fuse.js";
 import CopyButton from "@/components/CopyButton";
