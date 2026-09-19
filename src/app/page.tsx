@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useDeferredValue } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import Link from "next/link";
 import Fuse from "fuse.js";
 import CopyButton from "@/components/CopyButton";
@@ -17,7 +18,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
   const [language, setLanguage] = useState("english");
-  const [activeFilters, setActiveFilters] = useState<{key: string, value: string}[]>([]);
+  const [activeFilters, setActiveFilters] = useState<{ key: string, value: string }[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
@@ -30,7 +31,7 @@ export default function Home() {
 
   // --- 3. MODAL VISIBILITY STATES ---
   const [selectedBandish, setSelectedBandish] = useState<any | null>(null);
-  const [isClosing, setIsClosing] = useState(false); 
+  const [isClosing, setIsClosing] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isInfoClosing, setIsInfoClosing] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -82,12 +83,12 @@ export default function Home() {
         } else {
           // fallback to local storage if no user metadata yet
           const savedFavs = localStorage.getItem("wiki-favorites");
-          if (savedFavs) { try { setFavorites(JSON.parse(savedFavs)); } catch (e) {} }
+          if (savedFavs) { try { setFavorites(JSON.parse(savedFavs)); } catch (e) { } }
         }
       } else {
         setIsSignedIn(false);
         const savedFavs = localStorage.getItem("wiki-favorites");
-        if (savedFavs) { try { setFavorites(JSON.parse(savedFavs)); } catch (e) {} }
+        if (savedFavs) { try { setFavorites(JSON.parse(savedFavs)); } catch (e) { } }
       }
     };
 
@@ -112,20 +113,20 @@ export default function Home() {
   // --- 6. HANDLERS ---
   const closeModal = () => { setIsClosing(true); setTimeout(() => { setSelectedBandish(null); setIsClosing(false); }, 300); };
   const closeInfoModal = () => { setIsInfoClosing(true); setTimeout(() => { setIsInfoOpen(false); setIsInfoClosing(false); }, 300); };
-  
+
   const clearForm = () => {
-    setFormTitle(""); setFormRaag(""); setFormTaal(""); setFormComposer(""); 
+    setFormTitle(""); setFormRaag(""); setFormTaal(""); setFormComposer("");
     setFormEnglish(""); setFormDevanagari(""); setAdminPasscode("");
   };
 
-  const closeAddModal = () => { 
-    setIsAddClosing(true); 
-    setTimeout(() => { setIsAddOpen(false); setIsAddClosing(false); clearForm(); }, 300); 
+  const closeAddModal = () => {
+    setIsAddClosing(true);
+    setTimeout(() => { setIsAddOpen(false); setIsAddClosing(false); clearForm(); }, 300);
   };
 
-  const closeEditModal = () => { 
-    setIsEditClosing(true); 
-    setTimeout(() => { setEditingBandish(null); setIsEditClosing(false); clearForm(); }, 300); 
+  const closeEditModal = () => {
+    setIsEditClosing(true);
+    setTimeout(() => { setEditingBandish(null); setIsEditClosing(false); clearForm(); }, 300);
   };
 
   const openEditModal = (bandish: any) => {
@@ -137,7 +138,7 @@ export default function Home() {
     setFormEnglish(bandish.lyrics.english);
     setFormDevanagari(bandish.lyrics.devanagari || "");
     // Close the viewing modal instantly without animation to transition smoothly to edit
-    setSelectedBandish(null); 
+    setSelectedBandish(null);
   };
 
   const handleFormSubmit = async (e: React.FormEvent, isEdit: boolean, action: 'save' | 'delete' = 'save') => {
@@ -149,7 +150,7 @@ export default function Home() {
       try {
         const result = await deleteBandishSecurely(editingBandish.id);
         if (!result.success) throw new Error(result.error);
-        
+
         setBaseData(prev => prev.filter(b => b.id !== editingBandish.id));
         closeEditModal();
       } catch (error: any) {
@@ -190,7 +191,7 @@ export default function Home() {
       if (isEdit && editingBandish) {
         const result = await updateBandishSecurely(editingBandish.id, payload);
         if (!result.success) throw new Error(result.error);
-        
+
         // INSTANT UI UPDATE
         if (result.data && result.data.length > 0) {
           setBaseData(prev => prev.map(b => b.id === editingBandish.id ? result.data[0] : b));
@@ -198,7 +199,7 @@ export default function Home() {
       } else {
         const result = await addBandishSecurely(payload);
         if (!result.success) throw new Error(result.error);
-        
+
         // INSTANT UI UPDATE
         if (result.data && result.data.length > 0) {
           setBaseData(prev => [result.data[0], ...prev]);
@@ -225,15 +226,15 @@ export default function Home() {
 
   const toggleFavorite = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    
+
     // First calculate the new state
-    const newFavs = favorites.includes(id) 
-      ? favorites.filter((favId) => favId !== id) 
+    const newFavs = favorites.includes(id)
+      ? favorites.filter((favId) => favId !== id)
       : [...favorites, id];
-    
+
     // Update local state immediately for snappy UI
     setFavorites(newFavs);
-    
+
     // Sync with storage based on auth state
     if (isSignedIn) {
       await supabase.auth.updateUser({
@@ -279,7 +280,7 @@ export default function Home() {
 
   const suggestedRaag = useMemo(() => {
     const cleanQuery = deferredQuery.trim();
-    if (!cleanQuery || cleanQuery.length < 3) return null; 
+    if (!cleanQuery || cleanQuery.length < 3) return null;
     const results = fuseRaags.search(cleanQuery);
     if (results.length > 0 && !activeFilters.some(f => f.key === "raag" && f.value === results[0].item)) return results[0].item;
     return null;
@@ -287,7 +288,7 @@ export default function Home() {
 
   const suggestedComposer = useMemo(() => {
     const cleanQuery = deferredQuery.trim();
-    if (!cleanQuery || cleanQuery.length < 3) return null; 
+    if (!cleanQuery || cleanQuery.length < 3) return null;
     const results = fuseComposers.search(cleanQuery);
     if (results.length > 0 && !activeFilters.some(f => f.key === "composer" && f.value === results[0].item)) return results[0].item;
     return null;
@@ -317,7 +318,7 @@ export default function Home() {
             {/* Action Buttons Container */}
             <div className="flex flex-wrap gap-3 mt-1">
               {/* 1. Existing Filter Button */}
-              <button 
+              <button
                 onClick={() => { toggleFilter("raag", suggestedRaag); setQuery(""); }}
                 className="flex items-center gap-2 bg-m3-secondary hover:bg-m3-secondary/90 dark:bg-m3-secondary-dark dark:hover:bg-m3-secondary-dark/90 text-white dark:text-gray-900 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95"
               >
@@ -326,7 +327,7 @@ export default function Home() {
               </button>
 
               {/* 2. Dedicated Raag Page Button */}
-              <Link 
+              <Link
                 href={`/raag/${suggestedRaag.toLowerCase().replace(/\s+/g, '-')}`}
                 className="flex items-center gap-2 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 group"
               >
@@ -362,19 +363,19 @@ export default function Home() {
               </div>
               <div className="flex flex-wrap gap-2 mb-5">
                 {/* UPDATED: Now uses secondary/10 so it never blends into the card hover state! */}
-                <button 
+                <button
                   onClick={(e) => { e.stopPropagation(); toggleFilter("raag", bandish.raag); }}
                   className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
                 >
                   {bandish.raag}
                 </button>
-                <button 
+                <button
                   onClick={(e) => { e.stopPropagation(); toggleFilter("taal", bandish.taal); }}
                   className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
                 >
                   {bandish.taal}
                 </button>
-                <button 
+                <button
                   onClick={(e) => { e.stopPropagation(); toggleFilter("composer", bandish.composer); }}
                   className="bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 hover:bg-m3-tertiary/20 dark:hover:bg-m3-tertiary-dark/20 text-m3-tertiary dark:text-m3-tertiary-dark px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
                 >
@@ -434,14 +435,14 @@ export default function Home() {
         </div>
         <div className="flex gap-3 w-full md:w-auto shrink-0">
           {isEdit && (
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={(e) => {
                 if (confirm("Are you sure you want to delete this bandish?")) {
                   handleFormSubmit(e as unknown as React.FormEvent, true, 'delete');
                 }
               }}
-              disabled={isSubmitting} 
+              disabled={isSubmitting}
               className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
             >
               <span className="material-symbols-rounded text-[1.4rem]">delete</span>
@@ -667,23 +668,23 @@ export default function Home() {
             </div>
             <div className="pr-12 mb-8 mt-2">
               {/* UPDATED: Added your custom fontVariationSettings to perfectly match the edit screen */}
-              <h2 
+              <h2
                 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight"
                 style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
               >
                 {selectedBandish.title}
               </h2>
-              
+
               <div className="flex flex-wrap gap-3">
                 {/* UPDATED: Clickable Raag Link */}
-                <Link 
+                <Link
                   href={`/raag/${selectedBandish.raag.toLowerCase().replace(/\s+/g, '-')}`}
                   className="group flex items-center gap-1.5 bg-m3-secondary/10 hover:bg-m3-secondary/20 dark:bg-m3-secondary-dark/10 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-4 py-2 rounded-full text-sm font-bold tracking-wide transition-all duration-300"
                 >
                   {selectedBandish.raag}
                   <span className="material-symbols-rounded text-[1rem] transition-transform group-hover:translate-x-1 group-hover:-translate-y-1">arrow_outward</span>
                 </Link>
-                
+
                 {/* Static Taal and Composer Tags */}
                 <span className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-4 py-2 rounded-full text-sm font-bold tracking-wide">
                   {selectedBandish.taal}
@@ -713,7 +714,7 @@ export default function Home() {
 
               {/* NEW: Open Full View Button */}
               <div className="pt-4 flex justify-end">
-                <Link 
+                <Link
                   href={`/bandish/${selectedBandish.id}`}
                   className="flex items-center gap-2 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark px-6 py-3 rounded-full text-sm font-bold transition-all duration-300 hover:scale-105 active:scale-95"
                 >
