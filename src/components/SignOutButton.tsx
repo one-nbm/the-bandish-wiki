@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 
 export default function SignOutButton() {
   const supabase = createClient();
+  const router = useRouter();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    window.location.href = "/";
+    router.push("/");
   };
 
   return (

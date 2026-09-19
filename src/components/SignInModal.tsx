@@ -6,8 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 export default function SignInModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -16,8 +15,7 @@ export default function SignInModal() {
 
   const openModal = () => {
     setError(null);
-    setEmail("");
-    setPassword("");
+
     setIsOpen(true);
   };
 
@@ -30,20 +28,6 @@ export default function SignInModal() {
     }, 300);
   };
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      window.location.href = "/";
-    }
-  };
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
@@ -122,59 +106,6 @@ export default function SignInModal() {
               </div>
             )}
 
-            {/* Email / Password form */}
-            <form onSubmit={handleEmailLogin} className="space-y-5">
-              <div>
-                <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-5 py-3.5 rounded-[1.5rem] text-base focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500"
-                  placeholder="you@example.com"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-5 py-3.5 rounded-[1.5rem] text-base focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading || googleLoading}
-                className="w-full flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.03] active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-              >
-                {loading ? (
-                  <span className="material-symbols-rounded animate-spin">refresh</span>
-                ) : (
-                  <span className="material-symbols-rounded">login</span>
-                )}
-                {loading ? "Signing in..." : "Sign In"}
-              </button>
-            </form>
-
-            {/* Divider */}
-            <div className="flex items-center my-6">
-              <div className="flex-1 border-t border-gray-200 dark:border-m3-surface-container-dark" />
-              <span className="px-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                or
-              </span>
-              <div className="flex-1 border-t border-gray-200 dark:border-m3-surface-container-dark" />
-            </div>
 
             {/* Google */}
             <button

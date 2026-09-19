@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import AddRenditionModal from "./AddRenditionModal";
 import EditRenditionModal from "./EditRenditionModal";
@@ -116,11 +117,13 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                   >
                     {/* Full-bleed thumbnail */}
                     {videoId && (
-                      <img
+                      <Image
                         src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
                         alt=""
                         aria-hidden="true"
-                        className="absolute inset-0 w-full h-full object-cover brightness-110 opacity-55 dark:brightness-75 dark:opacity-75"
+                        fill
+                        className="object-cover brightness-110 opacity-55 dark:brightness-75 dark:opacity-75"
+                        sizes="(max-width: 768px) 100vw, 50vw"
                       />
                     )}
 

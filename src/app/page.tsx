@@ -245,7 +245,7 @@ export default function Home() {
   };
 
   // --- 7. DATA PROCESSING ---
-  const processedData = useMemo(() => {
+  const preSearchData = useMemo(() => {
     let data = baseData;
     if (showFavoritesOnly) data = data.filter((bandish) => favorites.includes(bandish.id));
     if (activeFilters.length > 0) {
@@ -256,12 +256,17 @@ export default function Home() {
         return true;
       }));
     }
-    if (deferredQuery) {
-      const fuse = new Fuse(data, { keys: ["title", "raag", "composer", "taal"], threshold: 0.4 });
-      data = fuse.search(deferredQuery).map((result) => result.item);
-    }
     return data;
-  }, [baseData, showFavoritesOnly, favorites, activeFilters, deferredQuery]);
+  }, [baseData, showFavoritesOnly, favorites, activeFilters]);
+
+  const fuseBandishes = useMemo(() => new Fuse(preSearchData, { keys: ["title", "raag", "composer", "taal"], threshold: 0.4 }), [preSearchData]);
+
+  const processedData = useMemo(() => {
+    if (deferredQuery) {
+      return fuseBandishes.search(deferredQuery).map((result) => result.item);
+    }
+    return preSearchData;
+  }, [preSearchData, deferredQuery, fuseBandishes]);
 
   const bandishCount = processedData.length;
   const uniqueRaagsCount = new Set(processedData.map((b) => b.raag)).size;
@@ -269,21 +274,24 @@ export default function Home() {
   const allRaags = useMemo(() => Array.from(new Set(baseData.map(b => b.raag))), [baseData]);
   const allComposers = useMemo(() => Array.from(new Set(baseData.map(b => b.composer))), [baseData]);
 
+  const fuseRaags = useMemo(() => new Fuse(allRaags, { threshold: 0.4 }), [allRaags]);
+  const fuseComposers = useMemo(() => new Fuse(allComposers, { threshold: 0.4 }), [allComposers]);
+
   const suggestedRaag = useMemo(() => {
     const cleanQuery = deferredQuery.trim();
     if (!cleanQuery || cleanQuery.length < 3) return null; 
-    const results = new Fuse(allRaags, { threshold: 0.4 }).search(cleanQuery);
+    const results = fuseRaags.search(cleanQuery);
     if (results.length > 0 && !activeFilters.some(f => f.key === "raag" && f.value === results[0].item)) return results[0].item;
     return null;
-  }, [deferredQuery, allRaags, activeFilters]);
+  }, [deferredQuery, fuseRaags, activeFilters]);
 
   const suggestedComposer = useMemo(() => {
     const cleanQuery = deferredQuery.trim();
     if (!cleanQuery || cleanQuery.length < 3) return null; 
-    const results = new Fuse(allComposers, { threshold: 0.4 }).search(cleanQuery);
+    const results = fuseComposers.search(cleanQuery);
     if (results.length > 0 && !activeFilters.some(f => f.key === "composer" && f.value === results[0].item)) return results[0].item;
     return null;
-  }, [deferredQuery, allComposers, activeFilters]);
+  }, [deferredQuery, fuseComposers, activeFilters]);
 
   // --- 8. MEMOIZED GRID ---
   const memoizedGrid = useMemo(() => {
