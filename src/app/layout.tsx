@@ -15,6 +15,9 @@ const googleSans = Google_Sans_Flex({
 export const metadata: Metadata = {
   title: "The Bandish Wiki",
   description: "A catalogue of Bandishes",
+  verification: {
+    google: 'XLcf67BKg90PNoJCHeQ_7W8xBeEvNm1VNWDz2bj1K88',
+  },
 };
 
 export default function RootLayout({
@@ -26,14 +29,14 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <head>
         {/* CHANGED: Download the Rounded icon set instead of Outlined */}
-        <link 
-          rel="stylesheet" 
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" 
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
         />
       </head>
-      
+
       {/* ADDED: inline style to force the ROND variable axis to max (100) */}
-      <body 
+      <body
         className={`${googleSans.variable} font-sans min-h-screen flex flex-col antialiased relative overflow-x-hidden`}
         style={{ fontVariationSettings: '"ROND" 25' }}
       >
@@ -42,7 +45,7 @@ export default function RootLayout({
           <Navbar>
             <AuthButton />
           </Navbar>
-          
+
           {children}
           <SpeedInsights />
         </ThemeProvider>
