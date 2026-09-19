@@ -6,7 +6,21 @@ import AddRenditionModal from "./AddRenditionModal";
 import EditRenditionModal from "./EditRenditionModal";
 import CopyButton from "@/components/CopyButton";
 
+import type { Metadata } from "next";
 import { checkIsEditor } from "@/app/actions";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: bandish } = await supabase.from("bandishes").select("*").eq("id", id).single();
+  
+  if (!bandish) return { title: "Not Found | The Bandish Wiki" };
+
+  return {
+    title: `${bandish.title} - ${bandish.raag} | The Bandish Wiki`,
+    description: `Learn the ${bandish.taal} bandish composed by ${bandish.composer}. ${bandish.lyrics?.english?.substring(0, 100) || ""}...`,
+  };
+}
 
 export default async function BandishPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

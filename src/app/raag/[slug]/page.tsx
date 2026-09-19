@@ -2,7 +2,21 @@ import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EditRaagModal from "./EditRaagModal";
+import type { Metadata } from "next";
 import { checkIsEditor } from "@/app/actions";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: raag } = await supabase.from("raags").select("*").eq("slug", slug).single();
+  
+  if (!raag) return { title: "Not Found | The Bandish Wiki" };
+
+  return {
+    title: `Raag ${raag.name} | The Bandish Wiki`,
+    description: `Explore the details of Raag ${raag.name}, including its Thaat, Vaadi, Samvaadi, and Aaroh-Avaroh.`,
+  };
+}
 
 export default async function RaagPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
