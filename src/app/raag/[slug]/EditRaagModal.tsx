@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { updateRaagSecurely, deleteRaagSecurely } from "@/app/actions";
 
@@ -22,28 +22,16 @@ export default function EditRaagModal({ raag }: { raag: any }) {
   const [formDescription, setFormDescription] = useState(raag.description || "");
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState(false);
 
-  // Lock Background Scrolling
-  useEffect(() => {
-    if (isOpen) {
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.paddingRight = "";
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.paddingRight = "";
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
-
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setIsClosing(true);
     setTimeout(() => {
       setIsOpen(false);
       setIsClosing(false);
+      setToast(null);
+      setConfirmDialog(false);
       // Reset form if closed without saving
       setFormName(raag.name || "");
       setFormThaat(raag.thaat || "");
@@ -54,12 +42,43 @@ export default function EditRaagModal({ raag }: { raag: any }) {
       setFormAvaroh(raag.avaroh || "");
       setFormDescription(raag.description || "");
     }, 300);
-  };
+  }, [raag]);
+
+  // Lock Background Scrolling + Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (toast) {
+          setToast(null);
+        } else if (confirmDialog) {
+          setConfirmDialog(false);
+        } else if (isOpen) {
+          closeModal();
+        }
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.body.style.overflow = "hidden";
+    } else {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.paddingRight = "";
+      document.body.style.overflow = "";
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.paddingRight = "";
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, toast, confirmDialog, closeModal]);
 
   const handleFormSubmit = async (e: React.FormEvent, action: 'save' | 'delete' = 'save') => {
     e.preventDefault();
-
     setIsSubmitting(true);
+    setToast(null);
 
     if (action === 'delete') {
       try {
@@ -73,8 +92,9 @@ export default function EditRaagModal({ raag }: { raag: any }) {
         router.push("/");
       } catch (error: any) {
         console.error("❌ SUPABASE ERROR:", error);
-        alert(`Database Error: ${error.message || "Check console for details"}`);
+        setToast({ message: `Database Error: ${error.message || "Check console for details"}`, type: "error" });
         setIsSubmitting(false);
+        setConfirmDialog(false);
       }
       return;
     }
@@ -109,9 +129,13 @@ export default function EditRaagModal({ raag }: { raag: any }) {
 
     } catch (error: any) {
       console.error("❌ SUPABASE ERROR:", error);
-      alert(`Database Error: ${error.message || "Check console for details"}`);
+      setToast({ message: `Database Error: ${error.message || "Check console for details"}`, type: "error" });
       setIsSubmitting(false);
     }
+  };
+
+  const handleConfirmDelete = () => {
+    handleFormSubmit({ preventDefault: () => {} } as React.FormEvent, 'delete');
   };
 
   return (
@@ -187,32 +211,72 @@ export default function EditRaagModal({ raag }: { raag: any }) {
               </div>
 
               <hr className="border-gray-200 dark:border-m3-surface-high-dark my-2" />
+
+              {/* Toast */}
+              {toast && (
+                <div className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold ${toast.type === "error" ? "bg-m3-error/10 dark:bg-m3-error-dark/10 text-m3-error dark:text-m3-error-dark border border-m3-error/20 dark:border-m3-error-dark/20" : "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800/50"}`}>
+                  <span className="material-symbols-rounded text-[1.1rem]">{toast.type === "error" ? "error" : "check_circle"}</span>
+                  <span className="flex-1">{toast.message}</span>
+                  <button type="button" onClick={() => setToast(null)} className="p-0.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors">
+                    <span className="material-symbols-rounded text-[1rem]">close</span>
+                  </button>
+                </div>
+              )}
               
               <div className="flex gap-3 justify-end">
-                  <button 
-                    type="button" 
-                    onClick={(e) => {
-                      if (confirm("Are you sure you want to delete this raag?")) {
-                        handleFormSubmit(e as unknown as React.FormEvent, 'delete');
-                      }
-                    }}
-                    disabled={isSubmitting} 
-                    className="flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-                  >
-                    <span className="material-symbols-rounded text-[1.4rem]">delete</span>
-                    Delete
-                  </button>
-                  <button type="submit" disabled={isSubmitting} className="flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
-                    <span className="material-symbols-rounded text-[1.4rem]">save</span>
-                    <span className="whitespace-nowrap">{isSubmitting ? "Saving..." : "Save Changes"}</span>
-                  </button>
+                <button 
+                  type="button" 
+                  onClick={() => setConfirmDialog(true)}
+                  disabled={isSubmitting} 
+                  className="flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                >
+                  <span className="material-symbols-rounded text-[1.4rem]">delete</span>
+                  Delete
+                </button>
+                <button type="submit" disabled={isSubmitting} className="flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
+                  <span className="material-symbols-rounded text-[1.4rem]">save</span>
+                  <span className="whitespace-nowrap">{isSubmitting ? "Saving..." : "Save Changes"}</span>
+                </button>
               </div>
 
             </form>
           </div>
+
+          {/* Confirm Delete Dialog */}
+          {confirmDialog && (
+            <div className="absolute inset-0 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+              <div className="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm animate-backdrop-enter" onClick={() => setConfirmDialog(false)} />
+              <div className="relative w-full max-w-sm bg-m3-surface dark:bg-m3-surface-dark rounded-[2rem] p-6 shadow-2xl animate-modal-enter border border-m3-surface-high dark:border-m3-surface-high-dark">
+                <div className="flex flex-col items-center text-center mb-6">
+                  <div className="w-16 h-16 bg-m3-error/10 dark:bg-m3-error-dark/10 rounded-full flex items-center justify-center mb-4">
+                    <span className="material-symbols-rounded text-[2rem] text-m3-error dark:text-m3-error-dark">delete_forever</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete "{raag.name}"?</h3>
+                  <p className="text-m3-secondary dark:text-m3-secondary-dark text-sm">
+                    This will permanently delete the raag and all its associated data. This action cannot be undone.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setConfirmDialog(false)}
+                    disabled={isSubmitting}
+                    className="flex-1 px-4 py-3 rounded-full font-bold text-gray-700 dark:text-gray-300 bg-m3-surface-container dark:bg-m3-surface-container-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-high-dark transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmDelete}
+                    disabled={isSubmitting}
+                    className="flex-1 px-4 py-3 rounded-full font-bold text-white dark:text-gray-900 bg-m3-error dark:bg-m3-error-dark hover:bg-m3-error/90 dark:hover:bg-m3-error-dark/90 transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isSubmitting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </>
   );
 }
-

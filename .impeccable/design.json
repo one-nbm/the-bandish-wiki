@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-22T20:18:00Z",
+  "title": "Design System: Bandish Wiki",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "M3 Deep Purple", "canonical": "#6750A4", "tonalRamp": ["#21005D", "#4F378B", "#6750A4", "#D0BCFF", "#EADDFF"] },
+      "secondary": { "role": "secondary", "displayName": "M3 Muted Rose", "canonical": "#7D5260", "tonalRamp": ["#31111D", "#633B48", "#7D5260", "#EFB8C8", "#FFD8E4"] },
+      "tertiary": { "role": "tertiary", "displayName": "M3 Warm Gold", "canonical": "#7D5700", "tonalRamp": ["#281900", "#5A4300", "#7D5700", "#DCAE5A", "#FFDEA4"] },
+      "surface": { "role": "neutral", "displayName": "M3 Surface", "canonical": "#FEF7FF", "tonalRamp": ["#141218", "#211F26", "#332D41", "#EADDFF", "#FEF7FF"] }
+    },
+    "typographyMeta": {},
+    "shadows": [],
+    "motion": [
+      { "name": "spring-bounce", "value": "cubic-bezier(0.34, 1.56, 0.64, 1)", "purpose": "Playful spring physics on hover and active states for buttons and cards." }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Used for main actions like Sign In or Submit.",
+      "html": "<button class=\"ds-btn-primary\">Sign In</button>",
+      "css": ".ds-btn-primary { background: #6750A4; color: #fff; padding: 12px 24px; font-weight: 700; border: none; border-radius: 9999px; transition: all 500ms cubic-bezier(0.34,1.56,0.64,1); cursor: pointer; } .ds-btn-primary:hover { transform: scale(1.05); } .ds-btn-primary:active { transform: scale(0.95); }"
+    },
+    {
+      "name": "Tonal Tag",
+      "kind": "chip",
+      "refersTo": "tag-secondary",
+      "description": "Used to filter or categorize by Raag.",
+      "html": "<button class=\"ds-tag\">Des</button>",
+      "css": ".ds-tag { background: rgba(125, 82, 96, 0.1); color: #7D5260; padding: 6px 12px; font-weight: 700; font-size: 14px; border: none; border-radius: 9999px; transition: all 200ms ease; cursor: pointer; } .ds-tag:hover { background: rgba(125, 82, 96, 0.2); transform: scale(1.05); } .ds-tag:active { transform: scale(0.95); }"
+    },
+    {
+      "name": "Bandish Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Displays an individual composition.",
+      "html": "<div class=\"ds-card\"><h3>Hori Khelan Ko</h3><p>Lyrics and notation preview...</p></div>",
+      "css": ".ds-card { background: #F3EDF7; padding: 24px; border-radius: 40px; border: 1px solid #EADDFF; transition: all 500ms cubic-bezier(0.34,1.56,0.64,1); } .ds-card:hover { transform: translateY(-8px) scale(1.01); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Melodic Archive",
+    "overview": "The system is focused on preservation and easy retrieval, but it is not a dusty ledger. It is tactile and responsive, built around a vibrant Material 3 color palette. Elements spring to life with playful scaling and transitions to invite interaction, making practice and discovery feel dynamic.",
+    "keyCharacteristics": [
+      "High-contrast, expressive Material 3 colors.",
+      "Extreme roundness on interactive elements and containers.",
+      "Playful spring physics on hover and active states.",
+      "Tonal backgrounds and borders instead of drop shadows at rest."
+    ],
+    "rules": [
+      { "name": "The Tonal Border Rule", "body": "Instead of gray borders, all borders derive from the surface-high token of the current active theme, ensuring they blend harmoniously with the background.", "section": "colors" },
+      { "name": "The Generous Line-Height Rule", "body": "Lyrics and notation require breathing room. Always use relaxed leading to prevent dense blocks of text.", "section": "typography" },
+      { "name": "The Physical Lift Rule", "body": "We do not use drop shadows. Elevation is communicated entirely through scale and translation.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use cubic-bezier(0.34,1.56,0.64,1) for all interactive scaling transitions.",
+      "Do use tonal backgrounds (e.g., bg-m3-primary/10) for subtle emphasis instead of gray boxes."
+    ],
+    "donts": [
+      "Don't use box-shadow to elevate cards. Rely on the hover scale and translate effect.",
+      "Don't use sharp corners (rounded-sm or rounded-none). The system requires soft geometry."
+    ]
+  }
+}

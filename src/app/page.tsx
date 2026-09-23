@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useDeferredValue } from "react";
+import { useState, useEffect, useMemo, useDeferredValue, useRef } from "react";
 import Link from "next/link";
 import Fuse from "fuse.js";
 import CopyButton from "@/components/CopyButton";
@@ -47,6 +47,10 @@ export default function Home() {
   const [formDevanagari, setFormDevanagari] = useState("");
   const [adminPasscode, setAdminPasscode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ message: string, type: 'error' | 'success' } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ message: string, onConfirm: () => void } | null>(null);
+  const [isViewOptionsOpen, setIsViewOptionsOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // --- 5. EFFECTS ---
   useEffect(() => {
@@ -140,6 +144,26 @@ export default function Home() {
     setSelectedBandish(null);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (toast) setToast(null);
+        else if (confirmDialog) setConfirmDialog(null);
+        else if (isViewOptionsOpen) setIsViewOptionsOpen(false);
+        else if (isAddOpen) closeAddModal();
+        else if (editingBandish) closeEditModal();
+        else if (isInfoOpen) closeInfoModal();
+        else if (selectedBandish) closeModal();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [toast, confirmDialog, isViewOptionsOpen, isAddOpen, editingBandish, isInfoOpen, selectedBandish]);
+
   const handleFormSubmit = async (e: React.FormEvent, isEdit: boolean, action: 'save' | 'delete' = 'save') => {
     e.preventDefault();
 
@@ -154,7 +178,7 @@ export default function Home() {
         closeEditModal();
       } catch (error: any) {
         console.error("❌ SUPABASE ERROR:", error);
-        alert(`Database Error: ${error.message || "Check console for details"}`);
+        setToast({ message: `Database Error: ${error.message || "Check console for details"}`, type: 'error' });
       } finally {
         setIsSubmitting(false);
       }
@@ -209,7 +233,7 @@ export default function Home() {
 
     } catch (error: any) {
       console.error("❌ SUPABASE ERROR:", error);
-      alert(`Database Error: ${error.message || "Check console for details"}`);
+      setToast({ message: `Database Error: ${error.message || "Check console for details"}`, type: 'error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -437,9 +461,11 @@ export default function Home() {
             <button
               type="button"
               onClick={(e) => {
-                if (confirm("Are you sure you want to delete this bandish?")) {
-                  handleFormSubmit(e as unknown as React.FormEvent, true, 'delete');
-                }
+                e.preventDefault();
+                setConfirmDialog({
+                  message: "Are you sure you want to delete this bandish?",
+                  onConfirm: () => handleFormSubmit(e as unknown as React.FormEvent, true, 'delete')
+                });
               }}
               disabled={isSubmitting}
               className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
@@ -497,7 +523,7 @@ export default function Home() {
               <div className="absolute inset-y-0 left-0 flex items-center pl-5 md:pl-6 pointer-events-none z-10 transition-transform duration-500 group-focus-within:scale-110">
                 <span className="material-symbols-rounded transition-colors duration-300 text-gray-600 dark:text-gray-400 group-focus-within:text-m3-primary dark:group-focus-within:text-m3-primary-dark">search</span>
               </div>
-              <input type="text" placeholder="Search by text..." value={query} onChange={(e) => setQuery(e.target.value)} className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white text-base md:text-lg pl-[3.75rem] md:pl-[4.25rem] pr-5 py-4 md:py-5 rounded-full focus:outline-none transition-colors duration-300 placeholder-gray-500 dark:placeholder-gray-400 focus:bg-white dark:focus:bg-black/20" />
+              <input ref={searchInputRef} type="text" placeholder="Search by text... (Ctrl+K)" value={query} onChange={(e) => setQuery(e.target.value)} className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white text-base md:text-lg pl-[3.75rem] md:pl-[4.25rem] pr-5 py-4 md:py-5 rounded-full focus:outline-none transition-colors duration-300 placeholder-gray-500 dark:placeholder-gray-400 focus:bg-white dark:focus:bg-black/20" />
             </div>
             <div className={`grid transition-[grid-template-rows] duration-500 ease-out ${activeFilters.length > 0 ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
               <div className="overflow-hidden">
@@ -515,20 +541,32 @@ export default function Home() {
               </div>
             </div>
             {/* --- CONTROLS ROW --- */}
-            <div className="flex flex-wrap justify-center gap-3 md:gap-4 items-center">
-              <div className="relative flex items-center bg-m3-surface-container dark:bg-m3-surface-dark/50 p-1 rounded-full border border-gray-200 dark:border-gray-700">
-                <div className={`absolute top-1 bottom-1 w-[105px] rounded-full bg-m3-primary dark:bg-m3-primary-dark transition-transform duration-500 ease-out ${language === "english" ? "translate-x-0" : "translate-x-[105px]"}`} />
-                <button onClick={() => setLanguage("english")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "english" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>English</button>
-                <button onClick={() => setLanguage("devanagari")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "devanagari" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>Devanagari</button>
-              </div>
-              <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`group flex items-center justify-center gap-2 px-5 py-2 rounded-full text-sm font-bold border transition-all duration-300 hover:scale-105 active:scale-95 ${showFavoritesOnly ? "bg-m3-error dark:bg-m3-error-dark text-white dark:text-gray-900 border-transparent" : "bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20"}`}>
-                <span className="material-symbols-rounded text-[1.25rem] transition-all duration-300" style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
-                <span>{showFavoritesOnly ? "Favorites Only" : "All Bandishes"}</span>
+            <div className="flex flex-wrap justify-center relative z-20">
+              <button onClick={() => setIsViewOptionsOpen(!isViewOptionsOpen)} className="group flex items-center justify-center gap-2 bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300 hover:scale-105 active:scale-95">
+                <span className="material-symbols-rounded text-[1.25rem]">tune</span>
+                <span>View Options</span>
               </button>
-              <button onClick={toggleDarkMode} className="group flex items-center justify-center gap-2 bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 px-5 py-2 rounded-full text-sm font-bold border border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300 hover:scale-105 active:scale-95">
-                <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>{isDarkMode ? "light_mode" : "dark_mode"}</span>
-                <span className="hidden sm:inline">{isDarkMode ? "Light" : "Dark"}</span>
-              </button>
+
+              {isViewOptionsOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setIsViewOptionsOpen(false)}></div>
+                  <div className="absolute top-full mt-3 flex flex-col gap-3 p-4 bg-white dark:bg-m3-surface-container-dark rounded-[1.5rem] shadow-lg border border-gray-100 dark:border-m3-surface-high-dark z-20 animate-modal-enter origin-top min-w-[280px]">
+                    <div className="relative flex items-center bg-m3-surface-container dark:bg-m3-surface-dark/50 p-1 rounded-full border border-gray-200 dark:border-gray-700 mx-auto">
+                      <div className={`absolute top-1 bottom-1 w-[105px] rounded-full bg-m3-primary dark:bg-m3-primary-dark transition-transform duration-500 ease-out ${language === "english" ? "translate-x-0" : "translate-x-[105px]"}`} />
+                      <button onClick={() => setLanguage("english")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "english" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>English</button>
+                      <button onClick={() => setLanguage("devanagari")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "devanagari" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>Devanagari</button>
+                    </div>
+                    <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`w-full group flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold border transition-all duration-300 ${showFavoritesOnly ? "bg-m3-error dark:bg-m3-error-dark text-white dark:text-gray-900 border-transparent" : "bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20"}`}>
+                      <span className="material-symbols-rounded text-[1.25rem] transition-all duration-300" style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
+                      <span>{showFavoritesOnly ? "Favorites Only" : "All Bandishes"}</span>
+                    </button>
+                    <button onClick={toggleDarkMode} className="w-full group flex items-center justify-center gap-2 bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
+                      <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>{isDarkMode ? "light_mode" : "dark_mode"}</span>
+                      <span>{isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
           {/* --- BANDISH GRID --- */}
@@ -722,6 +760,33 @@ export default function Home() {
                 </Link>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- CUSTOM CONFIRM DIALOG --- */}
+      {confirmDialog && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6" onClick={() => setConfirmDialog(null)}>
+          <div className="absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm animate-backdrop-enter"></div>
+          <div className="relative w-full max-w-sm bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 border border-m3-surface-high dark:border-m3-surface-high-dark animate-modal-enter text-center" onClick={(e) => e.stopPropagation()}>
+            <span className="material-symbols-rounded text-5xl text-m3-error dark:text-m3-error-dark mb-4">warning</span>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Are you sure?</h3>
+            <p className="text-m3-secondary dark:text-m3-secondary-dark mb-8">{confirmDialog.message}</p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => setConfirmDialog(null)} className="px-6 py-3 rounded-full font-bold text-gray-700 dark:text-gray-300 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+              <button onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }} className="px-6 py-3 rounded-full font-bold text-white dark:text-gray-900 bg-m3-error dark:bg-m3-error-dark hover:opacity-90 transition-opacity">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- CUSTOM TOAST NOTIFICATION --- */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] animate-modal-enter">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-full shadow-lg border font-bold ${toast.type === 'error' ? 'bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark border-m3-error-dark/30' : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800/50'}`}>
+            <span className="material-symbols-rounded">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
+            <span>{toast.message}</span>
+            <button onClick={() => setToast(null)} className="ml-2 hover:opacity-70 flex items-center justify-center"><span className="material-symbols-rounded text-lg">close</span></button>
           </div>
         </div>
       )}

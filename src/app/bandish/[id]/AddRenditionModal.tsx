@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { updateBandishSecurely } from "@/app/actions";
 
@@ -13,23 +13,9 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
   const [formTitle, setFormTitle] = useState("");
   const [formUrl, setFormUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ message: string, type: 'error' | 'success' } | null>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.paddingRight = "";
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.paddingRight = "";
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
-
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setIsClosing(true);
     setTimeout(() => {
       setIsOpen(false);
@@ -37,12 +23,42 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
       setFormArtist("");
       setFormTitle("");
       setFormUrl("");
+      setToast(null);
     }, 300);
-  };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (toast) {
+          setToast(null);
+        } else if (isOpen) {
+          closeModal();
+        }
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.body.style.overflow = "hidden";
+    } else {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.paddingRight = "";
+      document.body.style.overflow = "";
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.paddingRight = "";
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, toast, closeModal]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setToast(null);
 
     const newRendition = { artist: formArtist, title: formTitle, url: formUrl };
     const updatedRenditions = [...(bandish.youtube_renditions || []), newRendition];
@@ -62,7 +78,7 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
       }, 300);
     } catch (error: any) {
       console.error("❌ ERROR:", error);
-      alert(`Error: ${error.message || "Check console for details"}`);
+      setToast({ message: error.message || "An unknown error occurred", type: 'error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -81,6 +97,7 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
       {isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 text-left" onClick={closeModal}>
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`} />
+          
           <div
             className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar shadow-2xl ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`}
             onClick={(e) => e.stopPropagation()}
@@ -120,6 +137,17 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
               </div>
             </form>
           </div>
+          
+          {/* Toast Notification */}
+          {toast && (
+            <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-4 rounded-full font-bold shadow-2xl animate-toast-slide-up z-[70] ${toast.type === 'error' ? 'bg-m3-error dark:bg-m3-error-dark text-white' : 'bg-green-600 dark:bg-green-500 text-white'}`}>
+              <span className="material-symbols-rounded text-[1.4rem]">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
+              <span>{toast.message}</span>
+              <button onClick={() => setToast(null)} className="ml-2 flex items-center justify-center p-1 hover:bg-white/20 rounded-full transition-colors">
+                <span className="material-symbols-rounded text-[1.2rem]">close</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </>

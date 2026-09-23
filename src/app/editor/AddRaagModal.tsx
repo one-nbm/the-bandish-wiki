@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { addRaagSecurely } from "@/app/actions";
@@ -30,28 +30,14 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
   const [formDescription, setFormDescription] = useState("");
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
 
-  // Lock Background Scrolling
-  useEffect(() => {
-    if (isOpen) {
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.paddingRight = "";
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.paddingRight = "";
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
-
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setIsClosing(true);
     setTimeout(() => {
       setIsOpen(false);
       setIsClosing(false);
+      setToast(null);
       // Reset form
       setFormName("");
       setFormThaat("");
@@ -62,19 +48,47 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
       setFormAvaroh("");
       setFormDescription("");
     }, 300);
-  };
+  }, []);
+
+  // Lock Background Scrolling + Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (toast) {
+          setToast(null);
+        } else if (isOpen) {
+          closeModal();
+        }
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.body.style.overflow = "hidden";
+    } else {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.paddingRight = "";
+      document.body.style.overflow = "";
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.paddingRight = "";
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, toast, closeModal]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-
-
     if (!formName.trim()) {
-      alert("Raag Name is required.");
+      setToast({ message: "Raag Name is required.", type: "error" });
       return;
     }
 
     setIsSubmitting(true);
+    setToast(null);
     const slug = generateSlug(formName);
 
     try {
@@ -121,7 +135,7 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
       
     } catch (error: any) {
       console.error("❌ SUPABASE ERROR:", error);
-      alert(`Database Error: ${error.message || "Check console for details"}`);
+      setToast({ message: `Database Error: ${error.message || "Check console for details"}`, type: "error" });
       setIsSubmitting(false);
     }
   };
@@ -273,6 +287,16 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
 
             {/* Footer with Submit */}
             <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#1A181E] rounded-b-3xl shrink-0">
+              {/* Toast inside footer */}
+              {toast && (
+                <div className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-3 text-sm font-bold ${toast.type === "error" ? "bg-m3-error/10 dark:bg-m3-error-dark/10 text-m3-error dark:text-m3-error-dark border border-m3-error/20 dark:border-m3-error-dark/20" : "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800/50"}`}>
+                  <span className="material-symbols-rounded text-[1.1rem]">{toast.type === "error" ? "error" : "check_circle"}</span>
+                  <span className="flex-1">{toast.message}</span>
+                  <button onClick={() => setToast(null)} className="p-0.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors">
+                    <span className="material-symbols-rounded text-[1rem]">close</span>
+                  </button>
+                </div>
+              )}
               <div className="flex items-center justify-end gap-3">
                 <button 
                   type="button"
@@ -303,4 +327,3 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
     </>
   );
 }
-

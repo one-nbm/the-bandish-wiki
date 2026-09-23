@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { updateBandishSecurely } from "@/app/actions";
@@ -19,27 +19,15 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
   const [formUrl, setFormUrl] = useState(rendition.url || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
+  
+  const [toast, setToast] = useState<{ message: string, type: 'error' | 'success' } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; action: 'delete' | null }>({ isOpen: false, action: null });
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (isOpen) {
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.paddingRight = "";
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.paddingRight = "";
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
-
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setIsClosing(true);
     setTimeout(() => {
       setIsOpen(false);
@@ -47,12 +35,45 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
       setFormArtist(rendition.artist || "");
       setFormTitle(rendition.title || "");
       setFormUrl(rendition.url || "");
+      setToast(null);
+      setConfirmDialog({ isOpen: false, action: null });
     }, 300);
-  };
+  }, [rendition.artist, rendition.title, rendition.url]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (toast) {
+          setToast(null);
+        } else if (confirmDialog.isOpen) {
+          setConfirmDialog({ isOpen: false, action: null });
+        } else if (isOpen) {
+          closeModal();
+        }
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.body.style.overflow = "hidden";
+    } else {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.paddingRight = "";
+      document.body.style.overflow = "";
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.paddingRight = "";
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, toast, confirmDialog.isOpen, closeModal]);
 
   const handleFormSubmit = async (e: React.FormEvent, action: 'save' | 'delete') => {
     e.preventDefault();
     setIsSubmitting(true);
+    setToast(null);
 
     const currentRenditions = [...(bandish.youtube_renditions || [])];
     if (action === 'delete') {
@@ -65,6 +86,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
       const result = await updateBandishSecurely(bandish.id, { youtube_renditions: currentRenditions });
       if (!result.success) throw new Error(result.error ?? "Unknown error");
 
+      setConfirmDialog({ isOpen: false, action: null });
       setIsClosing(true);
       setTimeout(() => {
         setIsOpen(false);
@@ -73,10 +95,14 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
       }, 300);
     } catch (error: any) {
       console.error("❌ ERROR:", error);
-      alert(`Error: ${error.message || "Check console for details"}`);
+      setToast({ message: error.message || "An unknown error occurred", type: 'error' });
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleConfirmDelete = () => {
+    handleFormSubmit({ preventDefault: () => {} } as React.FormEvent, 'delete');
   };
 
   return (
@@ -128,11 +154,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
                 <div className="flex gap-3 justify-end pt-2">
                   <button
                     type="button"
-                    onClick={(e) => {
-                      if (confirm("Are you sure you want to delete this rendition?")) {
-                        handleFormSubmit(e as unknown as React.FormEvent, 'delete');
-                      }
-                    }}
+                    onClick={() => setConfirmDialog({ isOpen: true, action: 'delete' })}
                     disabled={isSubmitting}
                     className="flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                   >
@@ -147,6 +169,51 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
                 </div>
               </form>
             </div>
+
+            {/* Confirm Dialog Overlay */}
+            {confirmDialog.isOpen && (
+              <div className="absolute inset-0 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+                <div className="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm animate-backdrop-enter" onClick={() => setConfirmDialog({ isOpen: false, action: null })} />
+                <div className="relative w-full max-w-sm bg-m3-surface dark:bg-m3-surface-dark rounded-[2rem] p-6 shadow-2xl animate-modal-enter border border-m3-surface-high dark:border-m3-surface-high-dark">
+                  <div className="flex flex-col items-center text-center mb-6">
+                    <div className="w-16 h-16 bg-m3-error/10 dark:bg-m3-error-dark/10 rounded-full flex items-center justify-center mb-4">
+                      <span className="material-symbols-rounded text-[2rem] text-m3-error dark:text-m3-error-dark">delete_forever</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Rendition?</h3>
+                    <p className="text-m3-secondary dark:text-m3-secondary-dark text-sm">
+                      This action cannot be undone. Are you sure you want to remove this video?
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setConfirmDialog({ isOpen: false, action: null })}
+                      disabled={isSubmitting}
+                      className="flex-1 px-4 py-3 rounded-full font-bold text-gray-700 dark:text-gray-300 bg-m3-surface-container dark:bg-m3-surface-container-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-high-dark transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleConfirmDelete}
+                      disabled={isSubmitting}
+                      className="flex-1 px-4 py-3 rounded-full font-bold text-white dark:text-gray-900 bg-m3-error dark:bg-m3-error-dark hover:bg-m3-error/90 dark:hover:bg-m3-error-dark/90 transition-colors flex items-center justify-center gap-2"
+                    >
+                      {isSubmitting ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Toast Notification */}
+            {toast && (
+              <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-4 rounded-full font-bold shadow-2xl animate-toast-slide-up z-[80] ${toast.type === 'error' ? 'bg-m3-error dark:bg-m3-error-dark text-white' : 'bg-green-600 dark:bg-green-500 text-white'}`}>
+                <span className="material-symbols-rounded text-[1.4rem]">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
+                <span>{toast.message}</span>
+                <button onClick={() => setToast(null)} className="ml-2 flex items-center justify-center p-1 hover:bg-white/20 rounded-full transition-colors">
+                  <span className="material-symbols-rounded text-[1.2rem]">close</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>,
         document.body
