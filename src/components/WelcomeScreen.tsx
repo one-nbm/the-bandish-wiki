@@ -18,7 +18,7 @@ type WelcomeScreenProps = {
   onStartBrowsing: () => void;
   totalBandishes: number;
   totalRaags: number;
-  searchInputRef: React.RefObject<HTMLInputElement>;
+  searchInputRef: React.RefObject<HTMLInputElement | null>;
 };
 
 export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalBandishes, totalRaags, searchInputRef }: WelcomeScreenProps) {
