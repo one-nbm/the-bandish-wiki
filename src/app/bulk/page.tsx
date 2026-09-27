@@ -15,6 +15,11 @@ export default function BulkUpload() {
       return;
     }
 
+    if (!passcode.trim()) {
+      setStatus({ message: "Admin Passcode is required.", type: 'error' });
+      return;
+    }
+
     let parsedData = [];
     try {
       parsedData = JSON.parse(jsonData);
@@ -28,9 +33,9 @@ export default function BulkUpload() {
 
     setIsSubmitting(true);
     setStatus(null);
-    
-    const response = await bulkAddBandishesSecurely(parsedData);
-    
+
+    const response = await bulkAddBandishesSecurely(parsedData, passcode);
+
     if (response.success) {
       setStatus({ message: `Success! Added ${parsedData.length} bandishes.`, type: 'success' });
       setJsonData(""); // clear on success
@@ -64,13 +69,13 @@ export default function BulkUpload() {
 
           <div>
             <label className="flex items-center gap-1.5 text-xs font-bold text-m3-error dark:text-m3-error-dark uppercase tracking-wider mb-2">
-              <span className="material-symbols-rounded text-[1.1rem]">lock</span> Admin Passcode (Optional)
+              <span className="material-symbols-rounded text-[1.1rem]">lock</span> Admin Passcode *
             </label>
             <input
               type="password"
               value={passcode}
               onChange={(e) => setPasscode(e.target.value)}
-              placeholder="Enter passcode if required"
+              placeholder="Enter admin passcode"
               className="w-full bg-m3-error/10 dark:bg-m3-error-dark/10 text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-error dark:focus:ring-m3-error-dark transition-all duration-300 placeholder-m3-error/50 dark:placeholder-m3-error-dark/50"
             />
           </div>

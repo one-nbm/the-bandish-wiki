@@ -140,9 +140,13 @@ export async function deleteBandishSecurely(id: string) {
   return { success: true };
 }
 
-export async function bulkAddBandishesSecurely(bandishesArray: any[]) {
+export async function bulkAddBandishesSecurely(bandishesArray: any[], passcode: string) {
   const { authorized, error, supabaseAdmin } = await authorizeEditor();
   if (!authorized || !supabaseAdmin) return { success: false, error: error ?? "Unauthorized" };
+
+  if (passcode !== process.env.ADMIN_PASSCODE) {
+    return { success: false, error: "Invalid Admin Passcode" };
+  }
 
   const { error: dbError } = await supabaseAdmin
     .from('bandishes')

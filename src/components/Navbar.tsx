@@ -14,6 +14,13 @@ export default function Navbar({ children }: { children: React.ReactNode }) {
         <Link
           href="/"
           aria-label="The Bandish Wiki Home"
+          onClick={(e) => {
+            if (pathname === "/") {
+              e.preventDefault();
+              window.dispatchEvent(new Event("reset-browsing"));
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
           className="inline-flex items-center hover:opacity-85 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 active:scale-95 shrink-0"
         >
           <Image

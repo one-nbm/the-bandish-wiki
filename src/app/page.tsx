@@ -8,6 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useTheme } from "./ThemeProvider";
 import { M3LoadingIndicator } from "@alerix/m3-loading-indicator/react";
 import { checkIsEditor, addBandishSecurely, updateBandishSecurely, deleteBandishSecurely } from "./actions";
+import WelcomeScreen from "@/components/WelcomeScreen";
 
 export default function Home() {
   const supabase = createClient();
@@ -20,6 +21,7 @@ export default function Home() {
   const [activeFilters, setActiveFilters] = useState<{ key: string, value: string }[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [hasStartedBrowsing, setHasStartedBrowsing] = useState(false);
 
   // --- 2. DATA STATES ---
   const [baseData, setBaseData] = useState<any[]>([]);
@@ -157,11 +159,23 @@ export default function Home() {
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
-        searchInputRef.current?.focus();
+        setHasStartedBrowsing(true); // Jump to browse if they use the shortcut
+        setTimeout(() => searchInputRef.current?.focus(), 50);
       }
     };
+
+    const handleResetBrowsing = () => {
+      setHasStartedBrowsing(false);
+      setQuery("");
+      setActiveFilters([]);
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("reset-browsing", handleResetBrowsing);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("reset-browsing", handleResetBrowsing);
+    };
   }, [toast, confirmDialog, isViewOptionsOpen, isAddOpen, editingBandish, isInfoOpen, selectedBandish]);
 
   const handleFormSubmit = async (e: React.FormEvent, isEdit: boolean, action: 'save' | 'delete' = 'save') => {
@@ -323,7 +337,7 @@ export default function Home() {
       return (
         <div className="text-center py-16 animate-card">
           <p className="text-lg text-gray-400 dark:text-gray-500 font-medium tracking-wide">
-            {showFavoritesOnly ? "You haven't saved any favorites yet!" : "no bandishes found for the given criteria"}
+            {showFavoritesOnly ? "You haven't saved any favorites yet!" : "No bandishes found... Adjust your filters or search query."}
           </p>
         </div>
       );
@@ -376,12 +390,28 @@ export default function Home() {
 
         {processedData.map((bandish, index) => {
           const isFavorited = favorites.includes(bandish.id);
+          const renditionCount = bandish.youtube_renditions?.length ?? 0;
           return (
             <div key={bandish.id} onClick={() => setSelectedBandish(bandish)} className="group relative animate-card bg-white dark:bg-m3-surface-container-dark hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01] cursor-pointer break-inside-avoid mb-4" style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}>
+              {/* Renditions Badge */}
+              {renditionCount > 0 && (
+                <div className="group/rendition absolute top-5 right-[3.75rem] z-10 h-11 flex items-center" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500 px-1.5 rounded-full transition-all duration-300 cursor-default">
+                    <span className="material-symbols-rounded text-[1.1rem]" style={{ fontVariationSettings: '"FILL" 1' }}>play_circle</span>
+                    <span className="text-xs font-semibold leading-none">{renditionCount}</span>
+                  </div>
+                  {/* Tooltip */}
+                  <div className="pointer-events-none absolute top-full right-0 mt-2 opacity-0 group-hover/rendition:opacity-100 transition-opacity duration-200 z-20">
+                    <div className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
+                      This bandish has {renditionCount} rendition{renditionCount !== 1 ? "s" : ""}
+                    </div>
+                  </div>
+                </div>
+              )}
               <button onClick={(e) => toggleFavorite(e, bandish.id)} className={`absolute top-5 right-5 w-11 h-11 flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-90 ${isFavorited ? "text-m3-error dark:text-m3-error-dark bg-m3-error/10 dark:bg-m3-error-dark/20" : "text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`} aria-label="Toggle Favorite">
                 <span className="material-symbols-rounded text-[1.4rem] transition-all duration-300" style={{ fontVariationSettings: isFavorited ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
               </button>
-              <div className="flex justify-between items-start mb-3 pr-16 md:pr-20">
+              <div className="flex justify-between items-start mb-3 pr-28 md:pr-32">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{bandish.title}</h2>
               </div>
               <div className="flex flex-wrap gap-2 mb-5">
@@ -487,94 +517,108 @@ export default function Home() {
     <main className="min-h-screen bg-transparent transition-colors duration-500 relative">
       <div className="p-3 sm:p-4 md:p-8 font-sans">
         <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
-          {/* --- HERO SEARCH SECTION --- */}
-          <div className="relative bg-m3-surface-high dark:bg-m3-surface-high-dark rounded-3xl md:rounded-[2.5rem] p-5 sm:p-8 md:p-12 transition-colors duration-500">
-            <div className="absolute top-5 right-5 sm:top-6 sm:right-6 md:top-8 md:right-8 flex items-center gap-2 md:gap-3">
-              {isAdmin ? (
-                <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="group flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95" title="Add a new Bandish">
-                  <span className="material-symbols-rounded text-[1.25rem]">add</span>
-                  <span className="hidden md:block font-bold text-sm ml-1">Add Bandish</span>
-                </button>
-              ) : (
-                <a
-                  href="https://forms.gle/sTqp5q4Ym6JLzaSA9"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 bg-m3-surface-container/50 dark:bg-m3-surface-dark/40 hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95"
-                  title="Submit a Bandish"
-                >
-                  <span className="material-symbols-rounded text-[1.25rem]">add</span>
-                  <span className="hidden md:block font-bold text-sm ml-1">Submit Bandish</span>
-                </a>
-              )}
-              <button onClick={() => setIsInfoOpen(true)} className="group flex items-center justify-center w-10 h-10 p-0 bg-m3-surface-container/50 dark:bg-m3-surface-dark/40 hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95" title="How to use the wiki">
-                <span className="material-symbols-rounded text-[1.5rem]">info</span>
-              </button>
-            </div>
-            <div className="pr-28 sm:pr-32 md:pr-48">
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight leading-none md:leading-tight" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>
-                The Bandish Wiki
-              </h1>
-              <p className="text-sm sm:text-base text-m3-secondary dark:text-m3-secondary-dark mb-5 md:mb-8 font-medium transition-all duration-300 md:mt-0 mt-2">
-                Showing <span className="font-bold">{bandishCount}</span> bandish{bandishCount !== 1 ? "es" : ""} across <span className="font-bold">{uniqueRaagsCount}</span> raag{uniqueRaagsCount !== 1 ? "s" : ""}
-              </p>
-            </div>
-            <div className="relative mb-5 md:mb-6 group mx-0 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] focus-within:-mx-1 md:focus-within:-mx-4">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-5 md:pl-6 pointer-events-none z-10 transition-transform duration-500 group-focus-within:scale-110">
-                <span className="material-symbols-rounded transition-colors duration-300 text-gray-600 dark:text-gray-400 group-focus-within:text-m3-primary dark:group-focus-within:text-m3-primary-dark">search</span>
-              </div>
-              <input ref={searchInputRef} type="text" placeholder="Search by text... (Ctrl+K)" value={query} onChange={(e) => setQuery(e.target.value)} className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white text-base md:text-lg pl-[3.75rem] md:pl-[4.25rem] pr-5 py-4 md:py-5 rounded-full focus:outline-none transition-colors duration-300 placeholder-gray-500 dark:placeholder-gray-400 focus:bg-white dark:focus:bg-black/20" />
-            </div>
-            <div className={`grid transition-[grid-template-rows] duration-500 ease-out ${activeFilters.length > 0 ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-              <div className="overflow-hidden">
-                <div className="flex flex-wrap justify-center gap-2 md:gap-3 pt-2 pb-5 md:pb-6">
-                  {activeFilters.map((filter) => (
-                    <div key={`${filter.key}-${filter.value}`} className="inline-flex items-center gap-2 bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 px-4 py-1.5 rounded-full text-sm font-bold transition-transform duration-300 hover:scale-105">
-                      <span className="capitalize opacity-80 font-medium">{filter.key}:</span><span>{filter.value}</span>
-                      <button onClick={() => toggleFilter(filter.key, filter.value)} className="flex items-center justify-center hover:rotate-90 hover:bg-white/20 dark:hover:bg-black/10 rounded-full p-0.5 ml-1 transition-all duration-300"><span className="material-symbols-rounded text-[1.1rem]">close</span></button>
+
+          {!hasStartedBrowsing ? (
+            <WelcomeScreen
+              query={query}
+              setQuery={setQuery}
+              onStartBrowsing={() => setHasStartedBrowsing(true)}
+              totalBandishes={baseData.length}
+              totalRaags={new Set(baseData.map(b => b.raag)).size}
+              searchInputRef={searchInputRef}
+            />
+          ) : (
+            <>
+              {/* --- HERO SEARCH SECTION --- */}
+              <div className="relative z-50 bg-m3-surface-high dark:bg-m3-surface-high-dark rounded-3xl md:rounded-[2.5rem] p-5 sm:p-8 md:p-12 transition-colors duration-500 animate-modal-enter">
+                <div className="absolute top-5 right-5 sm:top-6 sm:right-6 md:top-8 md:right-8 flex items-center gap-2 md:gap-3">
+                  {isAdmin ? (
+                    <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="group flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95" title="Add a new Bandish">
+                      <span className="material-symbols-rounded text-[1.25rem]">add</span>
+                      <span className="hidden md:block font-bold text-sm ml-1">Add Bandish</span>
+                    </button>
+                  ) : (
+                    <a
+                      href="https://forms.gle/sTqp5q4Ym6JLzaSA9"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 bg-m3-surface-container/50 dark:bg-m3-surface-dark/40 hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95"
+                      title="Submit a Bandish"
+                    >
+                      <span className="material-symbols-rounded text-[1.25rem]">add</span>
+                      <span className="hidden md:block font-bold text-sm ml-1">Submit Bandish</span>
+                    </a>
+                  )}
+                  <button onClick={() => setIsInfoOpen(true)} className="group flex items-center justify-center w-10 h-10 p-0 bg-m3-surface-container/50 dark:bg-m3-surface-dark/40 hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95" title="How to use the wiki">
+                    <span className="material-symbols-rounded text-[1.5rem]">info</span>
+                  </button>
+                </div>
+                <div className="pr-28 sm:pr-32 md:pr-48">
+                  <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight leading-none md:leading-tight" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>
+                    The Bandish Wiki
+                  </h1>
+                  <p className="text-sm sm:text-base text-m3-secondary dark:text-m3-secondary-dark mb-5 md:mb-8 font-medium transition-all duration-300 md:mt-0 mt-2">
+                    Showing <span className="font-bold">{bandishCount}</span> bandish{bandishCount !== 1 ? "es" : ""} across <span className="font-bold">{uniqueRaagsCount}</span> raag{uniqueRaagsCount !== 1 ? "s" : ""}
+                  </p>
+                </div>
+                <div className="relative mb-5 md:mb-6 group mx-0 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] focus-within:-mx-1 md:focus-within:-mx-4">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-5 md:pl-6 pointer-events-none z-10 transition-transform duration-500 group-focus-within:scale-110">
+                    <span className="material-symbols-rounded transition-colors duration-300 text-gray-600 dark:text-gray-400 group-focus-within:text-m3-primary dark:group-focus-within:text-m3-primary-dark">search</span>
+                  </div>
+                  <input ref={searchInputRef} type="text" placeholder="Search by text... (Ctrl+K)" value={query} onChange={(e) => setQuery(e.target.value)} className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white text-base md:text-lg pl-[3.75rem] md:pl-[4.25rem] pr-5 py-4 md:py-5 rounded-full focus:outline-none transition-colors duration-300 placeholder-gray-500 dark:placeholder-gray-400 focus:bg-white dark:focus:bg-black/20" />
+                </div>
+                <div className={`grid transition-[grid-template-rows] duration-500 ease-out ${activeFilters.length > 0 ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                  <div className="overflow-hidden">
+                    <div className="flex flex-wrap justify-center gap-2 md:gap-3 pt-2 pb-5 md:pb-6">
+                      {activeFilters.map((filter) => (
+                        <div key={`${filter.key}-${filter.value}`} className="inline-flex items-center gap-2 bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 px-4 py-1.5 rounded-full text-sm font-bold transition-transform duration-300 hover:scale-105">
+                          <span className="capitalize opacity-80 font-medium">{filter.key}:</span><span>{filter.value}</span>
+                          <button onClick={() => toggleFilter(filter.key, filter.value)} className="flex items-center justify-center hover:rotate-90 hover:bg-white/20 dark:hover:bg-black/10 rounded-full p-0.5 ml-1 transition-all duration-300"><span className="material-symbols-rounded text-[1.1rem]">close</span></button>
+                        </div>
+                      ))}
+                      {activeFilters.length > 1 && (
+                        <button onClick={() => setActiveFilters([])} className="text-sm font-bold text-m3-primary dark:text-m3-primary-dark hover:text-gray-900 dark:hover:text-white underline underline-offset-4 px-2 active:scale-95 transition-transform duration-200">Clear All</button>
+                      )}
                     </div>
-                  ))}
-                  {activeFilters.length > 1 && (
-                    <button onClick={() => setActiveFilters([])} className="text-sm font-bold text-m3-primary dark:text-m3-primary-dark hover:text-gray-900 dark:hover:text-white underline underline-offset-4 px-2 active:scale-95 transition-transform duration-200">Clear All</button>
+                  </div>
+                </div>
+                {/* --- CONTROLS ROW --- */}
+                <div className="flex flex-wrap justify-center relative z-50">
+                  <button onClick={() => setIsViewOptionsOpen(!isViewOptionsOpen)} className="group flex items-center justify-center gap-2 bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300 hover:scale-105 active:scale-95">
+                    <span className="material-symbols-rounded text-[1.25rem]">tune</span>
+                    <span>View Options</span>
+                  </button>
+
+                  {isViewOptionsOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsViewOptionsOpen(false)}></div>
+                      <div className="absolute top-full mt-3 flex flex-col gap-3 p-4 bg-white dark:bg-m3-surface-container-dark rounded-[1.5rem] border border-gray-100 dark:border-m3-surface-high-dark z-50 animate-modal-enter origin-top min-w-[280px]">
+                        <div className="relative flex items-center bg-m3-surface-container dark:bg-m3-surface-dark/50 p-1 rounded-full border border-gray-200 dark:border-gray-700 mx-auto">
+                          <div className={`absolute top-1 bottom-1 w-[105px] rounded-full bg-m3-primary dark:bg-m3-primary-dark transition-transform duration-500 ease-out ${language === "english" ? "translate-x-0" : "translate-x-[105px]"}`} />
+                          <button onClick={() => setLanguage("english")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "english" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>English</button>
+                          <button onClick={() => setLanguage("devanagari")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "devanagari" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>Devanagari</button>
+                        </div>
+                        <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`w-full group flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold border transition-all duration-300 ${showFavoritesOnly ? "bg-m3-error dark:bg-m3-error-dark text-white dark:text-gray-900 border-transparent" : "bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20"}`}>
+                          <span className="material-symbols-rounded text-[1.25rem] transition-all duration-300" style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
+                          <span>{showFavoritesOnly ? "Favorites Only" : "All Bandishes"}</span>
+                        </button>
+                        <button onClick={toggleDarkMode} className="w-full group flex items-center justify-center gap-2 bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
+                          <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>{isDarkMode ? "light_mode" : "dark_mode"}</span>
+                          <span>{isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
-            </div>
-            {/* --- CONTROLS ROW --- */}
-            <div className="flex flex-wrap justify-center relative z-20">
-              <button onClick={() => setIsViewOptionsOpen(!isViewOptionsOpen)} className="group flex items-center justify-center gap-2 bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300 hover:scale-105 active:scale-95">
-                <span className="material-symbols-rounded text-[1.25rem]">tune</span>
-                <span>View Options</span>
-              </button>
-
-              {isViewOptionsOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setIsViewOptionsOpen(false)}></div>
-                  <div className="absolute top-full mt-3 flex flex-col gap-3 p-4 bg-white dark:bg-m3-surface-container-dark rounded-[1.5rem] shadow-lg border border-gray-100 dark:border-m3-surface-high-dark z-20 animate-modal-enter origin-top min-w-[280px]">
-                    <div className="relative flex items-center bg-m3-surface-container dark:bg-m3-surface-dark/50 p-1 rounded-full border border-gray-200 dark:border-gray-700 mx-auto">
-                      <div className={`absolute top-1 bottom-1 w-[105px] rounded-full bg-m3-primary dark:bg-m3-primary-dark transition-transform duration-500 ease-out ${language === "english" ? "translate-x-0" : "translate-x-[105px]"}`} />
-                      <button onClick={() => setLanguage("english")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "english" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>English</button>
-                      <button onClick={() => setLanguage("devanagari")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "devanagari" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>Devanagari</button>
-                    </div>
-                    <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`w-full group flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold border transition-all duration-300 ${showFavoritesOnly ? "bg-m3-error dark:bg-m3-error-dark text-white dark:text-gray-900 border-transparent" : "bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20"}`}>
-                      <span className="material-symbols-rounded text-[1.25rem] transition-all duration-300" style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
-                      <span>{showFavoritesOnly ? "Favorites Only" : "All Bandishes"}</span>
-                    </button>
-                    <button onClick={toggleDarkMode} className="w-full group flex items-center justify-center gap-2 bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
-                      <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>{isDarkMode ? "light_mode" : "dark_mode"}</span>
-                      <span>{isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-          {/* --- BANDISH GRID --- */}
-          {!isMounted ? (
-            <div className="min-h-[50vh] flex flex-col items-center justify-center gap-6">
-              <M3LoadingIndicator size={96} contained={true} color={isDarkMode ? "#D0BCFF" : "#6750A4"} containerColor={isDarkMode ? "#211F26" : "#F3EDF7"} />
-            </div>
-          ) : memoizedGrid}
+              {/* --- BANDISH GRID --- */}
+              {!isMounted ? (
+                <div className="min-h-[50vh] flex flex-col items-center justify-center gap-6">
+                  <M3LoadingIndicator size={96} contained={true} color={isDarkMode ? "#D0BCFF" : "#6750A4"} containerColor={isDarkMode ? "#211F26" : "#F3EDF7"} />
+                </div>
+              ) : memoizedGrid}
+            </>
+          )}
         </div>
       </div>
 

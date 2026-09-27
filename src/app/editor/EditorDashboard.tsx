@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import AddRaagModal from "./AddRaagModal";
 
 interface EditorDashboardProps {
@@ -113,9 +114,16 @@ export default function EditorDashboard({ initialName, bandishCount, raagCount }
         </div>
       </div>
 
-      {/* Add New Raag Section */}
-      <div className="mt-4">
+      {/* Action Buttons Section */}
+      <div className="mt-4 flex flex-col sm:flex-row gap-4">
         <AddRaagModal contributorName={initialName} />
+        <Link 
+          href="/bulk"
+          className="w-full sm:w-auto px-6 py-4 bg-m3-surface-high dark:bg-m3-surface-high-dark hover:bg-m3-primary/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-2xl font-bold transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 border border-gray-200 dark:border-gray-700"
+        >
+          <span className="material-symbols-rounded text-2xl">upload_file</span>
+          Bulk Add Bandishes
+        </Link>
       </div>
 
     </div>
