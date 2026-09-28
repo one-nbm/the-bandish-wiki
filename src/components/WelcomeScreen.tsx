@@ -132,7 +132,7 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
   };
 
   return (
-    <div className={`min-h-[85vh] flex flex-col items-center justify-center p-6 sm:p-8 animate-modal-enter relative`}>
+    <div className={`min-h-[85vh] flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 animate-modal-enter relative`}>
 
       {/* Background Gradient Blob based on Samay */}
       <div className={`absolute inset-0 bg-gradient-to-br ${timeState.themeClass} opacity-50 dark:opacity-30 blur-3xl pointer-events-none transition-all duration-1000`} />
@@ -140,46 +140,46 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
       <div className="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center text-center">
 
         {/* Title */}
-        <motion.h2 layoutId="app-title" className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>
+        <motion.h2 layoutId="app-title" className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6 sm:mb-8 tracking-tight" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>
           The Bandish Wiki
         </motion.h2>
 
         {/* Greeting & Samay Indicator */}
         <div
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 dark:bg-m3-surface-container-dark/90 border border-gray-200/80 dark:border-gray-700/80 backdrop-blur-xl mb-8 animate-toast-slide-up cursor-default"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/90 dark:bg-m3-surface-container-dark/90 border border-gray-200/80 dark:border-gray-700/80 backdrop-blur-xl mb-6 sm:mb-8 animate-toast-slide-up cursor-default"
           title="Samay refers to the time of day a raag is traditionally performed in Hindustani classical music"
         >
-          <span className="material-symbols-rounded text-[1.2rem] text-m3-primary dark:text-m3-primary-dark">{timeState.icon}</span>
-          <span className="text-sm font-bold text-gray-800 dark:text-gray-200 tracking-wide uppercase">{timeState.samay} Samay</span>
+          <span className="material-symbols-rounded text-[1.1rem] sm:text-[1.2rem] text-m3-primary dark:text-m3-primary-dark">{timeState.icon}</span>
+          <span className="text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 tracking-wide uppercase">{timeState.samay} Samay</span>
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white mb-6 tracking-tight" style={{ fontVariationSettings: '"wght" 900, "wdth" 130' }}>
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-gray-900 dark:text-white mb-4 sm:mb-6 tracking-tight" style={{ fontVariationSettings: '"wght" 900, "wdth" 130' }}>
           {timeState.greeting}.
         </h1>
 
-        <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-12 max-w-xl mx-auto font-medium">
+        <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 sm:mb-12 max-w-xl mx-auto font-medium px-2">
           Welcome to the Bandish Wiki, a living archive of Hindustani bandishes; notated, translated, and growing.
         </p>
 
         {/* Big Search Bar */}
-        <form onSubmit={handleSearchSubmit} className="w-full relative group mb-12">
-          <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-            <span className="material-symbols-rounded text-[1.8rem] text-gray-400 dark:text-gray-500 group-focus-within:text-m3-primary dark:group-focus-within:text-m3-primary-dark transition-colors duration-300">search</span>
+        <form onSubmit={handleSearchSubmit} className="w-full relative group mb-8 sm:mb-12">
+          <div className="absolute inset-y-0 left-4 sm:left-6 flex items-center pointer-events-none">
+            <span className="material-symbols-rounded text-[1.5rem] sm:text-[1.8rem] text-gray-400 dark:text-gray-500 group-focus-within:text-m3-primary dark:group-focus-within:text-m3-primary-dark transition-colors duration-300">search</span>
           </div>
           <input
             ref={searchInputRef}
             type="text"
-            className="w-full bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white text-lg md:text-xl px-16 py-6 rounded-[2rem] border-2 border-transparent focus:border-m3-primary dark:focus:border-m3-primary-dark outline-none transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] placeholder-gray-400 dark:placeholder-gray-500"
-            placeholder="Search for a bandish, raag, taal, composer..."
+            className="w-full bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white text-base sm:text-lg md:text-xl pl-12 pr-16 sm:pl-16 sm:pr-24 py-4 sm:py-6 rounded-[2rem] border-2 border-transparent focus:border-m3-primary dark:focus:border-m3-primary-dark outline-none transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] placeholder-gray-400 dark:placeholder-gray-500"
+            placeholder="Search bandishes, raags..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <div className="absolute inset-y-0 right-4 flex items-center gap-2">
+          <div className="absolute inset-y-0 right-2 sm:right-4 flex items-center gap-2">
             {/* Ctrl+K hint — fades out when the input is focused */}
             <kbd className="hidden sm:flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800/50 rounded-lg border border-gray-200/60 dark:border-gray-700/40 pointer-events-none group-focus-within:opacity-0 transition-opacity duration-200 select-none">
               {isMounted ? (isMac ? <span className="font-sans">⌘</span> : <span>Ctrl</span>) : <span>Ctrl</span>}K
             </kbd>
-            <button type="submit" className="bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 w-12 h-12 flex items-center justify-center rounded-full transition-transform duration-300 hover:scale-105 active:scale-95">
+            <button type="submit" className="bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-transform duration-300 hover:scale-105 active:scale-95">
               <span className="material-symbols-rounded">arrow_forward</span>
             </button>
           </div>
@@ -190,7 +190,7 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
 
           {/* Featured Raag — skeleton while loading, error state on failure, full card when ready */}
           {isLoading ? (
-            <div className="flex items-center justify-between p-6 bg-white/70 dark:bg-m3-surface-container-dark/70 rounded-3xl border border-gray-200/80 dark:border-gray-700/80 backdrop-blur-xl animate-pulse">
+            <div className="flex items-center justify-between p-5 sm:p-6 bg-white/70 dark:bg-m3-surface-container-dark/70 rounded-3xl border border-gray-200/80 dark:border-gray-700/80 backdrop-blur-xl animate-pulse">
               <div className="space-y-2 flex-1 mr-4">
                 <div className="h-3 w-20 bg-gray-300/60 dark:bg-gray-600/60 rounded-full" />
                 <div className="h-6 w-36 bg-gray-300/60 dark:bg-gray-600/60 rounded-full" />
@@ -199,7 +199,7 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
               <div className="w-10 h-10 rounded-full bg-gray-200/60 dark:bg-gray-700/60 shrink-0" />
             </div>
           ) : fetchError ? (
-            <button onClick={onStartBrowsing} className="group flex items-center justify-between p-6 bg-m3-error/5 dark:bg-m3-error-dark/5 rounded-3xl border border-m3-error/20 dark:border-m3-error-dark/20 text-left transition-all duration-300 hover:-translate-y-1 w-full">
+            <button onClick={onStartBrowsing} className="group flex items-center justify-between p-5 sm:p-6 bg-m3-error/5 dark:bg-m3-error-dark/5 rounded-3xl border border-m3-error/20 dark:border-m3-error-dark/20 text-left transition-all duration-300 hover:-translate-y-1 w-full">
               <div>
                 <span className="block text-xs font-bold text-m3-error dark:text-m3-error-dark uppercase tracking-wider mb-1">Featured Raag</span>
                 <span className="text-base font-semibold text-gray-600 dark:text-gray-400">Couldn't load</span>
@@ -216,11 +216,11 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
           ) : featuredRaag ? (
             <Link
               href={featuredRaag.slug ? `/raag/${featuredRaag.slug}` : `/raag/${featuredRaag.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")}`}
-              className="group flex items-center justify-between p-6 bg-white/90 dark:bg-m3-surface-container-dark/90 hover:bg-white dark:hover:bg-m3-surface-high-dark backdrop-blur-xl rounded-3xl border border-gray-200/80 dark:border-gray-700/80 transition-all duration-500 hover:-translate-y-1 text-left"
+              className="group flex items-center justify-between p-5 sm:p-6 bg-white/90 dark:bg-m3-surface-container-dark/90 hover:bg-white dark:hover:bg-m3-surface-high-dark backdrop-blur-xl rounded-3xl border border-gray-200/80 dark:border-gray-700/80 transition-all duration-500 hover:-translate-y-1 text-left"
             >
-              <div className="flex-1 mr-4">
-                <span className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-1">{timeState.samay} Raag</span>
-                <span className="text-xl font-bold text-gray-900 dark:text-white block mb-1">{featuredRaag.name}</span>
+              <div className="flex-1 mr-3 sm:mr-4">
+                <span className="block text-[10px] sm:text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-1">{timeState.samay} Raag</span>
+                <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white block mb-0.5 sm:mb-1">{featuredRaag.name}</span>
                 <span
                   className="text-xs text-gray-500 dark:text-gray-400 font-medium"
                   title="Thaat is the parent scale family a raag belongs to"
@@ -234,9 +234,9 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
             </Link>
           ) : null}
 
-          <button onClick={onStartBrowsing} className="group flex items-center justify-between p-6 bg-white/90 dark:bg-m3-surface-container-dark/90 hover:bg-white dark:hover:bg-m3-surface-high-dark backdrop-blur-xl rounded-3xl border border-gray-200/80 dark:border-gray-700/80 transition-all duration-500 hover:-translate-y-1 text-left">
-            <div className="flex-1 mr-4">
-              <span className="text-xl font-bold text-gray-900 dark:text-white block mb-1">Browse Full Archive</span>
+          <button onClick={onStartBrowsing} className="group flex items-center justify-between p-5 sm:p-6 bg-white/90 dark:bg-m3-surface-container-dark/90 hover:bg-white dark:hover:bg-m3-surface-high-dark backdrop-blur-xl rounded-3xl border border-gray-200/80 dark:border-gray-700/80 transition-all duration-500 hover:-translate-y-1 text-left">
+            <div className="flex-1 mr-3 sm:mr-4">
+              <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white block mb-0.5 sm:mb-1">Browse Full Archive</span>
               {totalBandishes > 0 && (
                 <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{totalBandishes} bandishes{totalRaags > 0 ? ` · ${totalRaags} raags` : ""}</span>
               )}
