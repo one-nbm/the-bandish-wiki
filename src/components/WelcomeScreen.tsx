@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
+import { motion } from "framer-motion";
 
 // Pure function — no closure deps, safe outside the component
 function getSamayFromHour(hour: number) {
@@ -138,9 +139,14 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
 
       <div className="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center text-center">
 
+        {/* Title */}
+        <motion.h2 layoutId="app-title" className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>
+          The Bandish Wiki
+        </motion.h2>
+
         {/* Greeting & Samay Indicator */}
         <div
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 dark:bg-black/20 border border-gray-200/50 dark:border-gray-800/50 backdrop-blur-md mb-8 animate-toast-slide-up cursor-default"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 dark:bg-m3-surface-container-dark/90 border border-gray-200/80 dark:border-gray-700/80 backdrop-blur-xl mb-8 animate-toast-slide-up cursor-default"
           title="Samay refers to the time of day a raag is traditionally performed in Hindustani classical music"
         >
           <span className="material-symbols-rounded text-[1.2rem] text-m3-primary dark:text-m3-primary-dark">{timeState.icon}</span>
@@ -184,7 +190,7 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
 
           {/* Featured Raag — skeleton while loading, error state on failure, full card when ready */}
           {isLoading ? (
-            <div className="flex items-center justify-between p-6 bg-white/40 dark:bg-m3-surface-container-dark/40 rounded-3xl border border-gray-200/50 dark:border-gray-800/50 animate-pulse">
+            <div className="flex items-center justify-between p-6 bg-white/70 dark:bg-m3-surface-container-dark/70 rounded-3xl border border-gray-200/80 dark:border-gray-700/80 backdrop-blur-xl animate-pulse">
               <div className="space-y-2 flex-1 mr-4">
                 <div className="h-3 w-20 bg-gray-300/60 dark:bg-gray-600/60 rounded-full" />
                 <div className="h-6 w-36 bg-gray-300/60 dark:bg-gray-600/60 rounded-full" />
@@ -210,7 +216,7 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
           ) : featuredRaag ? (
             <Link
               href={featuredRaag.slug ? `/raag/${featuredRaag.slug}` : `/raag/${featuredRaag.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")}`}
-              className="group flex items-center justify-between p-6 bg-white/60 dark:bg-m3-surface-container-dark/60 hover:bg-white dark:hover:bg-m3-surface-container-dark backdrop-blur-md rounded-3xl border border-gray-200/50 dark:border-gray-800/50 transition-all duration-500 hover:-translate-y-1 text-left"
+              className="group flex items-center justify-between p-6 bg-white/90 dark:bg-m3-surface-container-dark/90 hover:bg-white dark:hover:bg-m3-surface-high-dark backdrop-blur-xl rounded-3xl border border-gray-200/80 dark:border-gray-700/80 transition-all duration-500 hover:-translate-y-1 text-left"
             >
               <div className="flex-1 mr-4">
                 <span className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-1">{timeState.samay} Raag</span>
@@ -228,7 +234,7 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
             </Link>
           ) : null}
 
-          <button onClick={onStartBrowsing} className="group flex items-center justify-between p-6 bg-white/60 dark:bg-m3-surface-container-dark/60 hover:bg-white dark:hover:bg-m3-surface-container-dark backdrop-blur-md rounded-3xl border border-gray-200/50 dark:border-gray-800/50 transition-all duration-500 hover:-translate-y-1 text-left">
+          <button onClick={onStartBrowsing} className="group flex items-center justify-between p-6 bg-white/90 dark:bg-m3-surface-container-dark/90 hover:bg-white dark:hover:bg-m3-surface-high-dark backdrop-blur-xl rounded-3xl border border-gray-200/80 dark:border-gray-700/80 transition-all duration-500 hover:-translate-y-1 text-left">
             <div className="flex-1 mr-4">
               <span className="text-xl font-bold text-gray-900 dark:text-white block mb-1">Browse Full Archive</span>
               {totalBandishes > 0 && (

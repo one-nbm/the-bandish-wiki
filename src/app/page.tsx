@@ -9,6 +9,7 @@ import { useTheme } from "./ThemeProvider";
 import { M3LoadingIndicator } from "@alerix/m3-loading-indicator/react";
 import { checkIsEditor, addBandishSecurely, updateBandishSecurely, deleteBandishSecurely } from "./actions";
 import WelcomeScreen from "@/components/WelcomeScreen";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
   const supabase = createClient();
@@ -53,6 +54,8 @@ export default function Home() {
   const [confirmDialog, setConfirmDialog] = useState<{ message: string, onConfirm: () => void } | null>(null);
   const [isViewOptionsOpen, setIsViewOptionsOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const viewOptionsRef = useRef<HTMLDivElement>(null);
+  const [enableGlur, setEnableGlur] = useState(true);
 
   // --- 5. EFFECTS ---
   useEffect(() => {
@@ -97,10 +100,25 @@ export default function Home() {
       }
     };
 
+    const savedGlur = localStorage.getItem("wiki-glur");
+    if (savedGlur !== null) setEnableGlur(savedGlur === "true");
+
     fetchAdminStatus();
     fetchUserAndFavorites();
     fetchBandishes();
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (viewOptionsRef.current && !viewOptionsRef.current.contains(e.target as Node)) {
+        setIsViewOptionsOpen(false);
+      }
+    };
+    if (isViewOptionsOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isViewOptionsOpen]);
 
   // Lock Background Scrolling
   useEffect(() => {
@@ -180,6 +198,13 @@ export default function Home() {
 
   const handleFormSubmit = async (e: React.FormEvent, isEdit: boolean, action: 'save' | 'delete' = 'save') => {
     e.preventDefault();
+
+    if (action !== 'delete') {
+      if (!formTitle || !formRaag || !formTaal || !formComposer || !formEnglish || !adminPasscode) {
+        setToast({ message: "Please fill in all required fields.", type: 'error' });
+        return;
+      }
+    }
 
     setIsSubmitting(true);
 
@@ -402,7 +427,7 @@ export default function Home() {
                   </div>
                   {/* Tooltip */}
                   <div className="pointer-events-none absolute top-full right-0 mt-2 opacity-0 group-hover/rendition:opacity-100 transition-opacity duration-200 z-20">
-                    <div className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
+                    <div className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap">
                       This bandish has {renditionCount} rendition{renditionCount !== 1 ? "s" : ""}
                     </div>
                   </div>
@@ -451,10 +476,10 @@ export default function Home() {
 
   // --- 9. SHARED FORM JSX (Used by Add and Edit Modals) ---
   const renderForm = (isEdit: boolean) => (
-    <form onSubmit={(e) => handleFormSubmit(e, isEdit)} className="space-y-6 md:space-y-8">
+    <form noValidate onSubmit={(e) => handleFormSubmit(e, isEdit)} className="space-y-6 md:space-y-8">
       <div>
         <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Title</label>
-        <input type="text" required placeholder="e.g. Hori Khelan Ko" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+        <input type="text" autoFocus required placeholder="e.g. Hori Khelan Ko" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
@@ -514,113 +539,195 @@ export default function Home() {
   );
 
   return (
-    <main className="min-h-screen bg-transparent transition-colors duration-500 relative">
-      <div className="p-3 sm:p-4 md:p-8 font-sans">
-        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
-
-          {!hasStartedBrowsing ? (
-            <WelcomeScreen
-              query={query}
-              setQuery={setQuery}
-              onStartBrowsing={() => setHasStartedBrowsing(true)}
-              totalBandishes={baseData.length}
-              totalRaags={new Set(baseData.map(b => b.raag)).size}
-              searchInputRef={searchInputRef}
-            />
-          ) : (
-            <>
-              {/* --- HERO SEARCH SECTION --- */}
-              <div className="relative z-50 bg-m3-surface-high dark:bg-m3-surface-high-dark rounded-3xl md:rounded-[2.5rem] p-5 sm:p-8 md:p-12 transition-colors duration-500 animate-modal-enter">
-                <div className="absolute top-5 right-5 sm:top-6 sm:right-6 md:top-8 md:right-8 flex items-center gap-2 md:gap-3">
-                  {isAdmin ? (
-                    <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="group flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95" title="Add a new Bandish">
-                      <span className="material-symbols-rounded text-[1.25rem]">add</span>
-                      <span className="hidden md:block font-bold text-sm ml-1">Add Bandish</span>
-                    </button>
-                  ) : (
-                    <a
-                      href="https://forms.gle/sTqp5q4Ym6JLzaSA9"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center justify-center w-10 h-10 md:w-auto md:h-auto md:px-4 md:py-2 bg-m3-surface-container/50 dark:bg-m3-surface-dark/40 hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95"
-                      title="Submit a Bandish"
+    <main className="min-h-screen bg-transparent transition-colors duration-500 relative font-sans">
+      <AnimatePresence mode="wait">
+            {!hasStartedBrowsing ? (
+              <motion.div
+                key="welcome"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}
+                className="w-full max-w-4xl mx-auto p-3 sm:p-4 md:p-8"
+              >
+                <WelcomeScreen
+                  query={query}
+                  setQuery={setQuery}
+                  onStartBrowsing={() => {
+                    setHasStartedBrowsing(true);
+                    window.dispatchEvent(new Event("start-browsing"));
+                  }}
+                  totalBandishes={baseData.length}
+                  totalRaags={new Set(baseData.map(b => b.raag)).size}
+                  searchInputRef={searchInputRef}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="search"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="w-full"
+              >
+                {/* --- HERO SEARCH SECTION --- */}
+                <div className="sticky top-0 z-[100] mb-6 md:mb-8">
+                  {/* PROGRESSIVE GLUR BACKGROUND */}
+                  {enableGlur ? (
+                    <div
+                      className="absolute inset-x-0 top-0 h-[calc(100%+2rem)] md:h-[calc(100%+3rem)] pointer-events-none z-0"
                     >
-                      <span className="material-symbols-rounded text-[1.25rem]">add</span>
-                      <span className="hidden md:block font-bold text-sm ml-1">Submit Bandish</span>
-                    </a>
+                      <div className="absolute inset-0 bg-m3-surface/50 dark:bg-m3-surface-dark/50" style={{ maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }} />
+                      <div className="absolute inset-0" style={{ backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)', maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)' }} />
+                      <div className="absolute inset-0" style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', maskImage: 'linear-gradient(to bottom, black 40%, transparent 80%)', WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 80%)' }} />
+                      <div className="absolute inset-0" style={{ backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', maskImage: 'linear-gradient(to bottom, black 20%, transparent 60%)', WebkitMaskImage: 'linear-gradient(to bottom, black 20%, transparent 60%)' }} />
+                      <div className="absolute inset-0" style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', maskImage: 'linear-gradient(to bottom, black 0%, transparent 40%)', WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 40%)' }} />
+                    </div>
+                  ) : (
+                    <div className="absolute inset-x-0 top-0 bottom-0 pointer-events-none z-[-1] bg-m3-surface dark:bg-m3-surface-dark border-b border-gray-200 dark:border-gray-800" />
                   )}
-                  <button onClick={() => setIsInfoOpen(true)} className="group flex items-center justify-center w-10 h-10 p-0 bg-m3-surface-container/50 dark:bg-m3-surface-dark/40 hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95" title="How to use the wiki">
-                    <span className="material-symbols-rounded text-[1.5rem]">info</span>
-                  </button>
-                </div>
-                <div className="pr-28 sm:pr-32 md:pr-48">
-                  <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight leading-none md:leading-tight" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>
-                    The Bandish Wiki
-                  </h1>
-                  <p className="text-sm sm:text-base text-m3-secondary dark:text-m3-secondary-dark mb-5 md:mb-8 font-medium transition-all duration-300 md:mt-0 mt-2">
-                    Showing <span className="font-bold">{bandishCount}</span> bandish{bandishCount !== 1 ? "es" : ""} across <span className="font-bold">{uniqueRaagsCount}</span> raag{uniqueRaagsCount !== 1 ? "s" : ""}
-                  </p>
-                </div>
-                <div className="relative mb-5 md:mb-6 group mx-0 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] focus-within:-mx-1 md:focus-within:-mx-4">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-5 md:pl-6 pointer-events-none z-10 transition-transform duration-500 group-focus-within:scale-110">
-                    <span className="material-symbols-rounded transition-colors duration-300 text-gray-600 dark:text-gray-400 group-focus-within:text-m3-primary dark:group-focus-within:text-m3-primary-dark">search</span>
-                  </div>
-                  <input ref={searchInputRef} type="text" placeholder="Search by text... (Ctrl+K)" value={query} onChange={(e) => setQuery(e.target.value)} className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white text-base md:text-lg pl-[3.75rem] md:pl-[4.25rem] pr-5 py-4 md:py-5 rounded-full focus:outline-none transition-colors duration-300 placeholder-gray-500 dark:placeholder-gray-400 focus:bg-white dark:focus:bg-black/20" />
-                </div>
-                <div className={`grid transition-[grid-template-rows] duration-500 ease-out ${activeFilters.length > 0 ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-                  <div className="overflow-hidden">
-                    <div className="flex flex-wrap justify-center gap-2 md:gap-3 pt-2 pb-5 md:pb-6">
-                      {activeFilters.map((filter) => (
-                        <div key={`${filter.key}-${filter.value}`} className="inline-flex items-center gap-2 bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 px-4 py-1.5 rounded-full text-sm font-bold transition-transform duration-300 hover:scale-105">
-                          <span className="capitalize opacity-80 font-medium">{filter.key}:</span><span>{filter.value}</span>
-                          <button onClick={() => toggleFilter(filter.key, filter.value)} className="flex items-center justify-center hover:rotate-90 hover:bg-white/20 dark:hover:bg-black/10 rounded-full p-0.5 ml-1 transition-all duration-300"><span className="material-symbols-rounded text-[1.1rem]">close</span></button>
+                  <div className="relative z-10 pt-6 pb-4 md:pt-10 md:pb-6 max-w-4xl mx-auto px-3 sm:px-4 md:px-8">
+                    <div className="flex flex-col gap-3 md:gap-4 mb-2 md:mb-4">
+                      {/* Search Bar + Controls */}
+                      <div className="flex flex-row items-center gap-2 md:gap-3 px-1 md:px-2">
+                        <div className="relative flex-1 group transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
+                          <div className="absolute inset-y-0 left-0 flex items-center pl-5 md:pl-6 pointer-events-none z-10 transition-transform duration-500">
+                            <span className="material-symbols-rounded transition-colors duration-300 text-gray-500 dark:text-gray-400 group-focus-within:text-m3-primary dark:group-focus-within:text-m3-primary-dark">search</span>
+                          </div>
+                          <input ref={searchInputRef} type="text" placeholder="Search by text... (Ctrl+K)" value={query} onChange={(e) => setQuery(e.target.value)} className="w-full bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white text-base md:text-lg pl-[3.75rem] md:pl-[4.25rem] pr-[3.75rem] py-4 md:py-5 rounded-full border border-m3-surface-high dark:border-m3-surface-high-dark focus:border-m3-primary dark:focus:border-m3-primary-dark focus:ring-1 focus:ring-m3-primary dark:focus:ring-m3-primary-dark focus:outline-none transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+                          <div ref={viewOptionsRef} className="absolute inset-y-0 right-2 flex items-center">
+                            <button onClick={() => setIsViewOptionsOpen(!isViewOptionsOpen)} className={`p-2 md:p-3 rounded-full transition-all duration-300 flex items-center justify-center ${isViewOptionsOpen ? 'bg-m3-primary/15 dark:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark' : 'text-gray-500 hover:text-m3-primary dark:text-gray-400 dark:hover:text-m3-primary-dark hover:bg-gray-100 dark:hover:bg-m3-surface-high-dark'}`} title="View Options">
+                              <span className="material-symbols-rounded text-xl md:text-2xl transition-transform duration-500 group-hover:rotate-180">tune</span>
+                            </button>
+                            
+                            {/* Dropdown Menu attached to the search bar */}
+                            <AnimatePresence>
+                              {isViewOptionsOpen && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="absolute top-[calc(100%+0.5rem)] right-0 w-[90vw] max-w-[22rem] bg-m3-surface-container dark:bg-m3-surface-container-dark rounded-3xl border border-m3-surface-high dark:border-m3-surface-high-dark overflow-hidden z-[100] origin-top-right flex flex-col gap-3 p-4"
+                                >
+                                  <div className="relative flex items-center bg-m3-surface dark:bg-m3-surface-dark p-1 rounded-full border border-m3-surface-high dark:border-m3-surface-high-dark mx-auto w-[220px]">
+                                    <div className={`absolute top-1 bottom-1 w-[105px] rounded-full bg-m3-primary dark:bg-m3-primary-dark transition-transform duration-500 ease-out ${language === "english" ? "translate-x-0" : "translate-x-[107px]"}`} />
+                                    <button onClick={() => setLanguage("english")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "english" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>English</button>
+                                    <button onClick={() => setLanguage("devanagari")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "devanagari" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>Devanagari</button>
+                                  </div>
+                                  <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`w-full group flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold border transition-all duration-300 ${showFavoritesOnly ? "bg-m3-error dark:bg-m3-error-dark text-white dark:text-gray-900 border-transparent" : "bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20"}`}>
+                                    <span className="material-symbols-rounded text-[1.25rem] transition-all duration-300" style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
+                                    <span>{showFavoritesOnly ? "Favorites Only" : "All Bandishes"}</span>
+                                  </button>
+                                  <button onClick={() => { const next = !enableGlur; setEnableGlur(next); localStorage.setItem("wiki-glur", String(next)); }} className="w-full group flex items-center justify-center gap-2 bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
+                                    <span className="material-symbols-rounded text-[1.25rem]">{enableGlur ? "blur_on" : "blur_off"}</span>
+                                    <span>{enableGlur ? "Disable Header Blur" : "Enable Header Blur"}</span>
+                                  </button>
+                                  <button onClick={toggleDarkMode} className="w-full group flex items-center justify-center gap-2 bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
+                                    <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>{isDarkMode ? "light_mode" : "dark_mode"}</span>
+                                    <span>{isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
+                                  </button>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
                         </div>
-                      ))}
-                      {activeFilters.length > 1 && (
-                        <button onClick={() => setActiveFilters([])} className="text-sm font-bold text-m3-primary dark:text-m3-primary-dark hover:text-gray-900 dark:hover:text-white underline underline-offset-4 px-2 active:scale-95 transition-transform duration-200">Clear All</button>
-                      )}
+
+                        {/* Info Button (Hidden on Mobile Search Row) */}
+                        <button onClick={() => setIsInfoOpen(true)} className="group hidden sm:flex items-center justify-center w-[3.5rem] h-[3.5rem] p-0 bg-m3-surface-container dark:bg-m3-surface-container-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 border border-m3-surface-high dark:border-m3-surface-high-dark shrink-0" title="How to use the wiki">
+                          <span className="material-symbols-rounded text-[1.5rem]">info</span>
+                        </button>
+
+                        {/* Add Button */}
+                        {isAdmin ? (
+                          <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="group flex items-center justify-center w-[3.5rem] h-[3.5rem] sm:w-auto sm:px-6 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 shrink-0" title="Add a new Bandish">
+                            <span className="material-symbols-rounded text-[1.5rem]">add</span>
+                            <span className="hidden sm:block font-bold text-sm ml-1">Add</span>
+                          </button>
+                        ) : (
+                          <a
+                            href="https://forms.gle/sTqp5q4Ym6JLzaSA9"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex items-center justify-center w-[3.5rem] h-[3.5rem] sm:w-auto sm:px-6 bg-m3-surface-container dark:bg-m3-surface-container-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 border border-m3-surface-high dark:border-m3-surface-high-dark shrink-0"
+                            title="Submit a Bandish"
+                          >
+                            <span className="material-symbols-rounded text-[1.5rem]">add</span>
+                            <span className="hidden sm:block font-bold text-sm ml-1">Submit</span>
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Meta/Summary Row */}
+                      <div className="flex flex-row items-center justify-between px-2 pt-1 md:pt-0">
+                        <p className="text-xs md:text-sm text-m3-secondary dark:text-m3-secondary-dark font-medium transition-all duration-300">
+                          Showing <span className="font-bold">{bandishCount}</span> bandish{bandishCount !== 1 ? "es" : ""} across <span className="font-bold">{uniqueRaagsCount}</span> raag{uniqueRaagsCount !== 1 ? "s" : ""}
+                        </p>
+                        {/* Info Button for Mobile */}
+                        <button onClick={() => setIsInfoOpen(true)} className="sm:hidden flex items-center text-m3-primary dark:text-m3-primary-dark p-1" title="How to use the wiki">
+                          <span className="material-symbols-rounded text-[1.25rem]">info</span>
+                        </button>
+                      </div>
+
+                      {/* Active Filters */}
+                      <div className={`grid transition-[grid-template-rows] duration-500 ease-out ${activeFilters.length > 0 ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                        <div className="overflow-hidden">
+                          <div className="flex flex-wrap justify-start gap-2 md:gap-3 pt-1 px-2">
+                            {activeFilters.map((filter) => (
+                              <div key={`${filter.key}-${filter.value}`} className="inline-flex items-center gap-2 bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 px-3 md:px-4 py-1 md:py-1.5 rounded-full text-xs md:text-sm font-bold transition-transform duration-300 hover:scale-105">
+                                <span className="capitalize opacity-80 font-medium">{filter.key}:</span><span>{filter.value}</span>
+                                <button onClick={() => toggleFilter(filter.key, filter.value)} className="flex items-center justify-center hover:rotate-90 hover:bg-white/20 dark:hover:bg-black/10 rounded-full p-0.5 ml-1 transition-all duration-300"><span className="material-symbols-rounded text-[1.1rem] md:text-[1.25rem]">close</span></button>
+                              </div>
+                            ))}
+                            {activeFilters.length > 1 && (
+                              <button onClick={() => setActiveFilters([])} className="text-xs md:text-sm font-bold text-m3-primary dark:text-m3-primary-dark hover:text-gray-900 dark:hover:text-white underline underline-offset-4 px-2 active:scale-95 transition-transform duration-200">Clear All</button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                {/* --- CONTROLS ROW --- */}
-                <div className="flex flex-wrap justify-center relative z-50">
-                  <button onClick={() => setIsViewOptionsOpen(!isViewOptionsOpen)} className="group flex items-center justify-center gap-2 bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300 hover:scale-105 active:scale-95">
-                    <span className="material-symbols-rounded text-[1.25rem]">tune</span>
-                    <span>View Options</span>
-                  </button>
-
-                  {isViewOptionsOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setIsViewOptionsOpen(false)}></div>
-                      <div className="absolute top-full mt-3 flex flex-col gap-3 p-4 bg-white dark:bg-m3-surface-container-dark rounded-[1.5rem] border border-gray-100 dark:border-m3-surface-high-dark z-50 animate-modal-enter origin-top min-w-[280px]">
-                        <div className="relative flex items-center bg-m3-surface-container dark:bg-m3-surface-dark/50 p-1 rounded-full border border-gray-200 dark:border-gray-700 mx-auto">
-                          <div className={`absolute top-1 bottom-1 w-[105px] rounded-full bg-m3-primary dark:bg-m3-primary-dark transition-transform duration-500 ease-out ${language === "english" ? "translate-x-0" : "translate-x-[105px]"}`} />
-                          <button onClick={() => setLanguage("english")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "english" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>English</button>
-                          <button onClick={() => setLanguage("devanagari")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "devanagari" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>Devanagari</button>
-                        </div>
-                        <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`w-full group flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold border transition-all duration-300 ${showFavoritesOnly ? "bg-m3-error dark:bg-m3-error-dark text-white dark:text-gray-900 border-transparent" : "bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20"}`}>
-                          <span className="material-symbols-rounded text-[1.25rem] transition-all duration-300" style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
-                          <span>{showFavoritesOnly ? "Favorites Only" : "All Bandishes"}</span>
+                {/* --- BANDISH GRID --- */}
+                <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-8 space-y-6 md:space-y-8 pb-8">
+                  {!isMounted ? (
+                  <div className="min-h-[50vh] flex flex-col items-center justify-center gap-6">
+                    <M3LoadingIndicator size={96} contained={true} color={isDarkMode ? "#D0BCFF" : "#6750A4"} containerColor={isDarkMode ? "#211F26" : "#F3EDF7"} />
+                  </div>
+                ) : bandishCount === 0 ? (
+                  <div className="min-h-[40vh] flex flex-col items-center justify-center gap-6 text-center px-4 animate-fade-in mt-8 md:mt-12">
+                    <div className="w-24 h-24 bg-m3-surface-container dark:bg-m3-surface-container-dark rounded-full flex items-center justify-center mb-2">
+                      <span className="material-symbols-rounded text-5xl text-m3-secondary dark:text-m3-secondary-dark opacity-60">search_off</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wdth" 120' }}>No bandishes found</h3>
+                      <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                        We couldn't find any compositions matching your filters.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
+                      {(query || activeFilters.length > 0) && (
+                        <button onClick={() => { setQuery(""); setActiveFilters([]); }} className="px-6 py-3 rounded-full font-bold text-m3-primary dark:text-m3-primary-dark bg-m3-primary/10 dark:bg-m3-primary-dark/10 hover:bg-m3-primary/20 transition-colors">
+                          Clear Filters
                         </button>
-                        <button onClick={toggleDarkMode} className="w-full group flex items-center justify-center gap-2 bg-m3-surface-container dark:bg-m3-surface-dark/50 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-gray-200 dark:border-gray-700 hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
-                          <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>{isDarkMode ? "light_mode" : "dark_mode"}</span>
-                          <span>{isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
+                      )}
+                      {isAdmin ? (
+                        <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="px-6 py-3 rounded-full font-bold text-white bg-m3-primary dark:bg-m3-primary-dark hover:bg-m3-primary/90 transition-transform active:scale-95 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05]">
+                          Add New Bandish
                         </button>
-                      </div>
-                    </>
-                  )}
+                      ) : (
+                        <a href="https://forms.gle/sTqp5q4Ym6JLzaSA9" target="_blank" rel="noopener noreferrer" className="px-6 py-3 rounded-full font-bold text-white bg-m3-primary dark:bg-m3-primary-dark hover:bg-m3-primary/90 transition-transform active:scale-95 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05]">
+                          Submit a New Bandish
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  memoizedGrid
+                )}
                 </div>
-              </div>
-              {/* --- BANDISH GRID --- */}
-              {!isMounted ? (
-                <div className="min-h-[50vh] flex flex-col items-center justify-center gap-6">
-                  <M3LoadingIndicator size={96} contained={true} color={isDarkMode ? "#D0BCFF" : "#6750A4"} containerColor={isDarkMode ? "#211F26" : "#F3EDF7"} />
-                </div>
-              ) : memoizedGrid}
-            </>
-          )}
-        </div>
-      </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
       {/* --- INFO MODAL --- */}
       {isInfoOpen && (
@@ -827,7 +934,7 @@ export default function Home() {
       {/* --- CUSTOM TOAST NOTIFICATION --- */}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] animate-modal-enter">
-          <div className={`flex items-center gap-3 px-6 py-4 rounded-full shadow-lg border font-bold ${toast.type === 'error' ? 'bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark border-m3-error-dark/30' : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800/50'}`}>
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-full border font-bold ${toast.type === 'error' ? 'bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark border-m3-error-dark/30' : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800/50'}`}>
             <span className="material-symbols-rounded">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
             <span>{toast.message}</span>
             <button onClick={() => setToast(null)} className="ml-2 hover:opacity-70 flex items-center justify-center"><span className="material-symbols-rounded text-lg">close</span></button>

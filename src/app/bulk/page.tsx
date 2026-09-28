@@ -47,7 +47,7 @@ export default function BulkUpload() {
 
   return (
     <div className="min-h-screen bg-m3-surface dark:bg-m3-surface-dark p-6 md:p-12 text-gray-900 dark:text-white transition-colors duration-500 flex items-start justify-center">
-      <div className="w-full max-w-2xl bg-m3-surface-container dark:bg-m3-surface-container-dark p-8 md:p-10 rounded-[2.5rem] border border-m3-surface-high dark:border-m3-surface-high-dark shadow-sm animate-modal-enter mt-12 md:mt-20">
+      <div className="w-full max-w-2xl bg-m3-surface-container dark:bg-m3-surface-container-dark p-8 md:p-10 rounded-[2.5rem] border border-m3-surface-high dark:border-m3-surface-high-dark animate-modal-enter mt-12 md:mt-20">
         <div className="mb-8 text-center">
           <span className="material-symbols-rounded text-5xl text-m3-primary dark:text-m3-primary-dark mb-4 inline-block">library_add</span>
           <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Bulk Uploader</h1>
