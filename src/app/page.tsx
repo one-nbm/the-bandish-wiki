@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useDeferredValue, useRef } from "react";
+import { useState, useEffect, useMemo, useDeferredValue, useRef, useCallback } from "react";
 import Link from "next/link";
 import Fuse from "fuse.js";
 import CopyButton from "@/components/CopyButton";
@@ -9,6 +9,7 @@ import { useTheme } from "./ThemeProvider";
 import { M3LoadingIndicator } from "@alerix/m3-loading-indicator/react";
 import { checkIsEditor, addBandishSecurely, updateBandishSecurely, deleteBandishSecurely } from "./actions";
 import WelcomeScreen from "@/components/WelcomeScreen";
+import { BandishCard } from "@/components/BandishCard";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
@@ -265,26 +266,23 @@ export default function Home() {
     }
   };
 
-  const toggleFilter = (key: string, value: string) => {
+  const toggleFilter = useCallback((key: string, value: string) => {
     setActiveFilters((prev) => {
       const isAlreadyActive = prev.some((f) => f.key === key && f.value === value);
       if (isAlreadyActive) return prev.filter((f) => !(f.key === key && f.value === value));
       return [...prev, { key, value }];
     });
-  };
+  }, []);
 
-  const toggleFavorite = async (e: React.MouseEvent, id: string) => {
+  const toggleFavorite = useCallback(async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
 
-    // First calculate the new state
     const newFavs = favorites.includes(id)
       ? favorites.filter((favId) => favId !== id)
       : [...favorites, id];
 
-    // Update local state immediately for snappy UI
     setFavorites(newFavs);
 
-    // Sync with storage based on auth state
     if (isSignedIn) {
       await supabase.auth.updateUser({
         data: { favorites: newFavs }
@@ -292,7 +290,7 @@ export default function Home() {
     } else {
       localStorage.setItem("wiki-favorites", JSON.stringify(newFavs));
     }
-  };
+  }, [favorites, isSignedIn, supabase]);
 
   // --- 7. DATA PROCESSING ---
   const preSearchData = useMemo(() => {
@@ -345,7 +343,8 @@ export default function Home() {
 
   // --- 8. MEMOIZED GRID ---
   const selectedBandishId = selectedBandish?.id ?? null;
-  const memoizedGrid = useMemo(() => {
+  
+  const renderGrid = () => {
     if (processedData.length === 0 && !suggestedRaag && !suggestedComposer) {
       return (
         <div className="text-center py-16 animate-card">
@@ -365,9 +364,7 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">Looking for Raag {suggestedRaag}?</h2>
             </div>
             <p className="text-gray-700 dark:text-gray-300 mb-6 text-[1.05rem]">Switch to a tag filter to see a clean list of all bandishes in this raag.</p>
-            {/* Action Buttons Container */}
             <div className="flex flex-wrap gap-3 mt-1">
-              {/* 1. Existing Filter Button */}
               <button
                 onClick={() => { toggleFilter("raag", suggestedRaag); setQuery(""); }}
                 className="flex items-center gap-2 bg-m3-secondary hover:bg-m3-secondary/90 dark:bg-m3-secondary-dark dark:hover:bg-m3-secondary-dark/90 text-white dark:text-gray-900 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95"
@@ -375,8 +372,6 @@ export default function Home() {
                 <span className="material-symbols-rounded text-[1.2rem]">filter_list</span>
                 Filter by {suggestedRaag}
               </button>
-
-              {/* 2. Dedicated Raag Page Button */}
               <Link
                 href={`/raag/${suggestedRaag.toLowerCase().replace(/\s+/g, '-')}`}
                 className="flex items-center gap-2 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 group"
@@ -401,80 +396,22 @@ export default function Home() {
           </div>
         )}
 
-        {processedData.map((bandish, index) => {
-          const isFavorited = favorites.includes(bandish.id);
-          const renditionCount = bandish.youtube_renditions?.length ?? 0;
-          return (
-            <motion.div
-              key={bandish.id}
-              layoutId={`bandish-card-${bandish.id}`}
-              onClick={() => setSelectedBandish(bandish)}
-              className="group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4"
-              style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
-              animate={{ opacity: selectedBandishId === bandish.id ? 0 : 1 }}
-              whileHover={{ y: -6 }}
-              transition={{
-                layout: { duration: 0.2, ease: [0.4, 0, 0.2, 1] },
-                opacity: {
-                  duration: 0.1,
-                  delay: selectedBandishId === bandish.id ? 0 : 0.2,
-                },
-              }}
-            >
-              {/* Renditions Badge */}
-              {renditionCount > 0 && (
-                <div className="group/rendition absolute top-5 right-[3.75rem] z-10 h-11 flex items-center" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500 px-1.5 rounded-full transition-all duration-300 cursor-default">
-                    <span className="material-symbols-rounded text-[1.1rem]" style={{ fontVariationSettings: '"FILL" 1' }}>play_circle</span>
-                    <span className="text-xs font-semibold leading-none">{renditionCount}</span>
-                  </div>
-                  {/* Tooltip */}
-                  <div className="pointer-events-none absolute top-full right-0 mt-2 opacity-0 group-hover/rendition:opacity-100 transition-opacity duration-200 z-20">
-                    <div className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap">
-                      This bandish has {renditionCount} rendition{renditionCount !== 1 ? "s" : ""}
-                    </div>
-                  </div>
-                </div>
-              )}
-              <button onClick={(e) => toggleFavorite(e, bandish.id)} className={`absolute top-5 right-5 w-11 h-11 flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-90 ${isFavorited ? "text-m3-error dark:text-m3-error-dark bg-m3-error/10 dark:bg-m3-error-dark/20" : "text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`} aria-label="Toggle Favorite">
-                <span className="material-symbols-rounded text-[1.4rem] transition-all duration-300" style={{ fontVariationSettings: isFavorited ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
-              </button>
-              <div className="flex justify-between items-start mb-3 pr-28 md:pr-32">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{bandish.title}</h2>
-              </div>
-              <div className="flex flex-wrap gap-2 mb-5">
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleFilter("raag", bandish.raag); }}
-                  className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
-                >
-                  {bandish.raag}
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleFilter("taal", bandish.taal); }}
-                  className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
-                >
-                  {bandish.taal}
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); toggleFilter("composer", bandish.composer); }}
-                  className="bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 hover:bg-m3-tertiary/20 dark:hover:bg-m3-tertiary-dark/20 text-m3-tertiary dark:text-m3-tertiary-dark px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
-                >
-                  {bandish.composer}
-                </button>
-              </div>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4 whitespace-pre-wrap text-[1.05rem] transition-colors duration-300 line-clamp-4">
-                {language === "english" ? bandish.lyrics.english : (bandish.lyrics.devanagari || "Devanagari lyrics not available")}
-              </p>
-              <div className="mt-2 pt-2 flex items-center text-m3-primary dark:text-m3-primary-dark text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <span>Read Full Bandish</span>
-                <span className="material-symbols-rounded text-[1.2rem] ml-1">arrow_forward</span>
-              </div>
-            </motion.div>
-          );
-        })}
+        {processedData.map((bandish, index) => (
+          <BandishCard
+            key={bandish.id}
+            bandish={bandish}
+            index={index}
+            isSelected={selectedBandishId === bandish.id}
+            isFavorited={favorites.includes(bandish.id)}
+            language={language}
+            onSelect={setSelectedBandish}
+            onToggleFavorite={toggleFavorite}
+            onToggleFilter={toggleFilter}
+          />
+        ))}
       </div>
     );
-  }, [processedData, favorites, language, suggestedRaag, suggestedComposer, showFavoritesOnly, selectedBandishId]);
+  };
 
   // --- 9. SHARED FORM JSX (Used by Add and Edit Modals) ---
   const renderForm = (isEdit: boolean) => (
@@ -693,7 +630,7 @@ export default function Home() {
                     </div>
                   </div>
                 ) : (
-                  memoizedGrid
+                  renderGrid()
                 )}
                 </div>
               </motion.div>
