@@ -54,7 +54,6 @@ export default function Home() {
   const [confirmDialog, setConfirmDialog] = useState<{ message: string, onConfirm: () => void } | null>(null);
   const [isViewOptionsOpen, setIsViewOptionsOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const viewOptionsRef = useRef<HTMLDivElement>(null);
   const [enableGlur, setEnableGlur] = useState(true);
 
   // --- 5. EFFECTS ---
@@ -107,18 +106,6 @@ export default function Home() {
     fetchUserAndFavorites();
     fetchBandishes();
   }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (viewOptionsRef.current && !viewOptionsRef.current.contains(e.target as Node)) {
-        setIsViewOptionsOpen(false);
-      }
-    };
-    if (isViewOptionsOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isViewOptionsOpen]);
 
   // Lock Background Scrolling
   useEffect(() => {
@@ -417,7 +404,7 @@ export default function Home() {
           const isFavorited = favorites.includes(bandish.id);
           const renditionCount = bandish.youtube_renditions?.length ?? 0;
           return (
-            <div key={bandish.id} onClick={() => setSelectedBandish(bandish)} className="group relative animate-card bg-white dark:bg-m3-surface-container-dark hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01] cursor-pointer break-inside-avoid mb-4" style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}>
+            <div key={bandish.id} onClick={() => setSelectedBandish(bandish)} className="group relative animate-card bg-white dark:bg-m3-surface-container-dark hover:bg-m3-surface dark:hover:bg-m3-surface-high-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01] cursor-pointer break-inside-avoid mb-4" style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}>
               {/* Renditions Badge */}
               {renditionCount > 0 && (
                 <div className="group/rendition absolute top-5 right-[3.75rem] z-10 h-11 flex items-center" onClick={(e) => e.stopPropagation()}>
@@ -576,14 +563,14 @@ export default function Home() {
                     <div
                       className="absolute inset-x-0 top-0 h-[calc(100%+2rem)] md:h-[calc(100%+3rem)] pointer-events-none z-0"
                     >
-                      <div className="absolute inset-0 bg-m3-surface/50 dark:bg-m3-surface-dark/50" style={{ maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }} />
+                      <div className="absolute inset-0 bg-m3-surface-container/60 dark:bg-m3-surface-container-dark/60" style={{ maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }} />
                       <div className="absolute inset-0" style={{ backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)', maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)' }} />
                       <div className="absolute inset-0" style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', maskImage: 'linear-gradient(to bottom, black 40%, transparent 80%)', WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 80%)' }} />
                       <div className="absolute inset-0" style={{ backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', maskImage: 'linear-gradient(to bottom, black 20%, transparent 60%)', WebkitMaskImage: 'linear-gradient(to bottom, black 20%, transparent 60%)' }} />
                       <div className="absolute inset-0" style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', maskImage: 'linear-gradient(to bottom, black 0%, transparent 40%)', WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 40%)' }} />
                     </div>
                   ) : (
-                    <div className="absolute inset-x-0 top-0 bottom-0 pointer-events-none z-[-1] bg-m3-surface dark:bg-m3-surface-dark border-b border-gray-200 dark:border-gray-800" />
+                    <div className="absolute inset-x-0 top-0 bottom-0 pointer-events-none z-[-1] bg-m3-surface-container dark:bg-m3-surface-container-dark border-b border-gray-200 dark:border-gray-800" />
                   )}
                   <div className="relative z-10 pt-6 pb-4 md:pt-10 md:pb-6 max-w-4xl mx-auto px-3 sm:px-4 md:px-8">
                     <div className="flex flex-col gap-3 md:gap-4 mb-2 md:mb-4">
@@ -594,41 +581,10 @@ export default function Home() {
                             <span className="material-symbols-rounded transition-colors duration-300 text-gray-500 dark:text-gray-400 group-focus-within:text-m3-primary dark:group-focus-within:text-m3-primary-dark">search</span>
                           </div>
                           <input ref={searchInputRef} type="text" placeholder="Search by text... (Ctrl+K)" value={query} onChange={(e) => setQuery(e.target.value)} className="w-full bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white text-base md:text-lg pl-[3.75rem] md:pl-[4.25rem] pr-[3.75rem] py-4 md:py-5 rounded-full border border-m3-surface-high dark:border-m3-surface-high-dark focus:border-m3-primary dark:focus:border-m3-primary-dark focus:ring-1 focus:ring-m3-primary dark:focus:ring-m3-primary-dark focus:outline-none transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-                          <div ref={viewOptionsRef} className="absolute inset-y-0 right-2 flex items-center">
+                          <div className="absolute inset-y-0 right-2 flex items-center">
                             <button onClick={() => setIsViewOptionsOpen(!isViewOptionsOpen)} className={`p-2 md:p-3 rounded-full transition-all duration-300 flex items-center justify-center ${isViewOptionsOpen ? 'bg-m3-primary/15 dark:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark' : 'text-gray-500 hover:text-m3-primary dark:text-gray-400 dark:hover:text-m3-primary-dark hover:bg-gray-100 dark:hover:bg-m3-surface-high-dark'}`} title="View Options">
                               <span className="material-symbols-rounded text-xl md:text-2xl transition-transform duration-500 group-hover:rotate-180">tune</span>
                             </button>
-                            
-                            {/* Dropdown Menu attached to the search bar */}
-                            <AnimatePresence>
-                              {isViewOptionsOpen && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                                  transition={{ duration: 0.2 }}
-                                  className="absolute top-[calc(100%+0.5rem)] right-0 w-[90vw] max-w-[22rem] bg-m3-surface-container dark:bg-m3-surface-container-dark rounded-3xl border border-m3-surface-high dark:border-m3-surface-high-dark overflow-hidden z-[100] origin-top-right flex flex-col gap-3 p-4"
-                                >
-                                  <div className="relative flex items-center bg-m3-surface dark:bg-m3-surface-dark p-1 rounded-full border border-m3-surface-high dark:border-m3-surface-high-dark mx-auto w-[220px]">
-                                    <div className={`absolute top-1 bottom-1 w-[105px] rounded-full bg-m3-primary dark:bg-m3-primary-dark transition-transform duration-500 ease-out ${language === "english" ? "translate-x-0" : "translate-x-[107px]"}`} />
-                                    <button onClick={() => setLanguage("english")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "english" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>English</button>
-                                    <button onClick={() => setLanguage("devanagari")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "devanagari" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>Devanagari</button>
-                                  </div>
-                                  <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`w-full group flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold border transition-all duration-300 ${showFavoritesOnly ? "bg-m3-error dark:bg-m3-error-dark text-white dark:text-gray-900 border-transparent" : "bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20"}`}>
-                                    <span className="material-symbols-rounded text-[1.25rem] transition-all duration-300" style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
-                                    <span>{showFavoritesOnly ? "Favorites Only" : "All Bandishes"}</span>
-                                  </button>
-                                  <button onClick={() => { const next = !enableGlur; setEnableGlur(next); localStorage.setItem("wiki-glur", String(next)); }} className="w-full group flex items-center justify-center gap-2 bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
-                                    <span className="material-symbols-rounded text-[1.25rem]">{enableGlur ? "blur_on" : "blur_off"}</span>
-                                    <span>{enableGlur ? "Disable Header Blur" : "Enable Header Blur"}</span>
-                                  </button>
-                                  <button onClick={toggleDarkMode} className="w-full group flex items-center justify-center gap-2 bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
-                                    <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>{isDarkMode ? "light_mode" : "dark_mode"}</span>
-                                    <span>{isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
-                                  </button>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
                           </div>
                         </div>
 
@@ -941,6 +897,41 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* --- VIEW OPTIONS MODAL --- */}
+      <AnimatePresence>
+        {isViewOptionsOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" onClick={() => setIsViewOptionsOpen(false)}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm"></motion.div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="relative w-full max-w-[22rem] bg-m3-surface-container dark:bg-m3-surface-container-dark rounded-3xl border border-m3-surface-high dark:border-m3-surface-high-dark overflow-hidden flex flex-col gap-3 p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative flex items-center bg-m3-surface dark:bg-m3-surface-dark p-1 rounded-full border border-m3-surface-high dark:border-m3-surface-high-dark mx-auto w-[220px]">
+                <div className={`absolute top-1 bottom-1 w-[105px] rounded-full bg-m3-primary dark:bg-m3-primary-dark transition-transform duration-500 ease-out ${language === "english" ? "translate-x-0" : "translate-x-[107px]"}`} />
+                <button onClick={() => setLanguage("english")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "english" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>English</button>
+                <button onClick={() => setLanguage("devanagari")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "devanagari" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>Devanagari</button>
+              </div>
+              <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`w-full group flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold border transition-all duration-300 ${showFavoritesOnly ? "bg-m3-error dark:bg-m3-error-dark text-white dark:text-gray-900 border-transparent" : "bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20"}`}>
+                <span className="material-symbols-rounded text-[1.25rem] transition-all duration-300" style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
+                <span>{showFavoritesOnly ? "Favorites Only" : "All Bandishes"}</span>
+              </button>
+              <button onClick={() => { const next = !enableGlur; setEnableGlur(next); localStorage.setItem("wiki-glur", String(next)); }} className="w-full group flex items-center justify-center gap-2 bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
+                <span className="material-symbols-rounded text-[1.25rem]">{enableGlur ? "blur_on" : "blur_off"}</span>
+                <span>{enableGlur ? "Disable Header Blur" : "Enable Header Blur"}</span>
+              </button>
+              <button onClick={toggleDarkMode} className="w-full group flex items-center justify-center gap-2 bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
+                <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>{isDarkMode ? "light_mode" : "dark_mode"}</span>
+                <span>{isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
