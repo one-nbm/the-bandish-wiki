@@ -121,7 +121,7 @@ export default function Home() {
   }, [selectedBandish, isInfoOpen, isAddOpen, editingBandish]);
 
   // --- 6. HANDLERS ---
-  const closeModal = () => { setIsClosing(true); setTimeout(() => { setSelectedBandish(null); setIsClosing(false); }, 300); };
+  const closeModal = () => { setSelectedBandish(null); };
   const closeInfoModal = () => { setIsInfoClosing(true); setTimeout(() => { setIsInfoOpen(false); setIsInfoClosing(false); }, 300); };
 
   const clearForm = () => {
@@ -404,7 +404,15 @@ export default function Home() {
           const isFavorited = favorites.includes(bandish.id);
           const renditionCount = bandish.youtube_renditions?.length ?? 0;
           return (
-            <div key={bandish.id} onClick={() => setSelectedBandish(bandish)} className="group relative animate-card bg-white dark:bg-m3-surface-container-dark hover:bg-m3-surface dark:hover:bg-m3-surface-high-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01] cursor-pointer break-inside-avoid mb-4" style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}>
+            <motion.div
+              key={bandish.id}
+              layoutId={`bandish-card-${bandish.id}`}
+              onClick={() => setSelectedBandish(bandish)}
+              className="group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4"
+              style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
+              whileHover={{ y: -8, scale: 1.01, backgroundColor: 'var(--color-m3-surface, #FEF7FF)' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            >
               {/* Renditions Badge */}
               {renditionCount > 0 && (
                 <div className="group/rendition absolute top-5 right-[3.75rem] z-10 h-11 flex items-center" onClick={(e) => e.stopPropagation()}>
@@ -424,10 +432,9 @@ export default function Home() {
                 <span className="material-symbols-rounded text-[1.4rem] transition-all duration-300" style={{ fontVariationSettings: isFavorited ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
               </button>
               <div className="flex justify-between items-start mb-3 pr-28 md:pr-32">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{bandish.title}</h2>
+                <motion.h2 layoutId={`bandish-title-${bandish.id}`} className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{bandish.title}</motion.h2>
               </div>
               <div className="flex flex-wrap gap-2 mb-5">
-                {/* UPDATED: Now uses secondary/10 so it never blends into the card hover state! */}
                 <button
                   onClick={(e) => { e.stopPropagation(); toggleFilter("raag", bandish.raag); }}
                   className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
@@ -454,12 +461,12 @@ export default function Home() {
                 <span>Read Full Bandish</span>
                 <span className="material-symbols-rounded text-[1.2rem] ml-1">arrow_forward</span>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
     );
-  }, [processedData, favorites, language, suggestedRaag, suggestedComposer, showFavoritesOnly]);
+  }, [processedData, favorites, language, suggestedRaag, suggestedComposer, showFavoritesOnly, selectedBandish]);
 
   // --- 9. SHARED FORM JSX (Used by Add and Edit Modals) ---
   const renderForm = (isEdit: boolean) => (
@@ -796,10 +803,22 @@ export default function Home() {
       )}
 
       {/* --- EXPANDED BANDISH MODAL --- */}
+      <AnimatePresence>
       {selectedBandish && !editingBandish && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" onClick={closeModal}>
-          <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
-          <div className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
+          <motion.div
+            className="absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          />
+          <motion.div
+            layoutId={`bandish-card-${selectedBandish.id}`}
+            className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar"
+            onClick={(e) => e.stopPropagation()}
+            transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+          >
             <div className="absolute top-6 right-6 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3">
               <button onClick={closeModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-all duration-200 hover:scale-105 active:scale-95">
                 <span className="material-symbols-rounded text-[1.4rem]">close</span>
@@ -811,13 +830,13 @@ export default function Home() {
               )}
             </div>
             <div className="pr-12 mb-8 mt-2">
-              {/* UPDATED: Added your custom fontVariationSettings to perfectly match the edit screen */}
-              <h2
+              <motion.h2
+                layoutId={`bandish-title-${selectedBandish.id}`}
                 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight"
                 style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
               >
                 {selectedBandish.title}
-              </h2>
+              </motion.h2>
 
               <div className="flex flex-wrap gap-3">
                 {/* UPDATED: Clickable Raag Link */}
@@ -867,9 +886,10 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
+      </AnimatePresence>
 
       {/* --- CUSTOM CONFIRM DIALOG --- */}
       {confirmDialog && (
