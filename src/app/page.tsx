@@ -344,6 +344,7 @@ export default function Home() {
   }, [deferredQuery, fuseComposers, activeFilters]);
 
   // --- 8. MEMOIZED GRID ---
+  const selectedBandishId = selectedBandish?.id ?? null;
   const memoizedGrid = useMemo(() => {
     if (processedData.length === 0 && !suggestedRaag && !suggestedComposer) {
       return (
@@ -410,8 +411,15 @@ export default function Home() {
               onClick={() => setSelectedBandish(bandish)}
               className="group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4"
               style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
-              whileHover={{ y: -8, scale: 1.01, backgroundColor: 'var(--color-m3-surface, #FEF7FF)' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              animate={{ opacity: selectedBandishId === bandish.id ? 0 : 1 }}
+              whileHover={{ y: -6 }}
+              transition={{
+                layout: { duration: 0.2, ease: [0.4, 0, 0.2, 1] },
+                opacity: {
+                  duration: 0.1,
+                  delay: selectedBandishId === bandish.id ? 0 : 0.2,
+                },
+              }}
             >
               {/* Renditions Badge */}
               {renditionCount > 0 && (
@@ -432,7 +440,7 @@ export default function Home() {
                 <span className="material-symbols-rounded text-[1.4rem] transition-all duration-300" style={{ fontVariationSettings: isFavorited ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
               </button>
               <div className="flex justify-between items-start mb-3 pr-28 md:pr-32">
-                <motion.h2 layoutId={`bandish-title-${bandish.id}`} className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{bandish.title}</motion.h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{bandish.title}</h2>
               </div>
               <div className="flex flex-wrap gap-2 mb-5">
                 <button
@@ -466,7 +474,7 @@ export default function Home() {
         })}
       </div>
     );
-  }, [processedData, favorites, language, suggestedRaag, suggestedComposer, showFavoritesOnly, selectedBandish]);
+  }, [processedData, favorites, language, suggestedRaag, suggestedComposer, showFavoritesOnly, selectedBandishId]);
 
   // --- 9. SHARED FORM JSX (Used by Add and Edit Modals) ---
   const renderForm = (isEdit: boolean) => (
@@ -817,7 +825,7 @@ export default function Home() {
             layoutId={`bandish-card-${selectedBandish.id}`}
             className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar"
             onClick={(e) => e.stopPropagation()}
-            transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
           >
             <div className="absolute top-6 right-6 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3">
               <button onClick={closeModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-all duration-200 hover:scale-105 active:scale-95">
@@ -830,13 +838,12 @@ export default function Home() {
               )}
             </div>
             <div className="pr-12 mb-8 mt-2">
-              <motion.h2
-                layoutId={`bandish-title-${selectedBandish.id}`}
+              <h2
                 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight"
                 style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
               >
                 {selectedBandish.title}
-              </motion.h2>
+              </h2>
 
               <div className="flex flex-wrap gap-3">
                 {/* UPDATED: Clickable Raag Link */}
