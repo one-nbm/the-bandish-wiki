@@ -570,7 +570,7 @@ export default function Home() {
                 className="w-full"
               >
                 {/* --- HERO SEARCH SECTION --- */}
-                <div className="sticky top-0 z-[100] mb-6 md:mb-8">
+                <div className="sticky top-0 z-40 mb-6 md:mb-8">
                   {/* PROGRESSIVE GLUR BACKGROUND */}
                   {enableGlur ? (
                     <div
