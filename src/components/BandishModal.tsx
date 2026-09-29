@@ -180,7 +180,7 @@ export function BandishModal({ bandish, sourceRect, isAdmin, onClose, onEdit }: 
       <div
         ref={backdropRef}
         className="absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm"
-        style={{ opacity: 0 }}
+        style={{ opacity: 0, willChange: "opacity" }}
       />
 
       {/*
@@ -192,7 +192,7 @@ export function BandishModal({ bandish, sourceRect, isAdmin, onClose, onEdit }: 
       <div
         ref={panelRef}
         className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] p-8 md:p-12 border border-gray-100 dark:border-m3-surface-high-dark m3-scrollbar"
-        style={{ opacity: 0, willChange: "transform, opacity, border-radius" }}
+        style={{ opacity: 0, willChange: "transform, opacity, border-radius", contain: "layout style paint" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute top-6 right-6 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3">
