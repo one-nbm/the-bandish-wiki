@@ -137,7 +137,7 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
       {/* Background Gradient Blob based on Samay */}
       <div className={`absolute inset-0 bg-gradient-to-br ${timeState.themeClass} opacity-50 dark:opacity-30 blur-3xl pointer-events-none transition-all duration-1000`} />
 
-      <div className="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center text-center">
+      <div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center text-center">
 
         {/* Greeting & Samay Indicator */}
         <div

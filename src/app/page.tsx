@@ -360,7 +360,7 @@ export default function Home() {
     }
 
     return (
-      <div className="columns-1 md:columns-2 gap-4">
+      <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
         {suggestedRaag && (
           <div className="group relative bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 p-6 md:p-8 rounded-3xl border border-m3-secondary/20 flex flex-col items-start break-inside-avoid mb-4 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01]">
             <div className="flex items-center gap-3 mb-4">
@@ -422,29 +422,29 @@ export default function Home() {
     <form noValidate onSubmit={(e) => handleFormSubmit(e, isEdit)} className="space-y-6 md:space-y-8">
       <div>
         <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Title</label>
-        <input type="text" autoFocus required placeholder="e.g. Hori Khelan Ko" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+        <input type="text" autoFocus required placeholder="e.g. Hori Khelan Ko" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Raag</label>
-          <input type="text" required placeholder="e.g. Des" value={formRaag} onChange={(e) => setFormRaag(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+          <input type="text" required placeholder="e.g. Des" value={formRaag} onChange={(e) => setFormRaag(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
         </div>
         <div>
           <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Taal</label>
-          <input type="text" required placeholder="e.g. Tintal" value={formTaal} onChange={(e) => setFormTaal(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+          <input type="text" required placeholder="e.g. Tintal" value={formTaal} onChange={(e) => setFormTaal(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
         </div>
         <div>
           <label className="block text-xs font-bold text-m3-tertiary dark:text-m3-tertiary-dark uppercase tracking-wider mb-2">Composer</label>
-          <input type="text" required placeholder="e.g. Traditional" value={formComposer} onChange={(e) => setFormComposer(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-tertiary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+          <input type="text" required placeholder="e.g. Traditional" value={formComposer} onChange={(e) => setFormComposer(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-tertiary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
         </div>
       </div>
       <div>
         <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">English Transliteration (Required)</label>
-        <textarea required placeholder="Enter the phonetic lyrics here..." value={formEnglish} onChange={(e) => setFormEnglish(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" />
+        <textarea required placeholder="Enter the phonetic lyrics here..." value={formEnglish} onChange={(e) => setFormEnglish(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" />
       </div>
       <div>
         <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Devanagari Script (Optional)</label>
-        <textarea placeholder="होली खेलन को चले कन्हैयाँ..." value={formDevanagari} onChange={(e) => setFormDevanagari(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" />
+        <textarea placeholder="होली खेलन को चले कन्हैयाँ..." value={formDevanagari} onChange={(e) => setFormDevanagari(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" />
       </div>
       <hr className="border-gray-200 dark:border-m3-surface-high-dark my-2" />
       <div className="flex flex-col md:flex-row gap-6 items-end">
@@ -490,7 +490,7 @@ export default function Home() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}
-                className="w-full max-w-4xl mx-auto p-3 sm:p-4 md:p-8"
+                className="w-full max-w-5xl mx-auto p-3 sm:p-4 md:p-8"
               >
                 <WelcomeScreen
                   query={query}
@@ -528,7 +528,7 @@ export default function Home() {
                   ) : (
                     <div className="absolute inset-x-0 top-0 bottom-0 pointer-events-none z-[-1] bg-m3-surface-container dark:bg-m3-surface-container-dark" />
                   )}
-                  <div className="relative z-10 pt-6 pb-4 md:pt-10 md:pb-6 max-w-4xl mx-auto px-3 sm:px-4 md:px-8">
+                  <div className="relative z-10 pt-6 pb-4 md:pt-10 md:pb-6 max-w-7xl mx-auto px-4 sm:px-8 md:px-16 lg:px-24">
                     <div className="flex flex-col gap-3 md:gap-4 mb-2 md:mb-4">
                       {/* Search Bar + Controls */}
                       <div className="flex flex-row items-center gap-2 md:gap-3 px-1 md:px-2">
@@ -600,7 +600,7 @@ export default function Home() {
                   </div>
                 </div>
                 {/* --- BANDISH GRID --- */}
-                <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-8 space-y-6 md:space-y-8 pb-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-8 md:px-16 lg:px-24 space-y-6 md:space-y-8 pb-8">
                   {!isMounted ? (
                   <div className="min-h-[50vh] flex flex-col items-center justify-center gap-6">
                     <M3LoadingIndicator size={96} contained={true} color={isDarkMode ? "#D0BCFF" : "#6750A4"} containerColor={isDarkMode ? "#211F26" : "#F3EDF7"} />

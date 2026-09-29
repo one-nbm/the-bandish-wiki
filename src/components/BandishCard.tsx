@@ -61,19 +61,19 @@ export const BandishCard = memo(({
       <div className="flex flex-wrap gap-2 mb-5">
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFilter("raag", bandish.raag); }}
-          className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+          className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-2xl text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
         >
           {bandish.raag}
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFilter("taal", bandish.taal); }}
-          className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+          className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-2xl text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
         >
           {bandish.taal}
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFilter("composer", bandish.composer); }}
-          className="bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 hover:bg-m3-tertiary/20 dark:hover:bg-m3-tertiary-dark/20 text-m3-tertiary dark:text-m3-tertiary-dark px-3 py-1.5 rounded-full text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+          className="bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 hover:bg-m3-tertiary/20 dark:hover:bg-m3-tertiary-dark/20 text-m3-tertiary dark:text-m3-tertiary-dark px-3 py-1.5 rounded-2xl text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
         >
           {bandish.composer}
         </button>
