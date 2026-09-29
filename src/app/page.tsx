@@ -3,13 +3,13 @@
 import { useState, useEffect, useMemo, useDeferredValue, useRef, useCallback } from "react";
 import Link from "next/link";
 import Fuse from "fuse.js";
-import CopyButton from "@/components/CopyButton";
 import { createClient } from "@/utils/supabase/client";
 import { useTheme } from "./ThemeProvider";
 import { M3LoadingIndicator } from "@alerix/m3-loading-indicator/react";
 import { checkIsEditor, addBandishSecurely, updateBandishSecurely, deleteBandishSecurely } from "./actions";
 import WelcomeScreen from "@/components/WelcomeScreen";
 import { BandishCard } from "@/components/BandishCard";
+import { BandishModal } from "@/components/BandishModal";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
@@ -34,7 +34,7 @@ export default function Home() {
 
   // --- 3. MODAL VISIBILITY STATES ---
   const [selectedBandish, setSelectedBandish] = useState<any | null>(null);
-  const [isClosing, setIsClosing] = useState(false);
+  const [selectedBandishRect, setSelectedBandishRect] = useState<DOMRect | null>(null);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isInfoClosing, setIsInfoClosing] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -122,7 +122,11 @@ export default function Home() {
   }, [selectedBandish, isInfoOpen, isAddOpen, editingBandish]);
 
   // --- 6. HANDLERS ---
-  const closeModal = () => { setSelectedBandish(null); };
+  const closeModal = () => { setSelectedBandish(null); setSelectedBandishRect(null); };
+  const selectBandish = useCallback((bandish: any, rect: DOMRect) => {
+    setSelectedBandish(bandish);
+    setSelectedBandishRect(rect);
+  }, []);
   const closeInfoModal = () => { setIsInfoClosing(true); setTimeout(() => { setIsInfoOpen(false); setIsInfoClosing(false); }, 300); };
 
   const clearForm = () => {
@@ -161,7 +165,7 @@ export default function Home() {
         else if (isAddOpen) closeAddModal();
         else if (editingBandish) closeEditModal();
         else if (isInfoOpen) closeInfoModal();
-        else if (selectedBandish) closeModal();
+        // Note: selectedBandish / BandishModal handles its own Escape key internally with animation
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
@@ -182,7 +186,7 @@ export default function Home() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("reset-browsing", handleResetBrowsing);
     };
-  }, [toast, confirmDialog, isViewOptionsOpen, isAddOpen, editingBandish, isInfoOpen, selectedBandish]);
+  }, [toast, confirmDialog, isViewOptionsOpen, isAddOpen, editingBandish, isInfoOpen]);
 
   const handleFormSubmit = async (e: React.FormEvent, isEdit: boolean, action: 'save' | 'delete' = 'save') => {
     e.preventDefault();
@@ -343,7 +347,7 @@ export default function Home() {
 
   // --- 8. MEMOIZED GRID ---
   const selectedBandishId = selectedBandish?.id ?? null;
-  
+
   const renderGrid = () => {
     if (processedData.length === 0 && !suggestedRaag && !suggestedComposer) {
       return (
@@ -404,7 +408,7 @@ export default function Home() {
             isSelected={selectedBandishId === bandish.id}
             isFavorited={favorites.includes(bandish.id)}
             language={language}
-            onSelect={setSelectedBandish}
+            onSelect={selectBandish}
             onToggleFavorite={toggleFavorite}
             onToggleFilter={toggleFilter}
           />
@@ -747,93 +751,17 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- EXPANDED BANDISH MODAL --- */}
-      <AnimatePresence>
+      {/* --- EXPANDED BANDISH MODAL (GPU-accelerated FLIP animation, no layoutId) --- */}
       {selectedBandish && !editingBandish && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" onClick={closeModal}>
-          <motion.div
-            className="absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          />
-          <motion.div
-            layoutId={`bandish-card-${selectedBandish.id}`}
-            className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] p-8 md:p-12 border border-gray-100 dark:border-m3-surface-high-dark m3-scrollbar"
-            onClick={(e) => e.stopPropagation()}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-          >
-            <div className="absolute top-6 right-6 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3">
-              <button onClick={closeModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-all duration-200 hover:scale-105 active:scale-95">
-                <span className="material-symbols-rounded text-[1.4rem]">close</span>
-              </button>
-              {isAdmin && (
-                <button onClick={() => openEditModal(selectedBandish)} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-200 hover:scale-105 active:scale-95" title="Edit Bandish">
-                  <span className="material-symbols-rounded text-[1.4rem]">edit</span>
-                </button>
-              )}
-            </div>
-            <div className="pr-12 mb-8 mt-2">
-              <h2
-                className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight"
-                style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
-              >
-                {selectedBandish.title}
-              </h2>
-
-              <div className="flex flex-wrap gap-3">
-                {/* UPDATED: Clickable Raag Link */}
-                <Link
-                  href={`/raag/${selectedBandish.raag.toLowerCase().replace(/\s+/g, '-')}`}
-                  className="group flex items-center gap-1.5 bg-m3-secondary/10 hover:bg-m3-secondary/20 dark:bg-m3-secondary-dark/10 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-4 py-2 rounded-full text-sm font-bold tracking-wide transition-all duration-300"
-                >
-                  {selectedBandish.raag}
-                  <span className="material-symbols-rounded text-[1rem] transition-transform group-hover:translate-x-1 group-hover:-translate-y-1">arrow_outward</span>
-                </Link>
-
-                {/* Static Taal and Composer Tags */}
-                <span className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-4 py-2 rounded-full text-sm font-bold tracking-wide">
-                  {selectedBandish.taal}
-                </span>
-                <span className="bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 text-m3-tertiary dark:text-m3-tertiary-dark px-4 py-2 rounded-full text-sm font-bold tracking-wide">
-                  {selectedBandish.composer}
-                </span>
-              </div>
-            </div>
-            <div className="space-y-8 md:space-y-10">
-              {selectedBandish.lyrics.devanagari && (
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider transition-colors duration-300">Devanagari</h3>
-                    <CopyButton textToCopy={selectedBandish.lyrics.devanagari} />
-                  </div>
-                  <p className="text-gray-900 dark:text-white text-xl md:text-2xl leading-relaxed whitespace-pre-wrap font-medium transition-colors duration-300">{selectedBandish.lyrics.devanagari}</p>
-                </div>
-              )}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider transition-colors duration-300">Transliteration</h3>
-                  <CopyButton textToCopy={selectedBandish.lyrics.english} />
-                </div>
-                <p className="text-gray-900 dark:text-white text-xl md:text-2xl leading-relaxed whitespace-pre-wrap font-medium transition-colors duration-300">{selectedBandish.lyrics.english}</p>
-              </div>
-
-              {/* NEW: Open Full View Button */}
-              <div className="pt-4 flex justify-end">
-                <Link
-                  href={`/bandish/${selectedBandish.id}`}
-                  className="flex items-center gap-2 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark px-6 py-3 rounded-full text-sm font-bold transition-all duration-300 hover:scale-105 active:scale-95"
-                >
-                  <span>Open Full View</span>
-                  <span className="material-symbols-rounded text-[1.2rem]">arrow_outward</span>
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+        <BandishModal
+          key={selectedBandish.id}
+          bandish={selectedBandish}
+          sourceRect={selectedBandishRect}
+          isAdmin={isAdmin}
+          onClose={closeModal}
+          onEdit={openEditModal}
+        />
       )}
-      </AnimatePresence>
 
       {/* --- CUSTOM CONFIRM DIALOG --- */}
       {confirmDialog && (

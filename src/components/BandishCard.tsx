@@ -1,5 +1,4 @@
-import React, { memo } from "react";
-import { motion } from "framer-motion";
+import React, { memo, useRef, useCallback } from "react";
 
 export const BandishCard = memo(({
   bandish,
@@ -9,34 +8,34 @@ export const BandishCard = memo(({
   language,
   onSelect,
   onToggleFavorite,
-  onToggleFilter
+  onToggleFilter,
 }: {
   bandish: any;
   index: number;
   isSelected: boolean;
   isFavorited: boolean;
   language: string;
-  onSelect: (bandish: any) => void;
+  onSelect: (bandish: any, rect: DOMRect) => void;
   onToggleFavorite: (e: React.MouseEvent, id: string) => void;
   onToggleFilter: (key: string, value: string) => void;
 }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
   const renditionCount = bandish.youtube_renditions?.length ?? 0;
 
+  const handleClick = useCallback(() => {
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      onSelect(bandish, rect);
+    }
+  }, [bandish, onSelect]);
+
   return (
-    <motion.div
-      layoutId={`bandish-card-${bandish.id}`}
-      onClick={() => onSelect(bandish)}
-      className="group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4"
-      style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
-      animate={{ opacity: isSelected ? 0 : 1 }}
-      whileHover={{ y: -6 }}
-      transition={{
-        layout: { duration: 0.2, ease: [0.4, 0, 0.2, 1] },
-        opacity: {
-          duration: 0.1,
-          delay: isSelected ? 0 : 0.2,
-        },
-      }}
+    <div
+      ref={cardRef}
+      onClick={handleClick}
+      data-bandish-id={bandish.id}
+      className="group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4 transition-[transform,opacity] duration-200 ease-out hover:-translate-y-[6px]"
+      style={{ animationDelay: `${Math.min(index * 40, 400)}ms`, opacity: isSelected ? 0 : 1 }}
     >
       {/* Renditions Badge */}
       {renditionCount > 0 && (
@@ -86,6 +85,6 @@ export const BandishCard = memo(({
         <span>Read Full Bandish</span>
         <span className="material-symbols-rounded text-[1.2rem] ml-1">arrow_forward</span>
       </div>
-    </motion.div>
+    </div>
   );
 });
