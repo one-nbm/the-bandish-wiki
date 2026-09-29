@@ -34,7 +34,7 @@ export const BandishCard = memo(({
       ref={cardRef}
       onClick={handleClick}
       data-bandish-id={bandish.id}
-      className="group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4 transition-[transform,opacity] duration-200 ease-out hover:-translate-y-[6px]"
+      className="group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4 transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2"
       style={{ animationDelay: `${Math.min(index * 40, 400)}ms`, opacity: isSelected ? 0 : 1 }}
     >
       {/* Renditions Badge */}
