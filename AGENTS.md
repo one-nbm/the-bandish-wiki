@@ -15,5 +15,24 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 2. **ELEVATION:** Achieve depth and interactive elevation exclusively through `border` classes (e.g., `border-m3-surface-high`) and hover transforms (e.g., `hover:-translate-y-1`).
 3. **MODALS:** Modals and floating elements must use borders to separate themselves from the background, not shadows.
 4. **BLUR / GLUR:** When using progressive blurs or `backdrop-filter`, ensure the container has no `transform` properties (like `translateZ(0)`) that would flatten the stacking context and break the blur.
+5. **MORPHING MODALS**: When opening or closing a modal, the modal should animate from the size and position of the element that triggered it, and the source card should not be visible or fade out when the modal is open.
+6. **Z-INDEX STRATA**: NEVER use z-indexes higher than 40. 
+- Base Grid Elements: `z-1` to `z-10`
+- Sticky Header / Glur: `z-40`
+- Modals / Overlays: `z-50` to `z-60`
+- Toasts / Dialogs: `z-70` to `z-80`
+- *(Never elevate animated grid items above z-40 so they slide under the header).*    
+
 
 <!-- END:bandish-wiki-design-rules -->
+
+<!-- BEGIN:agent-behavior-rules -->
+
+# Agent Behavior Rules (STRICT)
+1. Before writing any code, list the potential edge cases, explain your architectural approach, and outline the steps you will take.
+2. Do not use placeholders, code omissions, or TODO comments. Write out the complete, functional implementation from start to finish.
+3. After you write code that optimizes performance, rate it on 1-10 on how well it will help the performance of the site, and keep editing until you reach at least an 8/10
+
+<!-- END:agent-behavior-rules -->
+
+

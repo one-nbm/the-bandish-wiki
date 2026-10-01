@@ -22,6 +22,11 @@ export default function Home() {
   const [language, setLanguage] = useState("english");
   const [activeFilters, setActiveFilters] = useState<{ key: string, value: string }[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const favoritesRef = useRef<string[]>(favorites);
+  
+  useEffect(() => {
+    favoritesRef.current = favorites;
+  }, [favorites]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [hasStartedBrowsing, setHasStartedBrowsing] = useState(false);
 
@@ -281,9 +286,10 @@ export default function Home() {
   const toggleFavorite = useCallback(async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
 
-    const newFavs = favorites.includes(id)
-      ? favorites.filter((favId) => favId !== id)
-      : [...favorites, id];
+    const currentFavs = favoritesRef.current;
+    const newFavs = currentFavs.includes(id)
+      ? currentFavs.filter((favId) => favId !== id)
+      : [...currentFavs, id];
 
     setFavorites(newFavs);
 
@@ -294,7 +300,7 @@ export default function Home() {
     } else {
       localStorage.setItem("wiki-favorites", JSON.stringify(newFavs));
     }
-  }, [favorites, isSignedIn, supabase]);
+  }, [isSignedIn, supabase]);
 
   // --- 7. DATA PROCESSING ---
   const preSearchData = useMemo(() => {
@@ -362,7 +368,7 @@ export default function Home() {
     return (
       <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
         {suggestedRaag && (
-          <div className="group relative bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 p-6 md:p-8 rounded-3xl border border-m3-secondary/20 flex flex-col items-start break-inside-avoid mb-4 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01]">
+          <div className="group relative bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 p-6 md:p-8 rounded-3xl border border-m3-secondary/20 flex flex-col items-start break-inside-avoid mb-4 transition duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01] transform-gpu">
             <div className="flex items-center gap-3 mb-4">
               <span className="material-symbols-rounded text-[2rem] text-m3-secondary dark:text-m3-secondary-dark">manage_search</span>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">Looking for Raag {suggestedRaag}?</h2>
@@ -388,7 +394,7 @@ export default function Home() {
         )}
 
         {suggestedComposer && (
-          <div className="group relative bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 p-6 md:p-8 rounded-3xl border border-m3-tertiary/20 flex flex-col items-start break-inside-avoid mb-4 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01]">
+          <div className="group relative bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 p-6 md:p-8 rounded-3xl border border-m3-tertiary/20 flex flex-col items-start break-inside-avoid mb-4 transition duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01] transform-gpu">
             <div className="flex items-center gap-3 mb-4">
               <span className="material-symbols-rounded text-[2rem] text-m3-tertiary dark:text-m3-tertiary-dark">person_search</span>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">Looking for {suggestedComposer}?</h2>

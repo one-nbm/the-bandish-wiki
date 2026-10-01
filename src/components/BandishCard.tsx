@@ -1,4 +1,5 @@
 import React, { memo, useRef, useCallback } from "react";
+import { motion } from "framer-motion";
 
 export const BandishCard = memo(({
   bandish,
@@ -30,12 +31,24 @@ export const BandishCard = memo(({
   }, [bandish, onSelect]);
 
   return (
-    <div
-      ref={cardRef}
+    <motion.div
+      layoutId={`bandish-${bandish.id}`}
+      ref={cardRef as any}
       onClick={handleClick}
       data-bandish-id={bandish.id}
-      className="group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4 transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2"
-      style={{ animationDelay: `${Math.min(index * 40, 400)}ms`, opacity: isSelected ? 0 : 1 }}
+      className="group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4"
+      whileHover={{ y: -8 }}
+      transition={{ 
+        layout: { type: "spring", bounce: 0, duration: 0.4 },
+        y: { type: "spring", bounce: 0.4, duration: 0.4 }
+      }}
+      onLayoutAnimationStart={() => {
+        if (cardRef.current) cardRef.current.style.zIndex = "30";
+      }}
+      onLayoutAnimationComplete={() => {
+        if (cardRef.current) cardRef.current.style.zIndex = "";
+      }}
+      style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
     >
       {/* Renditions Badge */}
       {renditionCount > 0 && (
@@ -52,8 +65,8 @@ export const BandishCard = memo(({
           </div>
         </div>
       )}
-      <button onClick={(e) => onToggleFavorite(e, bandish.id)} className={`absolute top-5 right-5 w-11 h-11 flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-90 ${isFavorited ? "text-m3-error dark:text-m3-error-dark bg-m3-error/10 dark:bg-m3-error-dark/20" : "text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`} aria-label="Toggle Favorite">
-        <span className="material-symbols-rounded text-[1.4rem] transition-all duration-300" style={{ fontVariationSettings: isFavorited ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
+      <button onClick={(e) => onToggleFavorite(e, bandish.id)} className={`absolute top-5 right-5 w-11 h-11 flex items-center justify-center rounded-full transition duration-300 hover:scale-110 active:scale-90 ${isFavorited ? "text-m3-error dark:text-m3-error-dark bg-m3-error/10 dark:bg-m3-error-dark/20" : "text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`} aria-label="Toggle Favorite">
+        <span className="material-symbols-rounded text-[1.4rem] transition" style={{ fontVariationSettings: isFavorited ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
       </button>
       <div className="flex justify-between items-start mb-3 pr-28 md:pr-32">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{bandish.title}</h2>
@@ -61,19 +74,19 @@ export const BandishCard = memo(({
       <div className="flex flex-wrap gap-2 mb-5">
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFilter("raag", bandish.raag); }}
-          className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-2xl text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+          className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-2xl text-sm font-bold tracking-wide transition duration-200 text-left hover:scale-105 active:scale-95"
         >
           {bandish.raag}
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFilter("taal", bandish.taal); }}
-          className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-2xl text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+          className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-2xl text-sm font-bold tracking-wide transition duration-200 text-left hover:scale-105 active:scale-95"
         >
           {bandish.taal}
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFilter("composer", bandish.composer); }}
-          className="bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 hover:bg-m3-tertiary/20 dark:hover:bg-m3-tertiary-dark/20 text-m3-tertiary dark:text-m3-tertiary-dark px-3 py-1.5 rounded-2xl text-sm font-bold tracking-wide transition-all duration-200 text-left hover:scale-105 active:scale-95"
+          className="bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 hover:bg-m3-tertiary/20 dark:hover:bg-m3-tertiary-dark/20 text-m3-tertiary dark:text-m3-tertiary-dark px-3 py-1.5 rounded-2xl text-sm font-bold tracking-wide transition duration-200 text-left hover:scale-105 active:scale-95"
         >
           {bandish.composer}
         </button>
@@ -85,6 +98,6 @@ export const BandishCard = memo(({
         <span>Read Full Bandish</span>
         <span className="material-symbols-rounded text-[1.2rem] ml-1">arrow_forward</span>
       </div>
-    </div>
+    </motion.div>
   );
 });
