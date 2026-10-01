@@ -44,6 +44,28 @@ body {
   animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 
+/* --- CARD HOVER LIFT ---
+   Pure CSS compositor-thread hover. Zero JS — no Framer spring overhead.
+   will-change promotes each card to its own GPU compositor layer immediately,
+   so the first hover is instant with no layer-promotion stutter.
+
+   CSS uses the transition defined at the TARGET state:
+   - Hovering IN: uses the :hover rule's transition (springy overshoot)
+   - Hovering OUT: uses the base rule's transition (smooth ease-out settle)
+*/
+.bandish-card {
+  will-change: transform;
+  transform: translateY(0) translateZ(0);
+  /* Leave transition: fast smooth ease */
+  transition: transform 280ms ease-out;
+}
+.bandish-card:hover {
+  transform: translateY(-8px) translateZ(0);
+  /* Enter transition: slight overshoot spring for premium feel */
+  transition: transform 300ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+
 /* --- NEW MODAL ANIMATIONS --- */
 @keyframes backdropEnter {
   from { opacity: 0; }
