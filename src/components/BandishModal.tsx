@@ -3,7 +3,7 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import CopyButton from "@/components/CopyButton";
-import { motion } from "framer-motion";
+import { motion, useIsPresent } from "framer-motion";
 
 interface BandishModalProps {
   bandish: any;
@@ -14,6 +14,8 @@ interface BandishModalProps {
 }
 
 export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModalProps) {
+  const isPresent = useIsPresent();
+
   // Escape key handler
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -33,7 +35,7 @@ export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModal
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.35, ease: "easeInOut" }}
+        transition={{ duration: isPresent ? 0.35 : 0.2, ease: "easeInOut" }}
         className="absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm"
         style={{ willChange: "opacity" }}
       />
@@ -46,15 +48,19 @@ export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModal
       */}
       <motion.div
         layoutId={`bandish-${bandish.id}`}
-        transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+        transition={{
+          layout: isPresent
+            ? { type: "spring", stiffness: 400, damping: 40 }
+            : { type: "spring", stiffness: 700, damping: 45 }
+        }}
         className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-m3-surface-container-dark rounded-[2rem] border border-gray-100 dark:border-m3-surface-high-dark m3-scrollbar"
         onClick={(e) => e.stopPropagation()}
-        style={{ willChange: "transform, opacity, border-radius" }}
+        style={{ willChange: "transform, opacity, border-radius", transform: "translateZ(0)" }}
       >
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, transition: { duration: 0.15 } }}
+          exit={{ opacity: 0, transition: { duration: 0.1, delay: 0 } }}
           transition={{ duration: 0.25, delay: 0.1 }}
           className="p-8 md:p-12"
         >

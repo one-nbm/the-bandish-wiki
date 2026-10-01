@@ -37,8 +37,10 @@ export const BandishCard = memo(({
       onClick={handleClick}
       data-bandish-id={bandish.id}
       className="bandish-card group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-[2rem] border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4"
-      transition={{ 
-        layout: { type: "spring", bounce: 0, duration: 0.4 }
+      transition={{
+        layout: isSelected 
+          ? { type: "spring", stiffness: 400, damping: 40 }
+          : { type: "spring", stiffness: 700, damping: 45 } // Snaps back instantly if interrupted
       }}
       onLayoutAnimationStart={() => {
         if (cardRef.current) cardRef.current.style.zIndex = "30";
