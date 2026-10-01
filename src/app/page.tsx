@@ -39,6 +39,7 @@ export default function Home() {
 
   // --- 3. MODAL VISIBILITY STATES ---
   const [selectedBandish, setSelectedBandish] = useState<any | null>(null);
+  const [isModalAnimating, setIsModalAnimating] = useState(false);
   const [selectedBandishRect, setSelectedBandishRect] = useState<DOMRect | null>(null);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isInfoClosing, setIsInfoClosing] = useState(false);
@@ -131,6 +132,7 @@ export default function Home() {
   const selectBandish = useCallback((bandish: any, rect: DOMRect) => {
     setSelectedBandish(bandish);
     setSelectedBandishRect(rect);
+    setIsModalAnimating(true);
   }, []);
   const closeInfoModal = () => { setIsInfoClosing(true); setTimeout(() => { setIsInfoOpen(false); setIsInfoClosing(false); }, 300); };
 
@@ -521,7 +523,7 @@ export default function Home() {
                 {/* --- HERO SEARCH SECTION --- */}
                 <div className="sticky top-0 z-40 mb-6 md:mb-8">
                   {/* PROGRESSIVE GLUR BACKGROUND */}
-                  {enableGlur ? (
+                  {enableGlur && !isModalAnimating && (
                     <div
                       className="absolute inset-x-0 top-0 h-[calc(100%+2rem)] md:h-[calc(100%+3rem)] pointer-events-none z-0"
                     >
@@ -531,7 +533,16 @@ export default function Home() {
                       <div className="absolute inset-0" style={{ backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', maskImage: 'linear-gradient(to bottom, black 20%, transparent 60%)', WebkitMaskImage: 'linear-gradient(to bottom, black 20%, transparent 60%)' }} />
                       <div className="absolute inset-0" style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', maskImage: 'linear-gradient(to bottom, black 0%, transparent 40%)', WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 40%)' }} />
                     </div>
-                  ) : (
+                  )}
+                  {/* FAST FALLBACK GRADIENT DURING ANIMATION (No Blur) */}
+                  {enableGlur && isModalAnimating && (
+                    <div
+                      className="absolute inset-x-0 top-0 h-[calc(100%+2rem)] md:h-[calc(100%+3rem)] pointer-events-none z-0"
+                    >
+                      <div className="absolute inset-0 bg-m3-surface-container dark:bg-m3-surface-dark" style={{ maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)' }} />
+                    </div>
+                  )}
+                  {!enableGlur && (
                     <div className="absolute inset-x-0 top-0 bottom-0 pointer-events-none z-[-1] bg-m3-surface-container dark:bg-m3-surface-container-dark" />
                   )}
                   <div className="relative z-10 pt-6 pb-4 md:pt-10 md:pb-6 max-w-7xl mx-auto px-4 sm:px-8 md:px-16 lg:px-24">
@@ -757,17 +768,19 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- EXPANDED BANDISH MODAL (GPU-accelerated FLIP animation, no layoutId) --- */}
-      {selectedBandish && !editingBandish && (
-        <BandishModal
-          key={selectedBandish.id}
-          bandish={selectedBandish}
-          sourceRect={selectedBandishRect}
-          isAdmin={isAdmin}
-          onClose={closeModal}
-          onEdit={openEditModal}
-        />
-      )}
+      {/* --- EXPANDED BANDISH MODAL (GPU-accelerated FLIP animation) --- */}
+      <AnimatePresence onExitComplete={() => setIsModalAnimating(false)}>
+        {selectedBandish && !editingBandish && (
+          <BandishModal
+            key={`modal-${selectedBandish.id}`}
+            bandish={selectedBandish}
+            sourceRect={selectedBandishRect}
+            isAdmin={isAdmin}
+            onClose={closeModal}
+            onEdit={openEditModal}
+          />
+        )}
+      </AnimatePresence>
 
       {/* --- CUSTOM CONFIRM DIALOG --- */}
       {confirmDialog && (

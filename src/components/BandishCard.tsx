@@ -36,7 +36,7 @@ export const BandishCard = memo(({
       ref={cardRef as any}
       onClick={handleClick}
       data-bandish-id={bandish.id}
-      className="group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-3xl border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4"
+      className="group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-[2rem] border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4"
       whileHover={{ y: -8 }}
       transition={{ 
         layout: { type: "spring", bounce: 0, duration: 0.4 },

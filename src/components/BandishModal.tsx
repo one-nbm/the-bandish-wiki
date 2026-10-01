@@ -47,7 +47,7 @@ export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModal
       <motion.div
         layoutId={`bandish-${bandish.id}`}
         transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark m3-scrollbar"
+        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-m3-surface-container-dark rounded-[2rem] border border-gray-100 dark:border-m3-surface-high-dark m3-scrollbar"
         onClick={(e) => e.stopPropagation()}
         style={{ willChange: "transform, opacity, border-radius" }}
       >
