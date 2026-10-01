@@ -128,7 +128,13 @@ export default function Home() {
   }, [selectedBandish, isInfoOpen, isAddOpen, editingBandish]);
 
   // --- 6. HANDLERS ---
-  const closeModal = () => { setSelectedBandish(null); setSelectedBandishRect(null); };
+  const closeModal = () => {
+    // BandishModal calls this after its 420ms animation already completes.
+    // Reset isModalAnimating immediately so the glur restores without delay.
+    setIsModalAnimating(false);
+    setSelectedBandish(null);
+    setSelectedBandishRect(null);
+  };
   const selectBandish = useCallback((bandish: any, rect: DOMRect) => {
     setSelectedBandish(bandish);
     setSelectedBandishRect(rect);
@@ -768,19 +774,17 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- EXPANDED BANDISH MODAL (GPU-accelerated FLIP animation) --- */}
-      <AnimatePresence onExitComplete={() => setIsModalAnimating(false)}>
-        {selectedBandish && !editingBandish && (
-          <BandishModal
-            key={`modal-${selectedBandish.id}`}
-            bandish={selectedBandish}
-            sourceRect={selectedBandishRect}
-            isAdmin={isAdmin}
-            onClose={closeModal}
-            onEdit={openEditModal}
-          />
-        )}
-      </AnimatePresence>
+      {/* --- EXPANDED BANDISH MODAL (manual FLIP CSS animation) --- */}
+      {selectedBandish && !editingBandish && (
+        <BandishModal
+          key={`modal-${selectedBandish.id}`}
+          bandish={selectedBandish}
+          sourceRect={selectedBandishRect}
+          isAdmin={isAdmin}
+          onClose={closeModal}
+          onEdit={openEditModal}
+        />
+      )}
 
       {/* --- CUSTOM CONFIRM DIALOG --- */}
       {confirmDialog && (
