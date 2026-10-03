@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useDeferredValue, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, startTransition, forwardRef } from "react";
 import Link from "next/link";
 import Fuse from "fuse.js";
 import { createClient } from "@/utils/supabase/client";
@@ -12,13 +12,43 @@ import { BandishCard } from "@/components/BandishCard";
 import { BandishModal } from "@/components/BandishModal";
 import { motion, AnimatePresence } from "framer-motion";
 
+const FastSearchInput = forwardRef<HTMLInputElement, {
+  initialValue: string;
+  onSearchChange: (val: string) => void;
+  className?: string;
+  placeholder?: string;
+}>(({ initialValue, onSearchChange, className, placeholder }, ref) => {
+  const [localValue, setLocalValue] = useState(initialValue);
+
+  // Sync with external resets (like when a filter clears the search)
+  useEffect(() => {
+    setLocalValue(initialValue);
+  }, [initialValue]);
+
+  return (
+    <input
+      ref={ref}
+      type="text"
+      value={localValue}
+      onChange={(e) => {
+        const val = e.target.value;
+        setLocalValue(val);
+        startTransition(() => {
+          onSearchChange(val);
+        });
+      }}
+      className={className}
+      placeholder={placeholder}
+    />
+  );
+});
+
 export default function Home() {
   const supabase = createClient();
   const { isDarkMode, toggleDarkMode } = useTheme();
 
   // --- 1. SEARCH & FILTER STATES ---
   const [query, setQuery] = useState("");
-  const deferredQuery = useDeferredValue(query);
   const [language, setLanguage] = useState("english");
   const [activeFilters, setActiveFilters] = useState<{ key: string, value: string }[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -29,6 +59,13 @@ export default function Home() {
   }, [favorites]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [hasStartedBrowsing, setHasStartedBrowsing] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  useEffect(() => {
+    if (query.trim() !== "" || activeFilters.length > 0 || showFavoritesOnly) {
+      setHasSearched(true);
+    }
+  }, [query, activeFilters, showFavoritesOnly]);
 
   // --- 2. DATA STATES ---
   const [baseData, setBaseData] = useState<any[]>([]);
@@ -146,8 +183,14 @@ export default function Home() {
     setTimeout(() => { setIsAddOpen(false); setIsAddClosing(false); clearForm(); }, 300);
   };
 
-  const closeEditModal = () => {
+  const closeEditModal = (bandishOverride?: any, forceClose?: boolean) => {
     setIsEditClosing(true);
+    const isEvent = bandishOverride && bandishOverride.nativeEvent;
+    const bandishToRestore = (!forceClose && !isEvent && bandishOverride) ? bandishOverride : (!forceClose ? editingBandish : null);
+    
+    if (bandishToRestore) {
+      setSelectedBandish(bandishToRestore);
+    }
     setTimeout(() => { setEditingBandish(null); setIsEditClosing(false); clearForm(); }, 300);
   };
 
@@ -213,7 +256,7 @@ export default function Home() {
         if (!result.success) throw new Error(result.error);
 
         setBaseData(prev => prev.filter(b => b.id !== editingBandish.id));
-        closeEditModal();
+        closeEditModal(null, true);
       } catch (error: any) {
         console.error("❌ SUPABASE ERROR:", error);
         setToast({ message: `Database Error: ${error.message || "Check console for details"}`, type: 'error' });
@@ -253,10 +296,13 @@ export default function Home() {
         const result = await updateBandishSecurely(editingBandish.id, payload);
         if (!result.success) throw new Error(result.error);
 
+        let updatedBandish = editingBandish;
         // INSTANT UI UPDATE
         if (result.data && result.data.length > 0) {
-          setBaseData(prev => prev.map(b => b.id === editingBandish.id ? result.data[0] : b));
+          updatedBandish = result.data[0];
+          setBaseData(prev => prev.map(b => b.id === editingBandish.id ? updatedBandish : b));
         }
+        closeEditModal(updatedBandish);
       } else {
         const result = await addBandishSecurely(payload);
         if (!result.success) throw new Error(result.error);
@@ -265,9 +311,8 @@ export default function Home() {
         if (result.data && result.data.length > 0) {
           setBaseData(prev => [result.data[0], ...prev]);
         }
+        closeAddModal();
       }
-
-      isEdit ? closeEditModal() : closeAddModal();
 
     } catch (error: any) {
       console.error("❌ SUPABASE ERROR:", error);
@@ -322,11 +367,11 @@ export default function Home() {
   const fuseBandishes = useMemo(() => new Fuse(preSearchData, { keys: ["title", "raag", "composer", "taal"], threshold: 0.4 }), [preSearchData]);
 
   const processedData = useMemo(() => {
-    if (deferredQuery) {
-      return fuseBandishes.search(deferredQuery).map((result) => result.item);
+    if (query) {
+      return fuseBandishes.search(query).map((result) => result.item);
     }
     return preSearchData;
-  }, [preSearchData, deferredQuery, fuseBandishes]);
+  }, [preSearchData, query, fuseBandishes]);
 
   const bandishCount = processedData.length;
   const uniqueRaagsCount = new Set(processedData.map((b) => b.raag)).size;
@@ -338,20 +383,20 @@ export default function Home() {
   const fuseComposers = useMemo(() => new Fuse(allComposers, { threshold: 0.4 }), [allComposers]);
 
   const suggestedRaag = useMemo(() => {
-    const cleanQuery = deferredQuery.trim();
+    const cleanQuery = query.trim();
     if (!cleanQuery || cleanQuery.length < 3) return null;
     const results = fuseRaags.search(cleanQuery);
     if (results.length > 0 && !activeFilters.some(f => f.key === "raag" && f.value === results[0].item)) return results[0].item;
     return null;
-  }, [deferredQuery, fuseRaags, activeFilters]);
+  }, [query, fuseRaags, activeFilters]);
 
   const suggestedComposer = useMemo(() => {
-    const cleanQuery = deferredQuery.trim();
+    const cleanQuery = query.trim();
     if (!cleanQuery || cleanQuery.length < 3) return null;
     const results = fuseComposers.search(cleanQuery);
     if (results.length > 0 && !activeFilters.some(f => f.key === "composer" && f.value === results[0].item)) return results[0].item;
     return null;
-  }, [deferredQuery, fuseComposers, activeFilters]);
+  }, [query, fuseComposers, activeFilters]);
 
   // --- 8. MEMOIZED GRID ---
   const selectedBandishId = selectedBandish?.id ?? null;
@@ -408,19 +453,23 @@ export default function Home() {
           </div>
         )}
 
-        {processedData.map((bandish, index) => (
-          <BandishCard
-            key={bandish.id}
-            bandish={bandish}
-            index={index}
-            isSelected={selectedBandishId === bandish.id}
-            isFavorited={favorites.includes(bandish.id)}
-            language={language}
-            onSelect={selectBandish}
-            onToggleFavorite={toggleFavorite}
-            onToggleFilter={toggleFilter}
-          />
-        ))}
+        <AnimatePresence mode="popLayout">
+          {processedData.map((bandish, index) => (
+            <BandishCard
+              key={bandish.id}
+              bandish={bandish}
+              index={index}
+              isSelected={selectedBandishId === bandish.id}
+              isFavorited={favorites.includes(bandish.id)}
+              language={language}
+              isSearching={query.trim() !== ""}
+              disableEntranceAnimation={hasSearched}
+              onSelect={selectBandish}
+              onToggleFavorite={toggleFavorite}
+              onToggleFilter={toggleFilter}
+            />
+          ))}
+        </AnimatePresence>
       </div>
     );
   };
@@ -553,7 +602,7 @@ export default function Home() {
                           <div className="absolute inset-y-0 left-0 flex items-center pl-5 md:pl-6 pointer-events-none z-10 transition-transform duration-500">
                             <span className="material-symbols-rounded transition-colors duration-300 text-gray-500 dark:text-gray-400 group-focus-within:text-m3-primary dark:group-focus-within:text-m3-primary-dark">search</span>
                           </div>
-                          <input ref={searchInputRef} type="text" placeholder="Search by text... (Ctrl+K)" value={query} onChange={(e) => setQuery(e.target.value)} className="w-full bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white text-base md:text-lg pl-[3.75rem] md:pl-[4.25rem] pr-[3.75rem] py-4 md:py-5 rounded-full border border-m3-surface-high dark:border-m3-surface-high-dark focus:border-m3-primary dark:focus:border-m3-primary-dark focus:ring-1 focus:ring-m3-primary dark:focus:ring-m3-primary-dark focus:outline-none transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+                          <FastSearchInput ref={searchInputRef} placeholder="Search by text... (Ctrl+K)" initialValue={query} onSearchChange={setQuery} className="w-full bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white text-base md:text-lg pl-[3.75rem] md:pl-[4.25rem] pr-[3.75rem] py-4 md:py-5 rounded-full border border-m3-surface-high dark:border-m3-surface-high-dark focus:border-m3-primary dark:focus:border-m3-primary-dark focus:ring-1 focus:ring-m3-primary dark:focus:ring-m3-primary-dark focus:outline-none transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
                           <div className="absolute inset-y-0 right-2 flex items-center">
                             <button onClick={() => setIsViewOptionsOpen(!isViewOptionsOpen)} className={`p-2 md:p-3 rounded-full transition-all duration-300 flex items-center justify-center ${isViewOptionsOpen ? 'bg-m3-primary/15 dark:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark' : 'text-gray-500 hover:text-m3-primary dark:text-gray-400 dark:hover:text-m3-primary-dark hover:bg-gray-100 dark:hover:bg-m3-surface-high-dark'}`} title="View Options">
                               <span className="material-symbols-rounded text-xl md:text-2xl transition-transform duration-500 group-hover:rotate-180">tune</span>
@@ -623,7 +672,12 @@ export default function Home() {
                     <M3LoadingIndicator size={96} contained={true} color={isDarkMode ? "#D0BCFF" : "#6750A4"} containerColor={isDarkMode ? "#211F26" : "#F3EDF7"} />
                   </div>
                 ) : bandishCount === 0 ? (
-                  <div className="min-h-[40vh] flex flex-col items-center justify-center gap-6 text-center px-4 animate-fade-in mt-8 md:mt-12">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+                    className="min-h-[40vh] flex flex-col items-center justify-center gap-6 text-center px-4 mt-8 md:mt-12"
+                  >
                     <div className="w-24 h-24 bg-m3-surface-container dark:bg-m3-surface-container-dark rounded-full flex items-center justify-center mb-2">
                       <span className="material-symbols-rounded text-5xl text-m3-secondary dark:text-m3-secondary-dark opacity-60">search_off</span>
                     </div>
@@ -649,7 +703,7 @@ export default function Home() {
                         </a>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                 ) : (
                   renderGrid()
                 )}

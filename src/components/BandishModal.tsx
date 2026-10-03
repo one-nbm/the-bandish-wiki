@@ -41,19 +41,18 @@ export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModal
       />
 
       {/*
-        Morphing panel.
-        Framer Motion's layoutId automatically handles the Container Transform.
-        It calculates the FLIP math from the card to the modal, scales the container,
-        and crossfades the content flawlessly out of the box.
+        Standard scale/fade entrance animation.
+        Replaces the expensive layoutId morph animation for better performance.
       */}
       <motion.div
-        layoutId={`bandish-${bandish.id}`}
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{
-          layout: isPresent
-            ? { type: "spring", stiffness: 400, damping: 40 }
-            : { type: "spring", stiffness: 700, damping: 45 }
+          duration: isPresent ? 0.4 : 0.2,
+          ease: isPresent ? [0.34, 1.56, 0.64, 1] : "easeInOut"
         }}
-        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-m3-surface-container-dark rounded-[2rem] border border-gray-100 dark:border-m3-surface-high-dark m3-scrollbar"
+        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark m3-scrollbar"
         onClick={(e) => e.stopPropagation()}
         style={{ willChange: "transform, opacity, border-radius", transform: "translateZ(0)" }}
       >

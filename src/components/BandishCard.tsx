@@ -7,6 +7,8 @@ export const BandishCard = memo(({
   isSelected,
   isFavorited,
   language,
+  isSearching,
+  disableEntranceAnimation,
   onSelect,
   onToggleFavorite,
   onToggleFilter,
@@ -16,6 +18,8 @@ export const BandishCard = memo(({
   isSelected: boolean;
   isFavorited: boolean;
   language: string;
+  isSearching?: boolean;
+  disableEntranceAnimation?: boolean;
   onSelect: (bandish: any, rect: DOMRect) => void;
   onToggleFavorite: (e: React.MouseEvent, id: string) => void;
   onToggleFilter: (key: string, value: string) => void;
@@ -32,22 +36,14 @@ export const BandishCard = memo(({
 
   return (
     <motion.div
-      layoutId={`bandish-${bandish.id}`}
+      initial={disableEntranceAnimation ? { opacity: 0, scale: 0.95 } : false}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1 } }}
+      transition={{ duration: 0.15, ease: "easeOut" }}
       ref={cardRef as any}
       onClick={handleClick}
       data-bandish-id={bandish.id}
-      className="bandish-card group relative animate-card bg-white dark:bg-m3-surface-container-dark p-6 rounded-[2rem] border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4"
-      transition={{
-        layout: isSelected 
-          ? { type: "spring", stiffness: 400, damping: 40 }
-          : { type: "spring", stiffness: 700, damping: 45 } // Snaps back instantly if interrupted
-      }}
-      onLayoutAnimationStart={() => {
-        if (cardRef.current) cardRef.current.style.zIndex = "30";
-      }}
-      onLayoutAnimationComplete={() => {
-        if (cardRef.current) cardRef.current.style.zIndex = "";
-      }}
+      className={`bandish-card group relative bg-white dark:bg-m3-surface-container-dark p-6 rounded-[1.5rem] border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4 ${disableEntranceAnimation ? '' : 'animate-card'}`}
       style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
     >
       {/* Renditions Badge */}
@@ -99,5 +95,14 @@ export const BandishCard = memo(({
         <span className="material-symbols-rounded text-[1.2rem] ml-1">arrow_forward</span>
       </div>
     </motion.div>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.bandish.id === nextProps.bandish.id &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isFavorited === nextProps.isFavorited &&
+    prevProps.language === nextProps.language &&
+    prevProps.isSearching === nextProps.isSearching &&
+    prevProps.disableEntranceAnimation === nextProps.disableEntranceAnimation
   );
 });
