@@ -17,8 +17,21 @@ const googleSans = Google_Sans_Flex({
 
 
 export const metadata: Metadata = {
-  title: "The Bandish Wiki",
-  description: "A catalogue of Bandishes",
+  title: {
+    template: "%s | The Bandish Wiki",
+    default: "The Bandish Wiki",
+  },
+  applicationName: "The Bandish Wiki",
+  description: "An open-source catalogue of Hindustani classical bandishes and raags.",
+  metadataBase: new URL("https://bandish-wiki.vercel.app"),
+  openGraph: {
+    title: "The Bandish Wiki",
+    description: "An open-source catalogue of Hindustani classical bandishes and raags.",
+    url: "https://bandish-wiki.vercel.app",
+    siteName: "The Bandish Wiki",
+    locale: "en_US",
+    type: "website",
+  },
   verification: {
     google: 'XLcf67BKg90PNoJCHeQ_7W8xBeEvNm1VNWDz2bj1K88',
   },
