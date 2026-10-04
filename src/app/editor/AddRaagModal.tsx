@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { addRaagSecurely } from "@/app/actions";
+import { ReactLenis } from 'lenis/react';
+import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
 
 function generateSlug(name: string) {
   return name
@@ -145,7 +147,7 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
       {/* Trigger Button */}
       <button 
         onClick={() => setIsOpen(true)} 
-        className="w-full sm:w-auto px-6 py-4 bg-m3-surface-high dark:bg-m3-surface-high-dark hover:bg-m3-primary/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-2xl font-bold transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 border border-gray-200 dark:border-gray-700"
+        className="w-full sm:w-auto px-6 py-4 bg-m3-surface-high dark:bg-m3-surface-high-dark hover:bg-m3-primary/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-[1.5rem] font-bold transition-all duration-300 active:scale-95 flex items-center justify-center gap-3"
       >
         <span className="material-symbols-rounded text-2xl">add_circle</span>
         Add New Raag
@@ -153,174 +155,156 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
 
       {/* Modal Overlay */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
-        >
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" onClick={closeModal}>
           {/* Backdrop */}
-          <div 
-            className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'animate-backdrop-enter'}`}
-            onClick={closeModal}
-          />
+          <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
           
           {/* Modal Content */}
-          <div 
-            className={`relative w-full max-w-4xl bg-m3-surface dark:bg-m3-surface-dark rounded-3xl shadow-2xl flex flex-col max-h-[90vh] transition-all duration-300 origin-center ${isClosing ? 'opacity-0 scale-95' : 'animate-modal-enter'}`}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark text-2xl">library_add</span>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Add New Raag</h3>
-              </div>
-              <button 
-                onClick={closeModal}
-                className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-              >
-                <span className="material-symbols-rounded">close</span>
-              </button>
-            </div>
-
-            {/* Scrollable Form Body */}
-            <div className="overflow-y-auto p-6 custom-scrollbar">
-              <form id="add-raag-form" onSubmit={handleFormSubmit} className="space-y-6">
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left Column */}
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Raag Name *</label>
-                      <input 
-                        type="text" 
-                        required
-                        value={formName}
-                        onChange={(e) => setFormName(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
-                        placeholder="e.g. Yaman"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Thaat</label>
-                      <input 
-                        type="text" 
-                        value={formThaat}
-                        onChange={(e) => setFormThaat(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
-                        placeholder="e.g. Kalyan"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Samay (Time)</label>
-                      <input 
-                        type="text" 
-                        value={formSamay}
-                        onChange={(e) => setFormSamay(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
-                        placeholder="e.g. Evening (First quarter of night)"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Right Column */}
-                  <div className="space-y-4">
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Vadi</label>
-                        <input 
-                          type="text" 
-                          value={formVadi}
-                          onChange={(e) => setFormVadi(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
-                          placeholder="e.g. Ga"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Samvadi</label>
-                        <input 
-                          type="text" 
-                          value={formSamvadi}
-                          onChange={(e) => setFormSamvadi(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
-                          placeholder="e.g. Ni"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Aaroh</label>
-                      <input 
-                        type="text" 
-                        value={formAaroh}
-                        onChange={(e) => setFormAaroh(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark font-mono text-sm"
-                        placeholder="e.g. S R G M P D N S'"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Avaroh</label>
-                      <input 
-                        type="text" 
-                        value={formAvaroh}
-                        onChange={(e) => setFormAvaroh(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark font-mono text-sm"
-                        placeholder="e.g. S' N D P M G R S"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                  <textarea 
-                    value={formDescription}
-                    onChange={(e) => setFormDescription(e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark resize-y custom-scrollbar"
-                    placeholder="General description, mood, rules, or historical context..."
-                  />
-                </div>
-
-              </form>
-            </div>
-
-            {/* Footer with Submit */}
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#1A181E] rounded-b-3xl shrink-0">
-              {/* Toast inside footer */}
-              {toast && (
-                <div className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-3 text-sm font-bold ${toast.type === "error" ? "bg-m3-error/10 dark:bg-m3-error-dark/10 text-m3-error dark:text-m3-error-dark border border-m3-error/20 dark:border-m3-error-dark/20" : "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800/50"}`}>
-                  <span className="material-symbols-rounded text-[1.1rem]">{toast.type === "error" ? "error" : "check_circle"}</span>
-                  <span className="flex-1">{toast.message}</span>
-                  <button onClick={() => setToast(null)} className="p-0.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors">
-                    <span className="material-symbols-rounded text-[1rem]">close</span>
+          <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
+            <ReactLenis options={LENIS_OPTIONS} className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar">
+              <div className="p-8 md:p-12">
+                <div className="absolute top-6 right-6 md:top-8 md:right-8 z-10">
+                  <button onClick={closeModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
+                    <span className="material-symbols-rounded">close</span>
                   </button>
                 </div>
-              )}
-              <div className="flex items-center justify-end gap-3">
-                <button 
-                  type="button"
-                  onClick={closeModal}
-                  className="px-6 py-2.5 font-bold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  form="add-raag-form"
-                  disabled={isSubmitting}
-                  className="px-8 py-2.5 bg-m3-primary hover:bg-m3-primary/90 text-white rounded-xl font-bold shadow-sm transition-transform active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <span className="material-symbols-rounded animate-spin text-[1.2rem]">sync</span>
-                  ) : (
-                    <span className="material-symbols-rounded text-[1.2rem]">add_circle</span>
-                  )}
-                  {isSubmitting ? 'Creating...' : 'Create Raag'}
-                </button>
-              </div>
-            </div>
+                
+                <div className="mb-8">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Add New Raag</h2>
+                  <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Contribute to the Raag database.</p>
+                </div>
 
+                <form id="add-raag-form" onSubmit={handleFormSubmit} className="space-y-6">
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Left Column */}
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Raag Name *</label>
+                        <input 
+                          type="text" 
+                          required
+                          value={formName}
+                          onChange={(e) => setFormName(e.target.value)}
+                          className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                          placeholder="e.g. Yaman"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Thaat</label>
+                        <input 
+                          type="text" 
+                          value={formThaat}
+                          onChange={(e) => setFormThaat(e.target.value)}
+                          className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                          placeholder="e.g. Kalyan"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Samay (Time)</label>
+                        <input 
+                          type="text" 
+                          value={formSamay}
+                          onChange={(e) => setFormSamay(e.target.value)}
+                          className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                          placeholder="e.g. Evening (First quarter of night)"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Right Column */}
+                    <div className="space-y-6">
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Vadi</label>
+                          <input 
+                            type="text" 
+                            value={formVadi}
+                            onChange={(e) => setFormVadi(e.target.value)}
+                            className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                            placeholder="e.g. Ga"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Samvadi</label>
+                          <input 
+                            type="text" 
+                            value={formSamvadi}
+                            onChange={(e) => setFormSamvadi(e.target.value)}
+                            className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                            placeholder="e.g. Ni"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Aaroh</label>
+                        <input 
+                          type="text" 
+                          value={formAaroh}
+                          onChange={(e) => setFormAaroh(e.target.value)}
+                          className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm"
+                          placeholder="e.g. S R G M P D N S'"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Avaroh</label>
+                        <input 
+                          type="text" 
+                          value={formAvaroh}
+                          onChange={(e) => setFormAvaroh(e.target.value)}
+                          className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm"
+                          placeholder="e.g. S' N D P M G R S"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Description</label>
+                    <textarea 
+                      value={formDescription}
+                      onChange={(e) => setFormDescription(e.target.value)}
+                      rows={4}
+                      className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 resize-y m3-scrollbar"
+                      placeholder="General description, mood, rules, or historical context..."
+                    />
+                  </div>
+
+                  {/* Toast Message */}
+                  {toast && (
+                    <div className={`mt-6 px-6 py-4 rounded-xl font-bold flex items-center gap-3 border ${toast.type === 'error' ? 'bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark border-m3-error-dark/30' : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800/50'} animate-modal-enter`}>
+                      <span className="material-symbols-rounded">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
+                      <span className="flex-1">{toast.message}</span>
+                      <button type="button" onClick={() => setToast(null)} className="p-0.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors flex">
+                        <span className="material-symbols-rounded text-[1.1rem]">close</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Submit Button */}
+                  <div className="pt-6">
+                    <button 
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full md:w-auto md:min-w-[200px] float-right flex justify-center items-center gap-2 bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 py-4 px-8 rounded-full font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                    >
+                      {isSubmitting ? (
+                        <span className="material-symbols-rounded text-[1.4rem] animate-spin">sync</span>
+                      ) : (
+                        <span className="material-symbols-rounded text-[1.4rem]">add_circle</span>
+                      )}
+                      {isSubmitting ? 'Creating...' : 'Create Raag'}
+                    </button>
+                    <div className="clear-both"></div>
+                  </div>
+
+                </form>
+              </div>
+            </ReactLenis>
           </div>
         </div>
       )}
