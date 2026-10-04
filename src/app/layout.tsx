@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import AuthButton from "@/components/AuthButton";
 import Navbar from "@/components/Navbar";
+import SmoothScrolling from "@/components/SmoothScrolling";
 import "./globals.css";
 
 const googleSans = Google_Sans_Flex({
@@ -43,12 +44,14 @@ export default function RootLayout({
       >
         {/* ADDED: The ThemeProvider to fix the Dark Mode state across pages! */}
         <ThemeProvider>
-          <Navbar>
-            <AuthButton />
-          </Navbar>
+          <SmoothScrolling>
+            <Navbar>
+              <AuthButton />
+            </Navbar>
 
-          {children}
-          <SpeedInsights />
+            {children}
+            <SpeedInsights />
+          </SmoothScrolling>
         </ThemeProvider>
         <GoogleAnalytics gaId="G-XELFB1P2TX" />
       </body>
