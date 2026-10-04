@@ -12,7 +12,9 @@ const googleSans = Google_Sans_Flex({
   variable: "--font-google-sans",
   subsets: ["latin"],
   axes: ["ROND", "wdth"],
+  adjustFontFallback: false,
 });
+
 
 export const metadata: Metadata = {
   title: "The Bandish Wiki",
@@ -28,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en">
       <head>
         {/* CHANGED: Download the Rounded icon set instead of Outlined */}
         <link

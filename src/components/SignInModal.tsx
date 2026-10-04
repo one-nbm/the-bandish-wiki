@@ -86,7 +86,7 @@ export default function SignInModal() {
             </button>
 
             {/* Header */}
-            <div className="mb-8">
+            <div className="mb-8 pr-12">
               <h2
                 className="text-3xl font-bold text-gray-900 dark:text-white mb-1"
                 style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}

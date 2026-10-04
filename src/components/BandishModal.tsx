@@ -4,6 +4,8 @@ import React, { useEffect } from "react";
 import Link from "next/link";
 import CopyButton from "@/components/CopyButton";
 import { motion, useIsPresent } from "framer-motion";
+import { ReactLenis } from 'lenis/react';
+import { LENIS_OPTIONS } from './SmoothScrolling';
 
 interface BandishModalProps {
   bandish: any;
@@ -52,16 +54,17 @@ export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModal
           duration: isPresent ? 0.4 : 0.2,
           ease: isPresent ? [0.34, 1.56, 0.64, 1] : "easeInOut"
         }}
-        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark m3-scrollbar"
+        className="relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
         style={{ willChange: "transform, opacity, border-radius", transform: "translateZ(0)" }}
       >
-        <motion.div
-          initial={{ opacity: 0 }}
+        <ReactLenis options={LENIS_OPTIONS} className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar">
+          <motion.div
+            initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.1, delay: 0 } }}
           transition={{ duration: 0.25, delay: 0.1 }}
-          className="p-8 md:p-12"
+          className="p-6 sm:p-8 md:p-12"
         >
           <div className="absolute top-6 right-6 md:top-8 md:right-8 flex flex-col gap-2 md:gap-3">
             <button
@@ -143,7 +146,8 @@ export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModal
             </div>
           </div>
         </motion.div>
-      </motion.div>
+      </ReactLenis>
+    </motion.div>
     </motion.div>
   );
 }

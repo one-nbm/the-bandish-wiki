@@ -11,6 +11,8 @@ import WelcomeScreen from "@/components/WelcomeScreen";
 import { BandishCard } from "@/components/BandishCard";
 import { BandishModal } from "@/components/BandishModal";
 import { motion, AnimatePresence } from "framer-motion";
+import { ReactLenis } from 'lenis/react';
+import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
 
 const FastSearchInput = forwardRef<HTMLInputElement, {
   initialValue: string;
@@ -716,7 +718,9 @@ export default function Home() {
       {isInfoOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" onClick={closeInfoModal}>
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isInfoClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
-          <div className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] p-8 md:p-12 border border-gray-100 dark:border-m3-surface-high-dark m3-scrollbar ${isInfoClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
+          <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col ${isInfoClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
+            <ReactLenis options={LENIS_OPTIONS} className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar">
+              <div className="p-8 md:p-12">
             <div className="absolute top-6 right-6 md:top-8 md:right-8">
               <button onClick={closeInfoModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
                 <span className="material-symbols-rounded">close</span>
@@ -777,8 +781,10 @@ export default function Home() {
                     Signed-in users can add and edit notable audio/video renditions. If you would like to contribute new bandishes or revise musical notations, click your account menu and choose &ldquo;Become an Editor&rdquo;!
                   </p>
                 </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            </ReactLenis>
           </div>
         </div>
       )}
@@ -788,17 +794,21 @@ export default function Home() {
       {isAddOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" onClick={closeAddModal}>
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isAddClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
-          <div className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] p-8 md:p-12 border border-gray-100 dark:border-m3-surface-high-dark m3-scrollbar transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isAddClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
-            <div className="absolute top-6 right-6 md:top-8 md:right-8">
-              <button onClick={closeAddModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
-                <span className="material-symbols-rounded">close</span>
-              </button>
-            </div>
-            <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Add New Bandish</h2>
-              <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Contribute to the Wiki database.</p>
-            </div>
-            {renderForm(false)}
+          <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isAddClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
+            <ReactLenis options={LENIS_OPTIONS} className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar">
+              <div className="p-8 md:p-12">
+                <div className="absolute top-6 right-6 md:top-8 md:right-8">
+                  <button onClick={closeAddModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
+                    <span className="material-symbols-rounded">close</span>
+                  </button>
+                </div>
+                <div className="mb-8">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Add New Bandish</h2>
+                  <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Contribute to the Wiki database.</p>
+                </div>
+                {renderForm(false)}
+              </div>
+            </ReactLenis>
           </div>
         </div>
       )}
@@ -807,17 +817,21 @@ export default function Home() {
       {editingBandish && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" onClick={closeEditModal}>
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isEditClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
-          <div className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] p-8 md:p-12 border border-gray-100 dark:border-m3-surface-high-dark m3-scrollbar transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isEditClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
-            <div className="absolute top-6 right-6 md:top-8 md:right-8">
-              <button onClick={closeEditModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
-                <span className="material-symbols-rounded">close</span>
-              </button>
-            </div>
-            <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Edit Bandish</h2>
-              <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Make corrections to <span className="font-bold">{editingBandish.title}</span>.</p>
-            </div>
-            {renderForm(true)}
+          <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isEditClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
+            <ReactLenis options={LENIS_OPTIONS} className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar">
+              <div className="p-8 md:p-12">
+                <div className="absolute top-6 right-6 md:top-8 md:right-8">
+                  <button onClick={closeEditModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
+                    <span className="material-symbols-rounded">close</span>
+                  </button>
+                </div>
+                <div className="mb-8">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Edit Bandish</h2>
+                  <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Make corrections to <span className="font-bold">{editingBandish.title}</span>.</p>
+                </div>
+                {renderForm(true)}
+              </div>
+            </ReactLenis>
           </div>
         </div>
       )}

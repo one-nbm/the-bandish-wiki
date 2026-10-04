@@ -48,7 +48,7 @@ export const BandishCard = memo(({
     >
       {/* Renditions Badge */}
       {renditionCount > 0 && (
-        <div className="group/rendition absolute top-5 right-[3.75rem] z-10 h-11 flex items-center" onClick={(e) => e.stopPropagation()}>
+        <div className="group/rendition absolute top-5 right-[4.25rem] z-10 h-11 flex items-center" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500 px-1.5 rounded-full transition-all duration-300 cursor-default">
             <span className="material-symbols-rounded text-[1.1rem]" style={{ fontVariationSettings: '"FILL" 1' }}>play_circle</span>
             <span className="text-xs font-semibold leading-none">{renditionCount}</span>
@@ -64,7 +64,7 @@ export const BandishCard = memo(({
       <button onClick={(e) => onToggleFavorite(e, bandish.id)} className={`absolute top-5 right-5 w-11 h-11 flex items-center justify-center rounded-full transition duration-300 hover:scale-110 active:scale-90 ${isFavorited ? "text-m3-error dark:text-m3-error-dark bg-m3-error/10 dark:bg-m3-error-dark/20" : "text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`} aria-label="Toggle Favorite">
         <span className="material-symbols-rounded text-[1.4rem] transition" style={{ fontVariationSettings: isFavorited ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
       </button>
-      <div className="flex justify-between items-start mb-3 pr-28 md:pr-32">
+      <div className="flex justify-between items-start mb-3 pr-[7.5rem] md:pr-32">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{bandish.title}</h2>
       </div>
       <div className="flex flex-wrap gap-2 mb-5">

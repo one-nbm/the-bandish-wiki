@@ -148,7 +148,7 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
           <span className="text-xs sm:text-sm font-bold text-m3-primary dark:text-m3-primary-dark tracking-wider uppercase">{timeState.samay} Samay</span>
         </div>
 
-        <motion.h1 layoutId="app-title" className="text-4xl sm:text-5xl md:text-7xl font-black text-gray-900 dark:text-white mb-4 sm:mb-6 tracking-tight whitespace-nowrap" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>
+        <motion.h1 layoutId="app-title" className="text-[2.2rem] sm:text-5xl md:text-7xl font-black text-gray-900 dark:text-white mb-4 sm:mb-6 tracking-tight" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>
           The Bandish Wiki
         </motion.h1>
 
