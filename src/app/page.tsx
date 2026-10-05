@@ -613,7 +613,7 @@ export default function Home() {
                         </div>
 
                         {/* Info Button (Hidden on Mobile Search Row) */}
-                        <button onClick={() => setIsInfoOpen(true)} className="group hidden sm:flex items-center justify-center w-[3.5rem] h-[3.5rem] p-0 bg-m3-surface-container dark:bg-m3-surface-container-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 border border-m3-surface-high dark:border-m3-surface-high-dark shrink-0" title="How to use the wiki">
+                        <button onClick={() => setIsInfoOpen(true)} className="group hidden sm:flex items-center justify-center w-[3.5rem] h-[3.5rem] p-0 bg-m3-primary/5 hover:bg-m3-primary/10 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 border border-m3-primary/20 dark:border-m3-primary-dark/20 shrink-0" title="How to use the wiki">
                           <span className="material-symbols-rounded text-[1.5rem]">info</span>
                         </button>
 
@@ -628,7 +628,7 @@ export default function Home() {
                             href="https://forms.gle/sTqp5q4Ym6JLzaSA9"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group flex items-center justify-center w-[3.5rem] h-[3.5rem] sm:w-auto sm:px-6 bg-m3-surface-container dark:bg-m3-surface-container-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 border border-m3-surface-high dark:border-m3-surface-high-dark shrink-0"
+                            className="group flex items-center justify-center w-[3.5rem] h-[3.5rem] sm:w-auto sm:px-6 bg-m3-primary/5 hover:bg-m3-primary/10 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 border border-m3-primary/20 dark:border-m3-primary-dark/20 shrink-0"
                             title="Submit a Bandish"
                           >
                             <span className="material-symbols-rounded text-[1.5rem]">add</span>

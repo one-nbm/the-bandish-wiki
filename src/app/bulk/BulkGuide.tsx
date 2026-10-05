@@ -1,6 +1,6 @@
 export default function BulkGuide() {
   return (
-    <div className="w-full bg-m3-surface-container/50 dark:bg-m3-surface-container-dark/50 p-6 sm:p-8 md:p-10 rounded-[2.5rem] border border-m3-surface-high dark:border-m3-surface-high-dark animate-modal-enter" style={{ animationDelay: '0.1s' }}>
+    <div className="w-full bg-white dark:bg-m3-surface-container-dark p-6 sm:p-8 md:p-10 rounded-[2.5rem] border border-m3-surface-high dark:border-m3-surface-high-dark animate-modal-enter" style={{ animationDelay: '0.1s' }}>
       <div className="flex items-center gap-3 mb-8">
         <span className="material-symbols-rounded text-4xl text-m3-primary dark:text-m3-primary-dark shrink-0">menu_book</span>
         <div>
@@ -27,13 +27,13 @@ export default function BulkGuide() {
               <code>{`[
   {
     "id": "e2f89c62-...",
-    "title": "Mori Itni Binati Ub Suniye Banwaari",
-    "raag": "Jaunpuri",
-    "taal": "Tintal Madhyalay",
+    "title": "Jhananana Jhananana Jhana Jhana",
+    "raag": "Deepak",
+    "taal": "Ada Chautala Drut",
     "composer": "unknown",
     "lyrics": { ... },
     "youtube_renditions": [ ... ],
-    "contributor": "Google Gemini"
+    "contributor": "Anonymous"
   }
 ]`}</code>
             </pre>
@@ -51,7 +51,7 @@ export default function BulkGuide() {
               { field: "id", type: "UUID", desc: "A valid UUID v4 string." },
               { field: "title", type: "String", desc: "Capitalize the first letter of each word (Title Case)." },
               { field: "raag", type: "String", desc: "Must match an existing Raag name exactly (e.g., \"Puriya Kalyan\")." },
-              { field: "taal", type: "String", desc: "Format as [TaalName] [LayName] without commas (e.g., \"Tintal Madhyalay\"). Spell Teentaal as \"Tintal\"." },
+              { field: "taal", type: "String", desc: "Format as [TaalName] [LayName] without commas (e.g., \"Tintal Madhyalay\"). Make sure to spell the taal and lay names as already written in the database." },
               { field: "composer", type: "String", desc: "If unknown, use exactly \"unknown\". Otherwise, Name followed by mudra in single-quotes." },
               { field: "contributor", type: "String", desc: "The name of the user or agent adding the entry. Can be configured for your account in the Editor Dashboard." }
             ].map((item, idx) => (
@@ -100,16 +100,16 @@ export default function BulkGuide() {
           <p className="mb-4 text-gray-700 dark:text-gray-300">An array of valid working YouTube links. Empty array <code className="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">[]</code> if none exist.</p>
           <ul className="space-y-2 mb-4 list-disc list-inside text-gray-700 dark:text-gray-300 leading-relaxed">
             <li><strong className="text-gray-900 dark:text-white">Valid URLs:</strong> Ensure the <code className="text-m3-primary dark:text-m3-primary-dark">url</code> is a valid, working YouTube link.</li>
-            <li className="leading-loose"><strong className="text-gray-900 dark:text-white">Title Convention:</strong> The <code className="text-m3-primary dark:text-m3-primary-dark">title</code> should generally follow the pattern <code className="text-xs bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded box-decoration-clone break-words">[Year] - [Album] - [Song Title] - [Video (If the rendition is one)]</code> depending on what information is available.</li>
-            <li><strong className="text-gray-900 dark:text-white">Artist:</strong> The full name of the performer.</li>
+            <li className="leading-loose"><strong className="text-gray-900 dark:text-white">Title Convention:</strong> The <code className="text-m3-primary dark:text-m3-primary-dark">title</code> should generally follow the pattern <code className="text-xs bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded box-decoration-clone break-words">[Year] - [Album] - [Bandish 1] - [Bandish 2]...[Bandish n] - [Video (If the rendition is one)]</code> depending on what information is available.</li>
+            <li><strong className="text-gray-900 dark:text-white">Artist:</strong> The full name of the performer without a title like Pt., Dr., etc.</li>
           </ul>
           <div className="bg-white dark:bg-[#1a181d] rounded-2xl p-4 sm:p-5 border border-m3-surface-high dark:border-m3-surface-high-dark overflow-x-auto m3-scrollbar">
             <pre className="text-xs sm:text-sm font-mono text-gray-800 dark:text-gray-300">
               <code>{`"youtube_renditions": [
   {
     "url": "https://www.youtube.com/watch?v=gc3XUmP44vk",
-    "title": "Jhanana Jhanana Baje",
-    "artist": "Pandit Bhimsen Joshi"
+    "title": "1983 - Jhananana Jhananana Jhana Jhana - Jhanana Baaje - Video",
+    "artist": "Example Person"
   }
 ]`}</code>
             </pre>

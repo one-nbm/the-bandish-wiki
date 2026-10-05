@@ -39,10 +39,10 @@ export default function UserAccountMenu({ email, isAdmin }: UserAccountMenuProps
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         aria-label="User account menu"
-        className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-m3-surface-container/60 dark:bg-m3-surface-dark/50 border border-gray-200 dark:border-gray-700 rounded-full cursor-pointer hover:bg-m3-surface-container dark:hover:bg-m3-surface-high-dark transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.03] active:scale-95"
+        className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-m3-primary/5 dark:bg-m3-primary-dark/10 border border-m3-primary/20 dark:border-m3-primary-dark/20 rounded-full cursor-pointer hover:bg-m3-primary/10 dark:hover:bg-m3-primary-dark/20 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.03] active:scale-95"
       >
         <span className="material-symbols-rounded text-[1.3rem] text-m3-primary dark:text-m3-primary-dark">account_circle</span>
-        <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] truncate">
+        <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white max-w-[80px] md:max-w-[120px] lg:max-w-[180px] truncate">
           {email}
         </span>
         <span

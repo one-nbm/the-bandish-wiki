@@ -147,7 +147,7 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
       {/* Trigger Button */}
       <button 
         onClick={() => setIsOpen(true)} 
-        className="w-full sm:w-auto px-6 py-4 bg-m3-surface-high dark:bg-m3-surface-high-dark hover:bg-m3-primary/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-[1.5rem] font-bold transition-all duration-300 active:scale-95 flex items-center justify-center gap-3"
+        className="w-full sm:w-auto px-6 py-4 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-[1.5rem] font-bold transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 border border-m3-primary/20 dark:border-m3-primary-dark/20"
       >
         <span className="material-symbols-rounded text-2xl">add_circle</span>
         Add New Raag

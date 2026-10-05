@@ -182,4 +182,54 @@ export async function checkIsEditor(): Promise<boolean> {
   return !error && !!data;
 }
 
+// ─── Index queue actions ───────────────────────────────────────────────────
 
+export async function getRenditionsToIndex() {
+  const { authorized, error, supabaseAdmin } = await authorizeEditor();
+  if (!authorized || !supabaseAdmin) return { success: false, error: error ?? "Unauthorized", data: null };
+
+  const { data, error: dbError } = await supabaseAdmin
+    .from('renditions_to_index')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (dbError) {
+    console.error("Fetch error:", dbError);
+    return { success: false, error: "Failed to fetch list.", data: null };
+  }
+
+  return { success: true, data };
+}
+
+export async function addRenditionToIndex(title: string, url: string) {
+  const { authorized, error, supabaseAdmin } = await authorizeEditor();
+  if (!authorized || !supabaseAdmin) return { success: false, error: error ?? "Unauthorized" };
+
+  const { error: dbError } = await supabaseAdmin
+    .from('renditions_to_index')
+    .insert([{ title, url }]);
+
+  if (dbError) {
+    console.error("Insert error:", dbError);
+    return { success: false, error: "Failed to add rendition." };
+  }
+
+  return { success: true };
+}
+
+export async function deleteRenditionFromIndex(id: string) {
+  const { authorized, error, supabaseAdmin } = await authorizeEditor();
+  if (!authorized || !supabaseAdmin) return { success: false, error: error ?? "Unauthorized" };
+
+  const { error: dbError } = await supabaseAdmin
+    .from('renditions_to_index')
+    .delete()
+    .eq('id', id);
+
+  if (dbError) {
+    console.error("Delete error:", dbError);
+    return { success: false, error: "Failed to delete rendition." };
+  }
+
+  return { success: true };
+}

@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AddRaagModal from "./AddRaagModal";
+import RenditionsToIndexList from "./RenditionsToIndexList";
 
 interface EditorDashboardProps {
   initialName: string;
@@ -43,7 +44,7 @@ export default function EditorDashboard({ initialName, bandishCount, raagCount }
     <div className="relative z-10 flex flex-col gap-6">
       
       {/* Settings Card */}
-      <div className="bg-m3-surface-container dark:bg-m3-surface-container-dark p-6 rounded-3xl">
+      <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 rounded-3xl">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark">person</span>
           Profile Settings
@@ -102,12 +103,12 @@ export default function EditorDashboard({ initialName, bandishCount, raagCount }
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-m3-surface-container dark:bg-m3-surface-container-dark p-6 rounded-3xl flex flex-col items-center justify-center text-center">
+        <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 rounded-3xl flex flex-col items-center justify-center text-center">
           <span className="material-symbols-rounded text-4xl text-m3-primary dark:text-m3-primary-dark mb-2">library_music</span>
           <p className="text-4xl font-black text-gray-900 dark:text-white">{bandishCount}</p>
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Bandishes Added</p>
         </div>
-        <div className="bg-m3-surface-container dark:bg-m3-surface-container-dark p-6 rounded-3xl flex flex-col items-center justify-center text-center">
+        <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 rounded-3xl flex flex-col items-center justify-center text-center">
           <span className="material-symbols-rounded text-4xl text-m3-primary dark:text-m3-primary-dark mb-2">queue_music</span>
           <p className="text-4xl font-black text-gray-900 dark:text-white">{raagCount}</p>
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Raags Added</p>
@@ -119,11 +120,15 @@ export default function EditorDashboard({ initialName, bandishCount, raagCount }
         <AddRaagModal contributorName={initialName} />
         <Link 
           href="/bulk"
-          className="w-full sm:w-auto px-6 py-4 bg-m3-surface-high dark:bg-m3-surface-high-dark hover:bg-m3-primary/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-2xl font-bold transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 border border-gray-200 dark:border-gray-700"
+          className="w-full sm:w-auto px-6 py-4 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-[1.5rem] font-bold transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 border border-m3-primary/20 dark:border-m3-primary-dark/20"
         >
           <span className="material-symbols-rounded text-2xl">upload_file</span>
           Bulk Add Bandishes
         </Link>
+      </div>
+
+      <div className="mt-4">
+        <RenditionsToIndexList />
       </div>
 
     </div>

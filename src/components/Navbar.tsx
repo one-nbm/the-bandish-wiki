@@ -57,7 +57,7 @@ export default function Navbar({ children }: { children: React.ReactNode }) {
         </Link>
 
         {/* Centered App Title for Layout Animation */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none hidden sm:flex">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none hidden lg:flex">
           {showTitle && (
             <motion.h2 
               layoutId="app-title"

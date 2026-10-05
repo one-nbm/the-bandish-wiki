@@ -54,7 +54,7 @@ export default function RootLayout({
 
       {/* ADDED: inline style to force the ROND variable axis to max (100) */}
       <body
-        className={`${googleSans.variable} font-sans min-h-screen flex flex-col antialiased relative overflow-x-hidden`}
+        className={`${googleSans.variable} font-sans min-h-screen flex flex-col antialiased relative overflow-x-hidden bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white transition-colors duration-500`}
         style={{ fontVariationSettings: '"ROND" 25' }}
       >
         {/* ADDED: The ThemeProvider to fix the Dark Mode state across pages! */}
