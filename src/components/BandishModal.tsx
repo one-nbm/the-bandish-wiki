@@ -58,7 +58,12 @@ export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModal
         onClick={(e) => e.stopPropagation()}
         style={{ willChange: "transform, opacity, border-radius", transform: "translateZ(0)" }}
       >
-        <ReactLenis options={LENIS_OPTIONS} className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar">
+        <ReactLenis 
+          options={LENIS_OPTIONS} 
+          className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar"
+          onWheel={(e: React.WheelEvent) => e.stopPropagation()}
+          onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
+        >
           <motion.div
             initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

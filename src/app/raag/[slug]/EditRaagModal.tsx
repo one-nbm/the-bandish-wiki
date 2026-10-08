@@ -207,7 +207,15 @@ export default function EditRaagModal({ raag }: { raag: any }) {
 
               <div>
                 <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Description</label>
-                <textarea placeholder="Description of the raag..." value={formDescription} onChange={(e) => setFormDescription(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" />
+                <textarea 
+                  placeholder="Description of the raag..." 
+                  value={formDescription} 
+                  onChange={(e) => setFormDescription(e.target.value)} 
+                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" 
+                  data-lenis-prevent="true"
+                  onWheel={(e: React.WheelEvent) => e.stopPropagation()}
+                  onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
+                />
               </div>
 
               <hr className="border-gray-200 dark:border-m3-surface-high-dark my-2" />

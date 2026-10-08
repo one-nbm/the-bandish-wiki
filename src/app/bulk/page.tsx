@@ -67,6 +67,9 @@ export default function BulkUpload() {
                 onChange={(e) => setJsonData(e.target.value)}
                 placeholder='[\n  {\n    "title": "Example",\n    "raag": "Yaman",\n    ...\n  }\n]'
                 className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[250px] font-mono text-sm resize-y m3-scrollbar"
+                data-lenis-prevent="true"
+                onWheel={(e: React.WheelEvent) => e.stopPropagation()}
+                onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
               />
             </div>
 

@@ -499,11 +499,28 @@ export default function Home() {
       </div>
       <div>
         <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">English Transliteration (Required)</label>
-        <textarea required placeholder="Enter the phonetic lyrics here..." value={formEnglish} onChange={(e) => setFormEnglish(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" />
+        <textarea 
+          required 
+          placeholder="Enter the phonetic lyrics here..." 
+          value={formEnglish} 
+          onChange={(e) => setFormEnglish(e.target.value)} 
+          className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" 
+          data-lenis-prevent="true"
+          onWheel={(e: React.WheelEvent) => e.stopPropagation()}
+          onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
+        />
       </div>
       <div>
         <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Devanagari Script (Optional)</label>
-        <textarea placeholder="होली खेलन को चले कन्हैयाँ..." value={formDevanagari} onChange={(e) => setFormDevanagari(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" />
+        <textarea 
+          placeholder="होली खेलन को चले कन्हैयाँ..." 
+          value={formDevanagari} 
+          onChange={(e) => setFormDevanagari(e.target.value)} 
+          className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" 
+          data-lenis-prevent="true"
+          onWheel={(e: React.WheelEvent) => e.stopPropagation()}
+          onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
+        />
       </div>
       <hr className="border-gray-200 dark:border-m3-surface-high-dark my-2" />
       <div className="flex flex-col md:flex-row gap-6 items-end">
@@ -719,7 +736,12 @@ export default function Home() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" onClick={closeInfoModal}>
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isInfoClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
           <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col ${isInfoClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
-            <ReactLenis options={LENIS_OPTIONS} className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar">
+            <ReactLenis 
+              options={LENIS_OPTIONS} 
+              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar"
+              onWheel={(e: React.WheelEvent) => e.stopPropagation()}
+              onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
+            >
               <div className="p-8 md:p-12">
             <div className="absolute top-6 right-6 md:top-8 md:right-8">
               <button onClick={closeInfoModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
@@ -795,7 +817,12 @@ export default function Home() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" onClick={closeAddModal}>
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isAddClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
           <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isAddClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
-            <ReactLenis options={LENIS_OPTIONS} className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar">
+            <ReactLenis 
+              options={LENIS_OPTIONS} 
+              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar"
+              onWheel={(e: React.WheelEvent) => e.stopPropagation()}
+              onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
+            >
               <div className="p-8 md:p-12">
                 <div className="absolute top-6 right-6 md:top-8 md:right-8">
                   <button onClick={closeAddModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
@@ -818,7 +845,12 @@ export default function Home() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" onClick={closeEditModal}>
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isEditClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
           <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isEditClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
-            <ReactLenis options={LENIS_OPTIONS} className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar">
+            <ReactLenis 
+              options={LENIS_OPTIONS} 
+              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar"
+              onWheel={(e: React.WheelEvent) => e.stopPropagation()}
+              onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
+            >
               <div className="p-8 md:p-12">
                 <div className="absolute top-6 right-6 md:top-8 md:right-8">
                   <button onClick={closeEditModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">

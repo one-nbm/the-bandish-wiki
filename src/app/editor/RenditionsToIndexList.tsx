@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { getRenditionsToIndex, addRenditionToIndex, deleteRenditionFromIndex } from "@/app/actions";
+import { ReactLenis } from 'lenis/react';
+import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
 
 export default function RenditionsToIndexList() {
   const [renditions, setRenditions] = useState<any[]>([]);
@@ -56,7 +58,12 @@ export default function RenditionsToIndexList() {
       </h2>
       
       {/* List */}
-      <div className="flex-1 overflow-y-auto m3-scrollbar pr-2 mb-4 space-y-2">
+      <ReactLenis 
+        options={LENIS_OPTIONS} 
+        className="flex-1 overflow-y-auto m3-scrollbar pr-2 mb-4 space-y-2"
+        onWheel={(e: React.WheelEvent) => e.stopPropagation()}
+        onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
+      >
         {loading ? (
           <p className="text-sm text-gray-500">Loading...</p>
         ) : renditions.length === 0 ? (
@@ -80,7 +87,7 @@ export default function RenditionsToIndexList() {
             </div>
           ))
         )}
-      </div>
+      </ReactLenis>
 
       {/* Add Form */}
       <form onSubmit={handleAdd} className="flex gap-2">
