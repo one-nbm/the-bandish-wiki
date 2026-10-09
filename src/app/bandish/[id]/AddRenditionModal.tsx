@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { updateBandishSecurely } from "@/app/actions";
+import { syncRenditionAcrossBandishes, getAllBandishTitles } from "@/app/actions";
+import BandishCombobox from "./BandishCombobox";
 
 export default function AddRenditionModal({ bandish }: { bandish: any }) {
   const router = useRouter();
@@ -15,7 +16,16 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
   const [formIsVideo, setFormIsVideo] = useState(false);
   const [formBandishes, setFormBandishes] = useState<string[]>([bandish?.title || ""]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [allTitles, setAllTitles] = useState<string[]>([]);
   const [toast, setToast] = useState<{ message: string, type: 'error' | 'success' } | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      getAllBandishTitles().then(res => {
+        if (res.success && res.data) setAllTitles(res.data);
+      });
+    }
+  }, [isOpen]);
 
   const closeModal = useCallback(() => {
     setIsClosing(true);
@@ -74,7 +84,7 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
     const updatedRenditions = [...(bandish.youtube_renditions || []), newRendition];
 
     try {
-      const result = await updateBandishSecurely(bandish.id, { youtube_renditions: updatedRenditions });
+      const result = await syncRenditionAcrossBandishes(null, newRendition);
       if (!result.success) throw new Error(result.error ?? "Unknown error");
 
       setIsClosing(true);
@@ -136,10 +146,13 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
                   <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Year (Optional)</label>
                   <input type="text" placeholder="e.g. 2005" value={formYear} onChange={(e) => setFormYear(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
                 </div>
-                <div className="flex items-center">
-                  <label className="flex items-center gap-3 cursor-pointer text-gray-900 dark:text-white font-bold select-none mt-4">
-                    <input type="checkbox" checked={formIsVideo} onChange={(e) => setFormIsVideo(e.target.checked)} className="w-6 h-6 rounded-md text-m3-primary dark:text-m3-primary-dark bg-m3-surface-container dark:bg-m3-surface-container-dark border-gray-300 dark:border-gray-600 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-200" />
-                    Is Video Recording?
+                <div className="flex items-center pt-6">
+                  <label className="flex items-center gap-4 cursor-pointer group">
+                    <div className={`relative w-[3.25rem] h-8 rounded-full transition-colors duration-300 ease-out border-2 ${formIsVideo ? 'bg-m3-primary border-m3-primary dark:bg-m3-primary-dark dark:border-m3-primary-dark' : 'bg-m3-surface-container border-gray-400 dark:bg-m3-surface-container-dark dark:border-gray-500 hover:border-gray-500 dark:hover:border-gray-400'}`}>
+                      <div className={`absolute top-1/2 -translate-y-1/2 rounded-full transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${formIsVideo ? 'left-[calc(100%-1.65rem)] w-6 h-6 bg-white dark:bg-gray-900' : 'left-1 w-5 h-5 bg-gray-400 dark:bg-gray-500 group-hover:bg-gray-500 dark:group-hover:bg-gray-400'}`} />
+                    </div>
+                    <input type="checkbox" className="sr-only" checked={formIsVideo} onChange={(e) => setFormIsVideo(e.target.checked)} />
+                    <span className="text-gray-900 dark:text-white font-bold select-none tracking-wide text-sm">Is Video Recording?</span>
                   </label>
                 </div>
               </div>
@@ -154,17 +167,14 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
                 <div className="space-y-3">
                   {formBandishes.map((b, index) => (
                     <div key={index} className="flex items-center gap-2">
-                      <input 
-                        type="text" 
-                        required
-                        placeholder="e.g. Khwaajaa Din Duniyaa Me" 
-                        value={b} 
-                        onChange={(e) => {
+                      <BandishCombobox
+                        value={b}
+                        onChange={(val) => {
                           const newB = [...formBandishes];
-                          newB[index] = e.target.value;
+                          newB[index] = val;
                           setFormBandishes(newB);
-                        }} 
-                        className="flex-1 bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                        }}
+                        allTitles={allTitles}
                       />
                       {formBandishes.length > 1 && (
                         <button 

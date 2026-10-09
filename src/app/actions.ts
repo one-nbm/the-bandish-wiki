@@ -233,3 +233,64 @@ export async function deleteRenditionFromIndex(id: string) {
 
   return { success: true };
 }
+
+// ─── Rendition Sync & Autocomplete ─────────────────────────────────────────
+
+export async function getAllBandishTitles() {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.from('bandishes').select('title');
+  if (error || !data) return { success: false, data: [] as string[] };
+  return { success: true, data: data.map(b => b.title) };
+}
+
+export async function syncRenditionAcrossBandishes(
+  oldRendition: any | null,
+  newRendition: any | null
+) {
+  const { authorized, error, supabaseAdmin } = await authorizeEditor();
+  if (!authorized || !supabaseAdmin) return { success: false, error: error ?? "Unauthorized" };
+
+  const oldTitles = oldRendition?.bandishes || [];
+  const newTitles = newRendition?.bandishes || [];
+  const allAffectedTitles = Array.from(new Set([...oldTitles, ...newTitles]));
+
+  if (allAffectedTitles.length === 0) return { success: true };
+
+  const { data: bandishes, error: fetchError } = await supabaseAdmin
+    .from('bandishes')
+    .select('id, title, youtube_renditions')
+    .in('title', allAffectedTitles);
+
+  if (fetchError || !bandishes) {
+    console.error("Fetch error:", fetchError);
+    return { success: false, error: "Failed to fetch affected bandishes." };
+  }
+
+  const targetUrl = oldRendition ? oldRendition.url : newRendition?.url;
+
+  for (const b of bandishes) {
+    let renditions = Array.isArray(b.youtube_renditions) ? [...b.youtube_renditions] : [];
+    const existingIndex = renditions.findIndex((r: any) => r.url === targetUrl);
+
+    const shouldHaveRendition = newTitles.includes(b.title) && newRendition !== null;
+
+    if (shouldHaveRendition) {
+      if (existingIndex >= 0) {
+        renditions[existingIndex] = newRendition;
+      } else {
+        renditions.push(newRendition);
+      }
+    } else {
+      if (existingIndex >= 0) {
+        renditions.splice(existingIndex, 1);
+      }
+    }
+
+    await supabaseAdmin
+      .from('bandishes')
+      .update({ youtube_renditions: renditions })
+      .eq('id', b.id);
+  }
+
+  return { success: true };
+}

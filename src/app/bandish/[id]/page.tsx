@@ -127,7 +127,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                 return (
                   <div
                     key={index}
-                    className="group relative bg-m3-surface-container dark:bg-m3-surface-container-dark rounded-3xl overflow-hidden dark:ring-1 dark:ring-white/15 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-1 hover:scale-[1.02] flex items-stretch min-h-[5rem]"
+                    className="group relative bg-gray-100 dark:bg-m3-surface-container-dark rounded-[2rem] overflow-hidden border border-m3-surface-high dark:border-m3-surface-high-dark transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-1 hover:scale-[1.02] flex items-stretch min-h-[7.5rem]"
                   >
                     {/* Full-bleed thumbnail */}
                     {videoId && (
@@ -141,8 +141,8 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                       />
                     )}
 
-                    {/* Gradient: white wash left in light mode (lightens thumbnail), transparent in dark; fades to card bg on right */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-white/55 dark:from-transparent via-m3-surface-container/95 dark:via-m3-surface-container-dark/95 via-[45%] to-m3-surface-container dark:to-m3-surface-container-dark" />
+                    {/* Gradient: solid gray on left for text legibility, fading to transparent on right so image peeks out */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-gray-100 dark:from-m3-surface-container-dark via-gray-100/95 dark:via-m3-surface-container-dark/95 via-[50%] to-white/20 dark:to-transparent" />
 
                     {/* Play button */}
                     <a
@@ -159,22 +159,37 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                       href={video.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="relative z-10 flex flex-col justify-center flex-1 min-w-0 py-3 pl-1 pr-2"
+                      className="relative z-10 flex flex-col justify-center flex-1 min-w-0 py-5 pl-2 pr-4"
                     >
-                      <h4 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base line-clamp-1 leading-snug flex items-center gap-2">
-                        {video.artist}
-                        {video.year && (
-                          <span className="text-[0.65rem] bg-m3-surface-high dark:bg-m3-surface-high-dark px-1.5 py-0.5 rounded-md font-medium text-gray-600 dark:text-gray-300">
-                            {video.year}
-                          </span>
-                        )}
-                        {video.isVideo && (
-                          <span className="material-symbols-rounded text-sm text-m3-primary dark:text-m3-primary-dark" title="Video Recording">videocam</span>
-                        )}
-                      </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 leading-snug font-medium">
-                        {video.bandishes && video.bandishes.length > 0 ? video.bandishes.join(' • ') : (video.title || "Watch on YouTube")}
-                      </p>
+                      <div className="flex flex-col gap-2">
+                        <h4 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg line-clamp-1 leading-snug">
+                          {video.artist}
+                        </h4>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {video.year && (
+                            <span className="bg-m3-surface-high dark:bg-m3-surface-high-dark text-gray-700 dark:text-gray-300 px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center">
+                              {video.year}
+                            </span>
+                          )}
+                          {video.isVideo && (
+                            <span className="bg-m3-primary/10 dark:bg-m3-primary-dark/10 text-m3-primary dark:text-m3-primary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center gap-1">
+                              <span className="material-symbols-rounded text-[1rem]">videocam</span>
+                              Video
+                            </span>
+                          )}
+                          {video.bandishes && video.bandishes.length > 0 ? (
+                            video.bandishes.map((b, idx) => (
+                              <span key={idx} className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide line-clamp-1">
+                                {b}
+                              </span>
+                            ))
+                          ) : video.title && (
+                            <span className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide line-clamp-1">
+                              {video.title}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </a>
 
                     {/* Action buttons */}
