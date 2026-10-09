@@ -10,8 +10,10 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [formArtist, setFormArtist] = useState("");
-  const [formTitle, setFormTitle] = useState("");
   const [formUrl, setFormUrl] = useState("");
+  const [formYear, setFormYear] = useState("");
+  const [formIsVideo, setFormIsVideo] = useState(false);
+  const [formBandishes, setFormBandishes] = useState<string[]>([bandish?.title || ""]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string, type: 'error' | 'success' } | null>(null);
 
@@ -21,8 +23,10 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
       setIsOpen(false);
       setIsClosing(false);
       setFormArtist("");
-      setFormTitle("");
       setFormUrl("");
+      setFormYear("");
+      setFormIsVideo(false);
+      setFormBandishes([bandish?.title || ""]);
       setToast(null);
     }, 300);
   }, []);
@@ -60,7 +64,13 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
     setIsSubmitting(true);
     setToast(null);
 
-    const newRendition = { artist: formArtist, title: formTitle, url: formUrl };
+    const newRendition = { 
+      artist: formArtist, 
+      url: formUrl,
+      year: formYear,
+      isVideo: formIsVideo,
+      bandishes: formBandishes.map((s: string) => s.trim()).filter(Boolean)
+    };
     const updatedRenditions = [...(bandish.youtube_renditions || []), newRendition];
 
     try {
@@ -72,8 +82,10 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
         setIsOpen(false);
         setIsClosing(false);
         setFormArtist("");
-        setFormTitle("");
         setFormUrl("");
+        setFormYear("");
+        setFormIsVideo(false);
+        setFormBandishes([bandish?.title || ""]);
         router.refresh();
       }, 300);
     } catch (error: any) {
@@ -119,9 +131,53 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
                 <input type="text" required placeholder="e.g. Pandit Jasraj" value={formArtist} onChange={(e) => setFormArtist(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Year (Optional)</label>
+                  <input type="text" placeholder="e.g. 2005" value={formYear} onChange={(e) => setFormYear(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+                </div>
+                <div className="flex items-center">
+                  <label className="flex items-center gap-3 cursor-pointer text-gray-900 dark:text-white font-bold select-none mt-4">
+                    <input type="checkbox" checked={formIsVideo} onChange={(e) => setFormIsVideo(e.target.checked)} className="w-6 h-6 rounded-md text-m3-primary dark:text-m3-primary-dark bg-m3-surface-container dark:bg-m3-surface-container-dark border-gray-300 dark:border-gray-600 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-200" />
+                    Is Video Recording?
+                  </label>
+                </div>
+              </div>
+
               <div>
-                <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Title (Optional)</label>
-                <input type="text" placeholder="e.g. Live at Sawai Gandharva" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider">Bandishes Included</label>
+                  <button type="button" onClick={() => setFormBandishes([...formBandishes, ""])} className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark hover:underline flex items-center gap-1">
+                    <span className="material-symbols-rounded text-[1rem]">add</span> Add Bandish
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {formBandishes.map((b, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input 
+                        type="text" 
+                        required
+                        placeholder="e.g. Khwaajaa Din Duniyaa Me" 
+                        value={b} 
+                        onChange={(e) => {
+                          const newB = [...formBandishes];
+                          newB[index] = e.target.value;
+                          setFormBandishes(newB);
+                        }} 
+                        className="flex-1 bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                      />
+                      {formBandishes.length > 1 && (
+                        <button 
+                          type="button" 
+                          onClick={() => setFormBandishes(formBandishes.filter((_, i) => i !== index))} 
+                          className="p-3 text-gray-400 hover:text-m3-error dark:hover:text-m3-error-dark hover:bg-m3-error/10 dark:hover:bg-m3-error-dark/10 rounded-full transition-colors"
+                        >
+                          <span className="material-symbols-rounded">delete</span>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div>

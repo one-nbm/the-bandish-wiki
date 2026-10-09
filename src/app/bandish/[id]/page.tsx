@@ -120,7 +120,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
           
           {bandish.youtube_renditions && bandish.youtube_renditions.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {bandish.youtube_renditions.map((video: { artist: string; url: string; title?: string }, index: number) => {
+              {bandish.youtube_renditions.map((video: { artist: string; url: string; title?: string; year?: string; isVideo?: boolean; bandishes?: string[] }, index: number) => {
                 const videoIdMatch = video.url.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=))([^"&?\/\s]{11})/i);
                 const videoId = videoIdMatch ? videoIdMatch[1] : null;
 
@@ -161,11 +161,19 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                       rel="noopener noreferrer"
                       className="relative z-10 flex flex-col justify-center flex-1 min-w-0 py-3 pl-1 pr-2"
                     >
-                      <h4 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base line-clamp-1 leading-snug">
+                      <h4 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base line-clamp-1 leading-snug flex items-center gap-2">
                         {video.artist}
+                        {video.year && (
+                          <span className="text-[0.65rem] bg-m3-surface-high dark:bg-m3-surface-high-dark px-1.5 py-0.5 rounded-md font-medium text-gray-600 dark:text-gray-300">
+                            {video.year}
+                          </span>
+                        )}
+                        {video.isVideo && (
+                          <span className="material-symbols-rounded text-sm text-m3-primary dark:text-m3-primary-dark" title="Video Recording">videocam</span>
+                        )}
                       </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2 leading-snug">
-                        {video.title || "Watch on YouTube"}
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 leading-snug font-medium">
+                        {video.bandishes && video.bandishes.length > 0 ? video.bandishes.join(' • ') : (video.title || "Watch on YouTube")}
                       </p>
                     </a>
 

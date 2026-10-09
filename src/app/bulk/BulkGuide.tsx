@@ -102,16 +102,20 @@ export default function BulkGuide() {
           <p className="mb-4 text-gray-700 dark:text-gray-300">An array of valid working YouTube links. Empty array <code className="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">[]</code> if none exist.</p>
           <ul className="space-y-2 mb-4 list-disc list-inside text-gray-700 dark:text-gray-300 leading-relaxed">
             <li><strong className="text-gray-900 dark:text-white">Valid URLs:</strong> Ensure the <code className="text-m3-primary dark:text-m3-primary-dark">url</code> is a valid, working YouTube link.</li>
-            <li className="leading-loose"><strong className="text-gray-900 dark:text-white">Title Convention:</strong> The <code className="text-m3-primary dark:text-m3-primary-dark">title</code> should generally follow the pattern <code className="text-xs bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded box-decoration-clone break-words">[Year] - [Album] - [Bandish 1] - [Bandish 2]...[Bandish n] - [Video (If the rendition is one)]</code> depending on what information is available.</li>
             <li><strong className="text-gray-900 dark:text-white">Artist:</strong> The full name of the performer without a title like Pt., Dr., etc.</li>
+            <li><strong className="text-gray-900 dark:text-white">Year (Optional):</strong> The year or decade of recording as a string (e.g. "1983", "1970s").</li>
+            <li><strong className="text-gray-900 dark:text-white">isVideo:</strong> Boolean indicating if the recording has video footage.</li>
+            <li className="leading-loose"><strong className="text-gray-900 dark:text-white">Bandishes:</strong> An array of exact string titles of the bandishes performed in the recording. E.g. <code className="text-xs bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded box-decoration-clone break-words">["Khwaajaa Din Duniyaa Me", "Man Haravaa"]</code>.</li>
           </ul>
           <div className="bg-white dark:bg-[#1a181d] rounded-2xl p-4 sm:p-5 border border-m3-surface-high dark:border-m3-surface-high-dark overflow-x-auto m3-scrollbar">
             <pre className="text-xs sm:text-sm font-mono text-gray-800 dark:text-gray-300">
               <code>{`"youtube_renditions": [
   {
     "url": "https://www.youtube.com/watch?v=gc3XUmP44vk",
-    "title": "1983 - Jhananana Jhananana Jhana Jhana - Jhanana Baaje - Video",
-    "artist": "Example Person"
+    "artist": "Example Person",
+    "year": "1983",
+    "isVideo": true,
+    "bandishes": ["Jhananana Jhananana Jhana Jhana", "Jhanana Baaje"]
   }
 ]`}</code>
             </pre>
@@ -137,11 +141,13 @@ export default function BulkGuide() {
       "english": "jhananan jhan jhananan jhan baaje paayaliya\\npiyaa se milan chali aaj kaminiya\\n\\namiy halaahal madbhare shwet shyam ratanaar\\njiyat marat jhuki jhuki parat jehi chitawat ek baar",
       "devanagari": "झनणन झन झनणन झन बाजे पायलिया\\nपिया से मिलन चली आज कामिनिया\\n\\nअमिय हलाहल मदभरे श्वेत श्याम रतनार\\nजियत मरत झुकी झुकी परत जेही चितवत एक बार"
     },
-    "youtube_renditions": [
+      "youtube_renditions": [
       {
         "url": "https://www.youtube.com/watch?v=gc3XUmP44vk",
-        "title": "Jhanana Jhanana Baje",
-        "artist": "Pandit Bhimsen Joshi"
+        "artist": "Pandit Bhimsen Joshi",
+        "year": "1970s",
+        "isVideo": true,
+        "bandishes": ["Jhananana Jhananana Jhana Jhana"]
       }
     ],
     "contributor": "Google Gemini"
