@@ -40,6 +40,25 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
   const raagSlug = bandish.raag.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
   const isAdmin = await checkIsEditor();
 
+  // Fetch IDs for rendition bandish tags
+  const allRenditionTitles = bandish.youtube_renditions
+    ? Array.from(new Set(bandish.youtube_renditions.flatMap((r: any) => r.bandishes || [])))
+    : [];
+    
+  let titleToIdMap: Record<string, string> = {};
+  if (allRenditionTitles.length > 0) {
+    const { data: relatedBandishes } = await supabase
+      .from('bandishes')
+      .select('id, title')
+      .in('title', allRenditionTitles);
+      
+    if (relatedBandishes) {
+      relatedBandishes.forEach((b: any) => {
+        titleToIdMap[b.title] = b.id;
+      });
+    }
+  }
+
   return (
     <main className="min-h-screen bg-transparent relative">
       
@@ -141,8 +160,8 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                       />
                     )}
 
-                    {/* Gradient: solid gray on left for text legibility, fading to transparent on right so image peeks out */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-gray-100 dark:from-m3-surface-container-dark via-gray-100/95 dark:via-m3-surface-container-dark/95 via-[50%] to-white/20 dark:to-transparent" />
+                    {/* Gradient: solid gray on right, fading to transparent on left */}
+                    <div className="absolute inset-0 bg-gradient-to-l from-gray-100 dark:from-m3-surface-container-dark via-gray-100/95 dark:via-m3-surface-container-dark/95 via-[50%] to-white/20 dark:to-transparent" />
 
                     {/* Play button */}
                     <a
@@ -178,14 +197,24 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                             </span>
                           )}
                           {video.bandishes && video.bandishes.length > 0 ? (
-                            video.bandishes.map((b, idx) => (
-                              <span key={idx} className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide line-clamp-1">
-                                {b}
-                              </span>
-                            ))
+                            video.bandishes.map((b, idx) => {
+                              const relatedId = titleToIdMap[b];
+                              if (relatedId) {
+                                return (
+                                  <Link key={idx} href={`/bandish/${relatedId}`} className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center max-w-full transition-colors z-20" onClick={(e) => e.stopPropagation()}>
+                                    <span className="truncate">{b}</span>
+                                  </Link>
+                                );
+                              }
+                              return (
+                                <span key={idx} className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center max-w-full">
+                                  <span className="truncate">{b}</span>
+                                </span>
+                              );
+                            })
                           ) : video.title && (
-                            <span className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide line-clamp-1">
-                              {video.title}
+                            <span className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center max-w-full">
+                              <span className="truncate">{video.title}</span>
                             </span>
                           )}
                         </div>
