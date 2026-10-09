@@ -93,6 +93,7 @@ export default function Home() {
   const [formTaal, setFormTaal] = useState("");
   const [formLay, setFormLay] = useState("");
   const [formComposer, setFormComposer] = useState("");
+  const [formTradition, setFormTradition] = useState("");
   const [formEnglish, setFormEnglish] = useState("");
   const [formDevanagari, setFormDevanagari] = useState("");
   const [adminPasscode, setAdminPasscode] = useState("");
@@ -177,7 +178,7 @@ export default function Home() {
   const closeInfoModal = () => { setIsInfoClosing(true); setTimeout(() => { setIsInfoOpen(false); setIsInfoClosing(false); }, 300); };
 
   const clearForm = () => {
-    setFormTitle(""); setFormRaag(""); setFormTaal(""); setFormLay(""); setFormComposer("");
+    setFormTitle(""); setFormRaag(""); setFormTaal(""); setFormLay(""); setFormComposer(""); setFormTradition("");
     setFormEnglish(""); setFormDevanagari(""); setAdminPasscode("");
   };
 
@@ -204,6 +205,7 @@ export default function Home() {
     setFormTaal(bandish.taal);
     setFormLay((bandish.lay || []).join(", "));
     setFormComposer(bandish.composer);
+    setFormTradition(bandish.tradition || "");
     setFormEnglish(bandish.lyrics.english);
     setFormDevanagari(bandish.lyrics.devanagari || "");
     // Close the viewing modal instantly without animation to transition smoothly to edit
@@ -285,6 +287,7 @@ export default function Home() {
       taal: formTaal,
       lay: formLay.split(',').map(s => s.trim()).filter(Boolean),
       composer: formComposer,
+      tradition: formTradition || null,
       lyrics: {
         english: formEnglish,
         devanagari: formDevanagari || "",
@@ -503,6 +506,10 @@ export default function Home() {
         <div>
           <label className="block text-xs font-bold text-m3-tertiary dark:text-m3-tertiary-dark uppercase tracking-wider mb-2">Composer</label>
           <input type="text" required placeholder="e.g. Traditional" value={formComposer} onChange={(e) => setFormComposer(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-tertiary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Gharana / Tradition</label>
+          <input type="text" placeholder="e.g. Agra, Gwalior" value={formTradition} onChange={(e) => setFormTradition(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
         </div>
       </div>
       <div>

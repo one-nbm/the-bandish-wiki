@@ -117,6 +117,9 @@ export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModal
               <span className="bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 text-m3-tertiary dark:text-m3-tertiary-dark px-4 py-2 rounded-full text-sm font-bold tracking-wide">
                 {bandish.composer}
               </span>
+              <span className="bg-m3-surface-high dark:bg-m3-surface-high-dark text-gray-800 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-bold tracking-wide">
+                {bandish.tradition || "N/A"}
+              </span>
             </div>
           </div>
 
