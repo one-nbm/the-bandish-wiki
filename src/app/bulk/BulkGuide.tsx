@@ -29,7 +29,8 @@ export default function BulkGuide() {
     "id": "e2f89c62-...",
     "title": "Jhananana Jhananana Jhana Jhana",
     "raag": "Deepak",
-    "taal": "Ada Chautala Drut",
+    "taal": "Ada Chautala",
+    "lay": ["Drut"],
     "composer": "unknown",
     "lyrics": { ... },
     "youtube_renditions": [ ... ],
@@ -51,7 +52,8 @@ export default function BulkGuide() {
               { field: "id", type: "UUID", desc: "A valid UUID v4 string." },
               { field: "title", type: "String", desc: "Capitalize the first letter of each word (Title Case)." },
               { field: "raag", type: "String", desc: "Must match an existing Raag name exactly (e.g., \"Puriya Kalyan\")." },
-              { field: "taal", type: "String", desc: "Format as [TaalName] [LayName] without commas (e.g., \"Tintal Madhyalay\"). Make sure to spell the taal and lay names as already written in the database." },
+              { field: "taal", type: "String", desc: "Just the taal name (e.g., \"Tintal\", \"Ada Chautala\")." },
+              { field: "lay", type: "Array of Strings", desc: "Array of lay names (e.g., [\"Vilambit\"], [\"Madhyalay\", \"Drut\"])." },
               { field: "composer", type: "String", desc: "If unknown, use exactly \"unknown\". Otherwise, Name followed by mudra in single-quotes." },
               { field: "contributor", type: "String", desc: "The name of the user or agent adding the entry. Can be configured for your account in the Editor Dashboard." }
             ].map((item, idx) => (

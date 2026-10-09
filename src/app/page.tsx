@@ -91,6 +91,7 @@ export default function Home() {
   const [formTitle, setFormTitle] = useState("");
   const [formRaag, setFormRaag] = useState("");
   const [formTaal, setFormTaal] = useState("");
+  const [formLay, setFormLay] = useState("");
   const [formComposer, setFormComposer] = useState("");
   const [formEnglish, setFormEnglish] = useState("");
   const [formDevanagari, setFormDevanagari] = useState("");
@@ -176,7 +177,7 @@ export default function Home() {
   const closeInfoModal = () => { setIsInfoClosing(true); setTimeout(() => { setIsInfoOpen(false); setIsInfoClosing(false); }, 300); };
 
   const clearForm = () => {
-    setFormTitle(""); setFormRaag(""); setFormTaal(""); setFormComposer("");
+    setFormTitle(""); setFormRaag(""); setFormTaal(""); setFormLay(""); setFormComposer("");
     setFormEnglish(""); setFormDevanagari(""); setAdminPasscode("");
   };
 
@@ -201,6 +202,7 @@ export default function Home() {
     setFormTitle(bandish.title);
     setFormRaag(bandish.raag);
     setFormTaal(bandish.taal);
+    setFormLay((bandish.lay || []).join(", "));
     setFormComposer(bandish.composer);
     setFormEnglish(bandish.lyrics.english);
     setFormDevanagari(bandish.lyrics.devanagari || "");
@@ -281,6 +283,7 @@ export default function Home() {
       title: formTitle,
       raag: formRaag,
       taal: formTaal,
+      lay: formLay.split(',').map(s => s.trim()).filter(Boolean),
       composer: formComposer,
       lyrics: {
         english: formEnglish,
@@ -359,6 +362,7 @@ export default function Home() {
       data = data.filter((bandish) => activeFilters.every((filter) => {
         if (filter.key === "raag") return bandish.raag === filter.value;
         if (filter.key === "taal") return bandish.taal === filter.value;
+        if (filter.key === "lay") return bandish.lay?.includes(filter.value);
         if (filter.key === "composer") return bandish.composer === filter.value;
         return true;
       }));
@@ -366,7 +370,7 @@ export default function Home() {
     return data;
   }, [baseData, showFavoritesOnly, favorites, activeFilters]);
 
-  const fuseBandishes = useMemo(() => new Fuse(preSearchData, { keys: ["title", "raag", "composer", "taal"], threshold: 0.4 }), [preSearchData]);
+  const fuseBandishes = useMemo(() => new Fuse(preSearchData, { keys: ["title", "raag", "composer", "taal", "lay"], threshold: 0.4 }), [preSearchData]);
 
   const processedData = useMemo(() => {
     if (query) {
@@ -483,7 +487,7 @@ export default function Home() {
         <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Title</label>
         <input type="text" autoFocus required placeholder="e.g. Hori Khelan Ko" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Raag</label>
           <input type="text" required placeholder="e.g. Des" value={formRaag} onChange={(e) => setFormRaag(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
@@ -491,6 +495,10 @@ export default function Home() {
         <div>
           <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Taal</label>
           <input type="text" required placeholder="e.g. Tintal" value={formTaal} onChange={(e) => setFormTaal(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Lay (Comma Separated)</label>
+          <input type="text" placeholder="e.g. Vilambit, Drut" value={formLay} onChange={(e) => setFormLay(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
         </div>
         <div>
           <label className="block text-xs font-bold text-m3-tertiary dark:text-m3-tertiary-dark uppercase tracking-wider mb-2">Composer</label>

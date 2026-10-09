@@ -80,6 +80,15 @@ export const BandishCard = memo(({
         >
           {bandish.taal}
         </button>
+        {bandish.lay?.map((l: string, i: number) => (
+          <button
+            key={`lay-${i}`}
+            onClick={(e) => { e.stopPropagation(); onToggleFilter("lay", l); }}
+            className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-2xl text-sm font-bold tracking-wide transition duration-200 text-left hover:scale-105 active:scale-95"
+          >
+            {l}
+          </button>
+        ))}
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFilter("composer", bandish.composer); }}
           className="bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 hover:bg-m3-tertiary/20 dark:hover:bg-m3-tertiary-dark/20 text-m3-tertiary dark:text-m3-tertiary-dark px-3 py-1.5 rounded-2xl text-sm font-bold tracking-wide transition duration-200 text-left hover:scale-105 active:scale-95"

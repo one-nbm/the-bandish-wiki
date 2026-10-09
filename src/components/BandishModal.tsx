@@ -109,6 +109,11 @@ export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModal
               <span className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-4 py-2 rounded-full text-sm font-bold tracking-wide">
                 {bandish.taal}
               </span>
+              {bandish.lay?.map((l: string, i: number) => (
+                <span key={`modal-lay-${i}`} className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-4 py-2 rounded-full text-sm font-bold tracking-wide">
+                  {l}
+                </span>
+              ))}
               <span className="bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 text-m3-tertiary dark:text-m3-tertiary-dark px-4 py-2 rounded-full text-sm font-bold tracking-wide">
                 {bandish.composer}
               </span>
