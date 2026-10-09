@@ -146,7 +146,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                 return (
                   <div
                     key={index}
-                    className="group relative bg-gray-100 dark:bg-m3-surface-container-dark rounded-[2rem] overflow-hidden border border-m3-surface-high dark:border-m3-surface-high-dark transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-1 hover:scale-[1.02] flex items-stretch min-h-[7.5rem]"
+                    className="group relative bg-white dark:bg-m3-surface-container-dark rounded-[2rem] overflow-hidden border border-m3-surface-high dark:border-m3-surface-high-dark transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-1 hover:scale-[1.02] flex items-stretch min-h-[7.5rem]"
                   >
                     {/* Full-bleed thumbnail */}
                     {videoId && (
@@ -160,31 +160,34 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                       />
                     )}
 
-                    {/* Gradient: solid gray on right, fading to transparent on left */}
-                    <div className="absolute inset-0 bg-gradient-to-l from-gray-100 dark:from-m3-surface-container-dark via-gray-100/95 dark:via-m3-surface-container-dark/95 via-[50%] to-white/20 dark:to-transparent" />
+                    {/* Gradient: solid on left, fading to transparent on right */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-white dark:from-m3-surface-container-dark via-white/95 dark:via-m3-surface-container-dark/95 via-[60%] to-transparent pointer-events-none" />
+
+                    {/* Full Card Click Target */}
+                    <a
+                      href={video.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute inset-0 z-[5]"
+                      aria-label={`Watch ${video.artist} performance`}
+                    />
 
                     {/* Play button */}
-                    <a
-                      href={video.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="relative z-10 w-20 sm:w-24 shrink-0 flex items-center justify-center"
+                    <div
+                      className="relative z-10 w-20 sm:w-24 shrink-0 flex items-center justify-center pointer-events-none"
                     >
                       <span className="material-symbols-rounded text-m3-primary dark:text-white text-[1.6rem] drop-shadow-lg transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-125">play_arrow</span>
-                    </a>
+                    </div>
 
                     {/* Text */}
-                    <a
-                      href={video.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="relative z-10 flex flex-col justify-center flex-1 min-w-0 py-5 pl-2 pr-4"
+                    <div
+                      className="relative z-10 flex flex-col justify-center flex-1 min-w-0 py-5 pl-2 pr-4 pointer-events-none"
                     >
                       <div className="flex flex-col gap-2">
                         <h4 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg line-clamp-1 leading-snug">
                           {video.artist}
                         </h4>
-                        <div className="flex flex-wrap gap-2 mt-1">
+                        <div className="flex flex-wrap gap-2 mt-1 pointer-events-auto">
                           {video.year && (
                             <span className="bg-m3-surface-high dark:bg-m3-surface-high-dark text-gray-700 dark:text-gray-300 px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center">
                               {video.year}
@@ -201,7 +204,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                               const relatedId = titleToIdMap[b];
                               if (relatedId) {
                                 return (
-                                  <Link key={idx} href={`/bandish/${relatedId}`} className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center max-w-full transition-colors z-20" onClick={(e) => e.stopPropagation()}>
+                                  <Link key={idx} href={`/bandish/${relatedId}`} className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center max-w-full transition-colors z-20">
                                     <span className="truncate">{b}</span>
                                   </Link>
                                 );
@@ -219,10 +222,10 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                           )}
                         </div>
                       </div>
-                    </a>
+                    </div>
 
                     {/* Action buttons */}
-                    <div className="relative z-10 flex flex-col items-center justify-center gap-1 px-2 shrink-0">
+                    <div className="relative z-20 flex flex-col items-center justify-center gap-1 px-2 shrink-0">
                       {isAdmin && <EditRenditionModal bandish={bandish} index={index} />}
                       <a
                         href={video.url}
