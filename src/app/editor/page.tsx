@@ -1,11 +1,11 @@
-import { checkIsEditor } from "@/app/actions";
+import { getUserRole, getPendingContributions, getMyContributions } from "@/app/actions";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import EditorDashboard from "./EditorDashboard";
 
 export default async function EditorPage() {
-  const isAdmin = await checkIsEditor();
-  if (!isAdmin) {
+  const role = await getUserRole();
+  if (role === "viewer") {
     redirect("/");
   }
 
@@ -14,8 +14,15 @@ export default async function EditorPage() {
   
   const contributorName = user?.user_metadata?.contributor_name || "Anonymous";
 
-  // Fetch user records and full database records in parallel
-  const [userBandishesRes, userRaagsRes, allBandishesRes, allRaagsRes] = await Promise.all([
+  // Fetch user records, full database records, and queue records in parallel
+  const [
+    userBandishesRes, 
+    userRaagsRes, 
+    allBandishesRes, 
+    allRaagsRes,
+    pendingContributionsRes,
+    myContributionsRes
+  ] = await Promise.all([
     supabase
       .from("bandishes")
       .select("id, title, raag, taal, composer, lay, tradition", { count: "exact" })
@@ -34,6 +41,8 @@ export default async function EditorPage() {
       .from("raags")
       .select("id, name, slug, thaat, samay, vadi, samvadi", { count: "exact" })
       .order("name", { ascending: true }),
+    role === "admin" ? getPendingContributions() : Promise.resolve({ success: true, data: [] }),
+    role === "contributor" ? getMyContributions() : Promise.resolve({ success: true, data: [] })
   ]);
 
   const userBandishes = userBandishesRes.data || [];
@@ -43,6 +52,9 @@ export default async function EditorPage() {
 
   const allBandishes = allBandishesRes.data || [];
   const allRaags = allRaagsRes.data || [];
+
+  const pendingContributions = (pendingContributionsRes as any).data || [];
+  const myContributions = (myContributionsRes as any).data || [];
 
   return (
     <main className="min-h-screen bg-transparent relative transition-colors duration-500">
@@ -54,6 +66,15 @@ export default async function EditorPage() {
         
         {/* Editor Header */}
         <div className="mb-12">
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full uppercase tracking-wider ${
+              role === "admin"
+                ? "bg-m3-primary/10 text-m3-primary dark:bg-m3-primary-dark/20 dark:text-m3-primary-dark border border-m3-primary/20"
+                : "bg-m3-tertiary/10 text-m3-tertiary dark:bg-m3-tertiary-dark/20 dark:text-m3-tertiary-dark border border-m3-tertiary/20"
+            }`}>
+              {role === "admin" ? "Administrator Access" : "Community Contributor"}
+            </span>
+          </div>
           <h1 
             className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight"
             style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
@@ -61,21 +82,23 @@ export default async function EditorPage() {
             Editor Dashboard
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">
-            Manage your contributions and community submissions
+            Manage your compositions, theoretical contributions, and community submissions
           </p>
         </div>
 
-      <EditorDashboard 
-        initialName={contributorName} 
-        bandishCount={bandishCount} 
-        raagCount={raagCount} 
-        userBandishes={userBandishes}
-        userRaags={userRaags}
-        allBandishes={allBandishes}
-        allRaags={allRaags}
-      />
+        <EditorDashboard 
+          initialName={contributorName} 
+          userRole={role}
+          bandishCount={bandishCount} 
+          raagCount={raagCount} 
+          userBandishes={userBandishes}
+          userRaags={userRaags}
+          allBandishes={allBandishes}
+          allRaags={allRaags}
+          pendingContributions={pendingContributions}
+          myContributions={myContributions}
+        />
       </div>
     </main>
   );
 }
-

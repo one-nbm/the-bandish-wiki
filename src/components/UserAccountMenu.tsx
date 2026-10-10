@@ -2,17 +2,22 @@
 
 import { useState, useRef, useEffect } from "react";
 import SignOutButton from "./SignOutButton";
-
 import Link from "next/link";
+import { UserRole } from "@/app/actions";
 
 interface UserAccountMenuProps {
   email: string;
   isAdmin?: boolean;
+  role?: UserRole;
 }
 
-export default function UserAccountMenu({ email, isAdmin }: UserAccountMenuProps) {
+export default function UserAccountMenu({ email, isAdmin, role }: UserAccountMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Compute effective role (fallback to legacy isAdmin boolean)
+  const effectiveRole: UserRole = role || (isAdmin ? "admin" : "viewer");
+  const canAccessDashboard = effectiveRole === "admin" || effectiveRole === "contributor";
 
   useEffect(() => {
     if (!isOpen) return;
@@ -58,15 +63,26 @@ export default function UserAccountMenu({ email, isAdmin }: UserAccountMenuProps
       {isOpen && (
         <div className="absolute top-full right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white dark:bg-m3-surface-high-dark p-3 rounded-2xl border border-gray-100 dark:border-gray-700 z-50 animate-modal-enter">
           <div className="px-3 py-2 mb-2 border-b border-gray-100 dark:border-gray-800">
-            <p className="text-[0.7rem] font-bold uppercase tracking-wider text-m3-secondary dark:text-m3-secondary-dark">
-              Signed in as
-            </p>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <span className="text-[0.7rem] font-bold uppercase tracking-wider text-m3-secondary dark:text-m3-secondary-dark">
+                Signed in as
+              </span>
+              <span className={`px-2 py-0.5 text-[0.65rem] font-bold rounded-full uppercase tracking-wider ${
+                effectiveRole === "admin" 
+                  ? "bg-m3-primary/10 text-m3-primary dark:bg-m3-primary-dark/20 dark:text-m3-primary-dark" 
+                  : effectiveRole === "contributor"
+                  ? "bg-m3-tertiary/10 text-m3-tertiary dark:bg-m3-tertiary-dark/20 dark:text-m3-tertiary-dark"
+                  : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+              }`}>
+                {effectiveRole === "admin" ? "Admin" : effectiveRole === "contributor" ? "Contributor" : "Viewer"}
+              </span>
+            </div>
             <p className="text-sm font-bold text-gray-900 dark:text-white truncate" title={email}>
               {email}
             </p>
           </div>
           <div className="flex flex-col gap-1.5">
-            {isAdmin ? (
+            {canAccessDashboard ? (
               <Link
                 href="/editor"
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 whitespace-nowrap"
@@ -83,7 +99,7 @@ export default function UserAccountMenu({ email, isAdmin }: UserAccountMenuProps
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-xl font-bold text-sm transition-all duration-300 active:scale-95 whitespace-nowrap"
               >
                 <span className="material-symbols-rounded text-[1.25rem]">edit_document</span>
-                <span>Become an Editor</span>
+                <span>Become a Contributor</span>
               </a>
             )}
             <SignOutButton />

@@ -9,6 +9,9 @@ import { ReactLenis } from 'lenis/react';
 import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
 import AddRaagModal from "./AddRaagModal";
 import RenditionsToIndexList from "./RenditionsToIndexList";
+import AdminApprovalList from "./AdminApprovalList";
+import ContributorSubmissionsList from "./ContributorSubmissionsList";
+import { UserRole } from "@/app/actions";
 
 interface ContributedBandish {
   id: string;
@@ -32,22 +35,28 @@ interface ContributedRaag {
 
 interface EditorDashboardProps {
   initialName: string;
+  userRole?: UserRole;
   bandishCount: number;
   raagCount: number;
   userBandishes?: ContributedBandish[];
   userRaags?: ContributedRaag[];
   allBandishes?: ContributedBandish[];
   allRaags?: ContributedRaag[];
+  pendingContributions?: any[];
+  myContributions?: any[];
 }
 
 export default function EditorDashboard({
   initialName,
+  userRole = "admin",
   bandishCount,
   raagCount,
   userBandishes = [],
   userRaags = [],
   allBandishes = [],
-  allRaags = []
+  allRaags = [],
+  pendingContributions = [],
+  myContributions = []
 }: EditorDashboardProps) {
   const [name, setName] = useState(initialName);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -616,33 +625,54 @@ export default function EditorDashboard({
             </span>
             <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">New Raag</h3>
             <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
-              Create a new canonical raag entry with scales & mood.
+              {userRole === "contributor" ? "Suggest a new canonical raag entry for review." : "Create a new canonical raag entry with scales & mood."}
             </p>
           </div>
           <div className="mt-3">
-            <AddRaagModal contributorName={initialName} />
+            <AddRaagModal contributorName={initialName} userRole={userRole} />
           </div>
         </div>
 
         {/* Action: Bulk Add Bandishes */}
-        <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-3.5 sm:p-5 rounded-2xl sm:rounded-[2rem] flex flex-col justify-between">
+        <div className={`bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-3.5 sm:p-5 rounded-2xl sm:rounded-[2rem] flex flex-col justify-between ${
+          userRole !== "admin" ? "opacity-45" : ""
+        }`}>
           <div>
-            <span className="material-symbols-rounded text-2xl sm:text-3xl text-m3-primary dark:text-m3-primary-dark mb-1.5 block">
-              upload_file
-            </span>
+            <div className="flex items-center justify-between gap-1 mb-1.5">
+              <span className="material-symbols-rounded text-2xl sm:text-3xl text-m3-primary dark:text-m3-primary-dark block">
+                upload_file
+              </span>
+              {userRole !== "admin" && (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 uppercase tracking-wider">
+                  Admin Only
+                </span>
+              )}
+            </div>
             <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">Bulk Ingestion</h3>
             <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
-              Validate and batch upload multiple compositions.
+              {userRole === "admin" ? "Validate and batch upload multiple compositions." : "Batch upload tool is reserved for Level 3 Administrators."}
             </p>
           </div>
           <div className="mt-3">
-            <Link
-              href="/bulk"
-              className="w-full py-2.5 sm:py-3 px-3 sm:px-4 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-[1.25rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-transform duration-200 active:scale-95 flex items-center justify-center gap-2 border border-m3-primary/20 dark:border-m3-primary-dark/20"
-            >
-              <span className="material-symbols-rounded text-base sm:text-lg">cloud_upload</span>
-              <span>Open Bulk Tool</span>
-            </Link>
+            {userRole === "admin" ? (
+              <Link
+                href="/bulk"
+                className="w-full py-2.5 sm:py-3 px-3 sm:px-4 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-[1.25rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-transform duration-200 active:scale-95 flex items-center justify-center gap-2 border border-m3-primary/20 dark:border-m3-primary-dark/20"
+              >
+                <span className="material-symbols-rounded text-base sm:text-lg">cloud_upload</span>
+                <span>Open Bulk Tool</span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="w-full py-2.5 sm:py-3 px-3 sm:px-4 bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 rounded-[1.25rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-gray-200 dark:border-gray-700 cursor-not-allowed"
+                title="Bulk Ingestion requires Level 3 Administrator privileges"
+              >
+                <span className="material-symbols-rounded text-base sm:text-lg">lock</span>
+                <span>Admin Only</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -879,16 +909,26 @@ export default function EditorDashboard({
             </p>
             <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
               {activeTab === "bandishes" ? (
-                <Link
-                  href="/bulk"
-                  className="px-5 py-2.5 rounded-full bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 font-bold text-xs sm:text-sm transition-transform duration-200 active:scale-95 flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-rounded text-base">cloud_upload</span>
-                  <span>Bulk Ingestion Tool</span>
-                </Link>
+                userRole === "admin" ? (
+                  <Link
+                    href="/bulk"
+                    className="px-5 py-2.5 rounded-full bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 font-bold text-xs sm:text-sm transition-transform duration-200 active:scale-95 flex items-center gap-1.5"
+                  >
+                    <span className="material-symbols-rounded text-base">cloud_upload</span>
+                    <span>Bulk Ingestion Tool</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/"
+                    className="px-5 py-2.5 rounded-full bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 font-bold text-xs sm:text-sm transition-transform duration-200 active:scale-95 flex items-center gap-1.5"
+                  >
+                    <span className="material-symbols-rounded text-base">add_circle</span>
+                    <span>Contribute a Bandish</span>
+                  </Link>
+                )
               ) : (
                 <div className="inline-block">
-                  <AddRaagModal contributorName={initialName} />
+                  <AddRaagModal contributorName={initialName} userRole={userRole} />
                 </div>
               )}
               <button
@@ -1290,13 +1330,23 @@ export default function EditorDashboard({
                 Compositions you author or upload using the bulk ingestion tool will be organized here.
               </p>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
-                <Link
-                  href="/bulk"
-                  className="px-4 py-2 rounded-full bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 font-bold text-xs hover:bg-m3-primary/90 transition-transform duration-200 active:scale-95 flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-rounded text-sm">cloud_upload</span>
-                  <span>Bulk Ingestion Tool</span>
-                </Link>
+                {userRole === "admin" ? (
+                  <Link
+                    href="/bulk"
+                    className="px-4 py-2 rounded-full bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 font-bold text-xs hover:bg-m3-primary/90 transition-transform duration-200 active:scale-95 flex items-center gap-1.5"
+                  >
+                    <span className="material-symbols-rounded text-sm">cloud_upload</span>
+                    <span>Bulk Ingestion Tool</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/"
+                    className="px-4 py-2 rounded-full bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 font-bold text-xs hover:bg-m3-primary/90 transition-transform duration-200 active:scale-95 flex items-center gap-1.5"
+                  >
+                    <span className="material-symbols-rounded text-sm">add_circle</span>
+                    <span>Contribute a Bandish</span>
+                  </Link>
+                )}
                 <Link
                   href="/"
                   className="px-4 py-2 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-gray-700 dark:text-gray-300 font-bold text-xs hover:bg-m3-surface-high/30 transition-colors flex items-center gap-1.5"
@@ -1398,7 +1448,7 @@ export default function EditorDashboard({
             </p>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
               <div className="inline-block">
-                <AddRaagModal contributorName={initialName} />
+                <AddRaagModal contributorName={initialName} userRole={userRole} />
               </div>
               <Link
                 href="/"
@@ -1574,6 +1624,15 @@ export default function EditorDashboard({
               </div>
             )}
           </div>
+        )}
+      </div>
+
+      {/* Community Contributions & Review Staging */}
+      <div>
+        {userRole === "admin" ? (
+          <AdminApprovalList initialPending={pendingContributions} />
+        ) : (
+          <ContributorSubmissionsList initialSubmissions={myContributions} />
         )}
       </div>
 

@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { syncRenditionAcrossBandishes, getAllBandishTitles } from "@/app/actions";
+import { syncRenditionAcrossBandishes, getAllBandishTitles, submitRenditionContribution, UserRole } from "@/app/actions";
 import BandishCombobox from "./BandishCombobox";
 
-export default function AddRenditionModal({ bandish }: { bandish: any }) {
+export default function AddRenditionModal({ bandish, userRole = "admin" }: { bandish: any; userRole?: UserRole }) {
   const router = useRouter();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -39,7 +39,7 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
       setFormBandishes([bandish?.title || ""]);
       setToast(null);
     }, 300);
-  }, []);
+  }, [bandish]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -81,9 +81,18 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
       isVideo: formIsVideo,
       bandishes: formBandishes.map((s: string) => s.trim()).filter(Boolean)
     };
-    const updatedRenditions = [...(bandish.youtube_renditions || []), newRendition];
 
     try {
+      if (userRole === "contributor") {
+        const result = await submitRenditionContribution(bandish.id, newRendition);
+        if (!result.success) throw new Error(result.error ?? "Failed to submit rendition");
+        setToast({ message: "Rendition submitted for administrator approval!", type: 'success' });
+        setTimeout(() => {
+          closeModal();
+        }, 1500);
+        return;
+      }
+
       const result = await syncRenditionAcrossBandishes(null, newRendition);
       if (!result.success) throw new Error(result.error ?? "Unknown error");
 
@@ -111,7 +120,7 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
       <button
         onClick={() => setIsOpen(true)}
         className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
-        title="Add Rendition"
+        title={userRole === "contributor" ? "Suggest Rendition" : "Add Rendition"}
       >
         <span className="material-symbols-rounded text-[1.4rem]">add</span>
       </button>
@@ -132,35 +141,68 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
             </div>
 
             <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Add Rendition</h2>
-              <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Add a YouTube performance to this bandish.</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>
+                {userRole === "contributor" ? "Suggest Rendition" : "Add Notable Rendition"}
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400">
+                {userRole === "contributor"
+                  ? "Submit a notable audio/video rendition. It will be verified by an administrator before appearing live."
+                  : "Link a notable performance or recording of this composition."}
+              </p>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="space-y-6 md:space-y-8">
+            <form onSubmit={handleFormSubmit} className="space-y-6">
               <div>
-                <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Artist (Required)</label>
-                <input type="text" required placeholder="e.g. Pandit Jasraj" value={formArtist} onChange={(e) => setFormArtist(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+                <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Artist / Performer</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Pt. Bhimsen Joshi"
+                  value={formArtist}
+                  onChange={(e) => setFormArtist(e.target.value)}
+                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">YouTube URL</label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={formUrl}
+                  onChange={(e) => setFormUrl(e.target.value)}
+                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Year (Optional)</label>
-                  <input type="text" placeholder="e.g. 2005" value={formYear} onChange={(e) => setFormYear(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+                  <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Year / Era (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 1978 or 1980s"
+                    value={formYear}
+                    onChange={(e) => setFormYear(e.target.value)}
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                  />
                 </div>
-                <div className="flex items-center pt-6">
-                  <label className="flex items-center gap-4 cursor-pointer group">
-                    <div className={`relative w-[3.25rem] h-8 rounded-full transition-colors duration-300 ease-out border-2 ${formIsVideo ? 'bg-m3-primary border-m3-primary dark:bg-m3-primary-dark dark:border-m3-primary-dark' : 'bg-m3-surface-container border-gray-400 dark:bg-m3-surface-container-dark dark:border-gray-500 hover:border-gray-500 dark:hover:border-gray-400'}`}>
-                      <div className={`absolute top-1/2 -translate-y-1/2 rounded-full transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${formIsVideo ? 'left-[calc(100%-1.65rem)] w-6 h-6 bg-white dark:bg-gray-900' : 'left-1 w-5 h-5 bg-gray-400 dark:bg-gray-500 group-hover:bg-gray-500 dark:group-hover:bg-gray-400'}`} />
-                    </div>
-                    <input type="checkbox" className="sr-only" checked={formIsVideo} onChange={(e) => setFormIsVideo(e.target.checked)} />
-                    <span className="text-gray-900 dark:text-white font-bold select-none tracking-wide text-sm">Is Video Recording?</span>
+                <div className="flex flex-col justify-end">
+                  <label className="flex items-center gap-3 cursor-pointer py-4">
+                    <input
+                      type="checkbox"
+                      checked={formIsVideo}
+                      onChange={(e) => setFormIsVideo(e.target.checked)}
+                      className="w-5 h-5 rounded-lg border-m3-surface-high text-m3-primary focus:ring-m3-primary"
+                    />
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Contains Video footage</span>
                   </label>
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider">Bandishes Included</label>
+                  <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider">Compositions Included</label>
                   <button type="button" onClick={() => setFormBandishes([...formBandishes, ""])} className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark hover:underline flex items-center gap-1">
                     <span className="material-symbols-rounded text-[1rem]">add</span> Add Bandish
                   </button>
@@ -191,15 +233,10 @@ export default function AddRenditionModal({ bandish }: { bandish: any }) {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">YouTube URL (Required)</label>
-                <input type="url" required placeholder="e.g. https://youtube.com/watch?v=..." value={formUrl} onChange={(e) => setFormUrl(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-              </div>
-
-              <div className="flex justify-end pt-2">
+              <div className="flex justify-end pt-4">
                 <button type="submit" disabled={isSubmitting} className="flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
-                  <span className="material-symbols-rounded text-[1.4rem]">save</span>
-                  {isSubmitting ? "Saving..." : "Add Rendition"}
+                  <span className="material-symbols-rounded text-[1.4rem]">{userRole === "contributor" ? "send" : "save"}</span>
+                  {isSubmitting ? "Submitting..." : userRole === "contributor" ? "Submit for Approval" : "Add Rendition"}
                 </button>
               </div>
             </form>

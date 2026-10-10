@@ -62,20 +62,32 @@ body {
   animation-delay: 0.15s;
 }
 
-/* --- CARD HOVER LIFT ---
+/* --- SCROLLING HOVER SUPPRESSION ---
+   Targeted specifically to .bandish-card to eliminate hover churn,
+   CSS transition oscillation, and multi-column repaints while scrolling.
+   Does not affect modals, menus, inputs, tables, or any other elements.
+*/
+body.is-scrolling .bandish-card {
+  pointer-events: none !important;
+}
+
+/* --- CARD HOVER LIFT & CONTAINMENT ---
    Pure CSS compositor-thread hover.
-   Uses transform: translateY with smooth cubic-bezier easing.
+   contain: layout style isolates each card from multi-column layout recalculations.
+   translateY(-4px) prevents edge jitter and flutter while keeping crisp tactile elevation.
    No translateZ(0) to prevent layer explosion and fragmentation in CSS multi-column.
    No box-shadow in transitions to adhere to flat design system.
 */
 .bandish-card {
+  contain: layout style;
   transform: translateY(0);
-  transition: transform 250ms cubic-bezier(0.2, 0, 0, 1);
+  transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
 }
 .bandish-card:hover {
-  transform: translateY(-6px);
-  transition: transform 250ms cubic-bezier(0.2, 0, 0, 1);
+  transform: translateY(-4px);
+  transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
 }
+
 
 
 /* --- NEW MODAL ANIMATIONS --- */

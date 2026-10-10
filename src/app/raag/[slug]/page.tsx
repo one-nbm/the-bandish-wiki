@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import EditRaagModal from "./EditRaagModal";
 import type { Metadata } from "next";
-import { checkIsEditor } from "@/app/actions";
+import { getUserRole } from "@/app/actions";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -39,7 +39,7 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
     .select("id, title, taal, composer")
     .eq("raag", raag.name);
 
-  const isAdmin = await checkIsEditor();
+  const role = await getUserRole();
 
   return (
     <main className="min-h-screen bg-transparent relative transition-colors duration-500">
@@ -57,7 +57,7 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
             <span className="material-symbols-rounded text-[1.2rem]">arrow_back</span>
             Back to Wiki
           </Link>
-          {isAdmin && <EditRaagModal raag={raag} />}
+          {(role === "admin" || role === "contributor") && <EditRaagModal raag={raag} userRole={role} />}
         </div>
 
         {/* Raag Header */}

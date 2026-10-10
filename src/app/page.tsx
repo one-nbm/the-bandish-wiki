@@ -6,7 +6,7 @@ import Fuse from "fuse.js";
 import { createClient } from "@/utils/supabase/client";
 import { useTheme } from "./ThemeProvider";
 import { M3LoadingIndicator } from "@alerix/m3-loading-indicator/react";
-import { checkIsEditor, addBandishSecurely, updateBandishSecurely, deleteBandishSecurely } from "./actions";
+import { checkIsEditor, getUserRole, UserRole, addBandishSecurely, updateBandishSecurely, deleteBandishSecurely, submitBandishContribution, submitBandishEdit } from "./actions";
 import WelcomeScreen from "@/components/WelcomeScreen";
 import { BandishCard } from "@/components/BandishCard";
 import { BandishModal } from "@/components/BandishModal";
@@ -40,10 +40,59 @@ export default function Home() {
     }
   }, [query, activeFilters, showFavoritesOnly]);
 
+  // Prevent hover thrashing / scroll choppiness on bandish cards while scrolling
+  useEffect(() => {
+    let scrollTimer: ReturnType<typeof setTimeout> | null = null;
+    let isScrollingActive = false;
+
+    const stopScrolling = () => {
+      if (scrollTimer) {
+        clearTimeout(scrollTimer);
+        scrollTimer = null;
+      }
+      if (isScrollingActive) {
+        document.body.classList.remove("is-scrolling");
+        isScrollingActive = false;
+      }
+    };
+
+    const handleScrollActivity = () => {
+      if (!isScrollingActive) {
+        isScrollingActive = true;
+        document.body.classList.add("is-scrolling");
+      }
+      if (scrollTimer) clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        stopScrolling();
+      }, 70);
+    };
+
+    // Instant bypass on any click / tap via capture phase so zero clicks are swallowed
+    const handlePointerDown = () => {
+      stopScrolling();
+    };
+
+    window.addEventListener("scroll", handleScrollActivity, { passive: true });
+    window.addEventListener("wheel", handleScrollActivity, { passive: true });
+    window.addEventListener("pointerdown", handlePointerDown, { capture: true, passive: true });
+    window.addEventListener("touchstart", handlePointerDown, { capture: true, passive: true });
+    window.addEventListener("blur", stopScrolling);
+
+    return () => {
+      window.removeEventListener("scroll", handleScrollActivity);
+      window.removeEventListener("wheel", handleScrollActivity);
+      window.removeEventListener("pointerdown", handlePointerDown, { capture: true });
+      window.removeEventListener("touchstart", handlePointerDown, { capture: true });
+      window.removeEventListener("blur", stopScrolling);
+      stopScrolling();
+    };
+  }, []);
+
   // --- 2. DATA STATES ---
   const [baseData, setBaseData] = useState<any[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>("viewer");
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [contributorName, setContributorName] = useState("Anonymous");
 
@@ -77,10 +126,13 @@ export default function Home() {
 
   // --- 5. EFFECTS ---
   useEffect(() => {
-    const fetchAdminStatus = async () => {
-      const adminStatus = await checkIsEditor();
-      setIsAdmin(adminStatus);
+    const fetchUserRole = async () => {
+      const role = await getUserRole();
+      setUserRole(role);
+      setIsAdmin(role === "admin");
     };
+
+    fetchUserRole();
 
     const fetchBandishes = async () => {
       const { data, error } = await supabase.from('bandishes').select('*');
@@ -121,7 +173,6 @@ export default function Home() {
     const savedGlur = localStorage.getItem("wiki-glur");
     if (savedGlur !== null) setEnableGlur(savedGlur === "true");
 
-    fetchAdminStatus();
     fetchUserAndFavorites();
     fetchBandishes();
   }, []);
@@ -219,7 +270,8 @@ export default function Home() {
     e.preventDefault();
 
     if (action !== 'delete') {
-      if (!formTitle || !formRaag || !formTaal || !formComposer || !formEnglish || !adminPasscode) {
+      const isPasscodeRequired = userRole === "admin";
+      if (!formTitle || !formRaag || !formTaal || !formComposer || !formEnglish || (isPasscodeRequired && !adminPasscode)) {
         setToast({ message: "Please fill in all required fields.", type: 'error' });
         return;
       }
@@ -228,6 +280,11 @@ export default function Home() {
     setIsSubmitting(true);
 
     if (action === 'delete') {
+      if (userRole !== "admin") {
+        setToast({ message: "Only administrators can delete bandishes.", type: 'error' });
+        setIsSubmitting(false);
+        return;
+      }
       try {
         const result = await deleteBandishSecurely(editingBandish.id);
         if (!result.success) throw new Error(result.error);
@@ -243,15 +300,15 @@ export default function Home() {
       return;
     }
 
-    // --- NEW LOGIC: Calculate the next sequential ID ---
+    // --- Calculate next sequential ID if adding directly as admin ---
     let nextId = "";
-    if (!isEdit) {
+    if (!isEdit && userRole === "admin") {
       const currentIds = baseData.map(b => parseInt(b.id, 10)).filter(n => !isNaN(n));
       const maxId = currentIds.length > 0 ? Math.max(...currentIds) : 0;
       nextId = String(maxId + 1).padStart(4, '0');
     }
 
-    // Prepare the data for Supabase
+    // Prepare payload
     const payload: any = {
       title: formTitle,
       raag: formRaag,
@@ -266,17 +323,34 @@ export default function Home() {
       contributor: contributorName,
     };
 
-    if (!isEdit) {
+    if (!isEdit && nextId) {
       payload.id = nextId;
     }
 
     try {
+      // Contributor Flow: Submits to approval queue
+      if (userRole === "contributor") {
+        if (isEdit && editingBandish) {
+          const result = await submitBandishEdit(editingBandish.id, payload, editingBandish);
+          if (!result.success) throw new Error(result.error);
+          setToast({ message: "Suggested edits submitted for administrator approval!", type: 'success' });
+          closeEditModal(null);
+        } else {
+          const result = await submitBandishContribution(payload);
+          if (!result.success) throw new Error(result.error);
+          setToast({ message: "New bandish submitted for administrator approval!", type: 'success' });
+          closeAddModal();
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Admin Flow: Direct publish/update
       if (isEdit && editingBandish) {
         const result = await updateBandishSecurely(editingBandish.id, payload);
         if (!result.success) throw new Error(result.error);
 
         let updatedBandish = editingBandish;
-        // INSTANT UI UPDATE
         if (result.data && result.data.length > 0) {
           updatedBandish = result.data[0];
           setBaseData(prev => prev.map(b => b.id === editingBandish.id ? updatedBandish : b));
@@ -286,7 +360,6 @@ export default function Home() {
         const result = await addBandishSecurely(payload);
         if (!result.success) throw new Error(result.error);
 
-        // INSTANT UI UPDATE
         if (result.data && result.data.length > 0) {
           setBaseData(prev => [result.data[0], ...prev]);
         }
@@ -294,8 +367,8 @@ export default function Home() {
       }
 
     } catch (error: any) {
-      console.error("❌ SUPABASE ERROR:", error);
-      setToast({ message: `Database Error: ${error.message || "Check console for details"}`, type: 'error' });
+      console.error("❌ ERROR:", error);
+      setToast({ message: `Error: ${error.message || "Failed to process request"}`, type: 'error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -555,14 +628,23 @@ export default function Home() {
       </div>
       <hr className="border-gray-200 dark:border-m3-surface-high-dark my-2" />
       <div className="flex flex-col md:flex-row gap-6 items-end">
-        <div className="w-full">
-          <label className="flex items-center gap-1.5 text-xs font-bold text-m3-error dark:text-m3-error-dark uppercase tracking-wider mb-2">
-            <span className="material-symbols-rounded text-[1.1rem]">lock</span> Admin Passcode
-          </label>
-          <input type="password" required placeholder="Enter the secret password to publish" value={adminPasscode} onChange={(e) => setAdminPasscode(e.target.value)} className="w-full bg-m3-error/10 dark:bg-m3-error-dark/10 text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-error dark:focus:ring-m3-error-dark transition-all duration-300 placeholder-m3-error/50 dark:placeholder-m3-error-dark/50" />
-        </div>
+        {userRole === "admin" ? (
+          <div className="w-full">
+            <label className="flex items-center gap-1.5 text-xs font-bold text-m3-error dark:text-m3-error-dark uppercase tracking-wider mb-2">
+              <span className="material-symbols-rounded text-[1.1rem]">lock</span> Admin Passcode
+            </label>
+            <input type="password" required placeholder="Enter the secret password to publish" value={adminPasscode} onChange={(e) => setAdminPasscode(e.target.value)} className="w-full bg-m3-error/10 dark:bg-m3-error-dark/10 text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-error dark:focus:ring-m3-error-dark transition-all duration-300 placeholder-m3-error/50 dark:placeholder-m3-error-dark/50" />
+          </div>
+        ) : (
+          <div className="w-full p-4 rounded-2xl bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/15 border border-m3-tertiary/20 flex items-center gap-3 text-xs sm:text-sm text-m3-tertiary dark:text-m3-tertiary-dark font-medium">
+            <span className="material-symbols-rounded text-xl shrink-0">verified</span>
+            <span>
+              <strong>Community Contribution:</strong> Your submission will be reviewed by an administrator before appearing live on the wiki.
+            </span>
+          </div>
+        )}
         <div className="flex gap-3 w-full md:w-auto shrink-0">
-          {isEdit && (
+          {isEdit && userRole === "admin" && (
             <button
               type="button"
               onClick={(e) => {
@@ -580,8 +662,14 @@ export default function Home() {
             </button>
           )}
           <button type="submit" disabled={isSubmitting} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
-            <span className="material-symbols-rounded text-[1.4rem]">{isEdit ? 'save' : 'publish'}</span>
-            <span className="whitespace-nowrap">{isSubmitting ? (isEdit ? "Saving..." : "Publishing...") : (isEdit ? "Save Changes" : "Publish")}</span>
+            <span className="material-symbols-rounded text-[1.4rem]">{userRole === "contributor" ? "send" : isEdit ? 'save' : 'publish'}</span>
+            <span className="whitespace-nowrap">
+              {isSubmitting 
+                ? (isEdit ? "Saving..." : "Publishing...") 
+                : userRole === "contributor"
+                ? (isEdit ? "Submit for Approval" : "Submit for Approval")
+                : (isEdit ? "Save Changes" : "Publish")}
+            </span>
           </button>
         </div>
       </div>
@@ -673,8 +761,8 @@ export default function Home() {
                         </button>
 
                         {/* Add Button */}
-                        {isAdmin ? (
-                          <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="group flex items-center justify-center w-[3.5rem] h-[3.5rem] sm:w-auto sm:px-6 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 shrink-0" title="Add a new Bandish">
+                        {userRole === "admin" || userRole === "contributor" ? (
+                          <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="group flex items-center justify-center w-[3.5rem] h-[3.5rem] sm:w-auto sm:px-6 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 shrink-0" title={userRole === "admin" ? "Add a new Bandish" : "Contribute a new Bandish"}>
                             <span className="material-symbols-rounded text-[1.5rem]">add</span>
                             <span className="hidden sm:block font-bold text-sm ml-1">Add</span>
                           </button>
@@ -750,7 +838,7 @@ export default function Home() {
                           Clear Filters
                         </button>
                       )}
-                      {isAdmin ? (
+                      {userRole === "admin" || userRole === "contributor" ? (
                         <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="px-6 py-3 rounded-full font-bold text-white bg-m3-primary dark:bg-m3-primary-dark hover:bg-m3-primary/90 transition-transform active:scale-95 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05]">
                           Add New Bandish
                         </button>
@@ -917,6 +1005,7 @@ export default function Home() {
             bandish={selectedBandish}
             sourceRect={selectedBandishRect}
             isAdmin={isAdmin}
+            userRole={userRole}
             onClose={closeModal}
             onEdit={openEditModal}
           />

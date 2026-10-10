@@ -7,7 +7,7 @@ import EditRenditionModal from "./EditRenditionModal";
 import CopyButton from "@/components/CopyButton";
 
 import type { Metadata } from "next";
-import { checkIsEditor } from "@/app/actions";
+import { getUserRole } from "@/app/actions";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -38,7 +38,8 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
 
   // Helper to create clean URLs
   const raagSlug = bandish.raag.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
-  const isAdmin = await checkIsEditor();
+  const role = await getUserRole();
+  const isAdmin = role === "admin";
 
   // Fetch IDs for rendition bandish tags
   const allRenditionTitles = bandish.youtube_renditions
@@ -137,7 +138,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
               <span className="material-symbols-rounded text-rose-400 text-[1.8rem]">play_circle</span>
               Notable Renditions
             </h3>
-            {isAdmin && <AddRenditionModal bandish={bandish} />}
+            {(role === "admin" || role === "contributor") && <AddRenditionModal bandish={bandish} userRole={role} />}
           </div>
 
           {bandish.youtube_renditions && bandish.youtube_renditions.length > 0 ? (

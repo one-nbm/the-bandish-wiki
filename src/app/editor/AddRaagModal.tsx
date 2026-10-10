@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { addRaagSecurely } from "@/app/actions";
+import { addRaagSecurely, submitRaagContribution, UserRole } from "@/app/actions";
 import { ReactLenis } from 'lenis/react';
 import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
 
@@ -13,7 +13,7 @@ function generateSlug(name: string) {
     .replace(/(^-|-$)+/g, "");
 }
 
-export default function AddRaagModal({ contributorName }: { contributorName: string }) {
+export default function AddRaagModal({ contributorName, userRole = "admin" }: { contributorName: string; userRole?: UserRole }) {
   const router = useRouter();
 
   // Modal State
@@ -105,6 +105,18 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
         description: formDescription,
         contributor: contributorName,
       };
+
+      if (userRole === "contributor") {
+        const result = await submitRaagContribution(payload);
+        if (!result.success) throw new Error(result.error);
+        setToast({ message: "Raag submitted for Admin approval! You can track its review status in your dashboard.", type: "success" });
+        setIsSubmitting(false);
+        setTimeout(() => {
+          closeModal();
+          router.refresh();
+        }, 1500);
+        return;
+      }
 
       const result = await addRaagSecurely(payload);
       if (!result.success) throw new Error(result.error);
@@ -288,9 +300,9 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
                       {isSubmitting ? (
                         <span className="material-symbols-rounded text-[1.4rem] animate-spin">sync</span>
                       ) : (
-                        <span className="material-symbols-rounded text-[1.4rem]">add_circle</span>
+                        <span className="material-symbols-rounded text-[1.4rem]">{userRole === "contributor" ? "send" : "add_circle"}</span>
                       )}
-                      {isSubmitting ? 'Creating...' : 'Create Raag'}
+                      {isSubmitting ? 'Submitting...' : userRole === 'contributor' ? 'Submit for Approval' : 'Create Raag'}
                     </button>
                     <div className="clear-both"></div>
                   </div>

@@ -7,16 +7,20 @@ import { motion, useIsPresent } from "framer-motion";
 import { ReactLenis } from 'lenis/react';
 import { LENIS_OPTIONS } from './SmoothScrolling';
 
+import { UserRole } from "@/app/actions";
+
 interface BandishModalProps {
   bandish: any;
   sourceRect: DOMRect | null;
   isAdmin: boolean;
+  userRole?: UserRole;
   onClose: () => void;
   onEdit: (bandish: any) => void;
 }
 
-export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModalProps) {
+export function BandishModal({ bandish, isAdmin, userRole, onClose, onEdit }: BandishModalProps) {
   const isPresent = useIsPresent();
+  const effectiveRole: UserRole = userRole || (isAdmin ? "admin" : "viewer");
 
   // Escape key handler
   useEffect(() => {
@@ -79,7 +83,7 @@ export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModal
             >
               <span className="material-symbols-rounded text-[1.4rem]">close</span>
             </button>
-            {isAdmin && (
+            {effectiveRole === "admin" ? (
               <button
                 onClick={() => onEdit(bandish)}
                 className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
@@ -87,7 +91,15 @@ export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModal
               >
                 <span className="material-symbols-rounded text-[1.4rem]">edit</span>
               </button>
-            )}
+            ) : effectiveRole === "contributor" ? (
+              <button
+                onClick={() => onEdit(bandish)}
+                className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-m3-tertiary dark:text-m3-tertiary-dark rounded-full transition-all duration-200 hover:scale-105 active:scale-95 border border-m3-tertiary/30"
+                title="Suggest Edits to Bandish"
+              >
+                <span className="material-symbols-rounded text-[1.4rem]">edit_note</span>
+              </button>
+            ) : null}
           </div>
 
           <div className="pr-12 mb-8 mt-2">

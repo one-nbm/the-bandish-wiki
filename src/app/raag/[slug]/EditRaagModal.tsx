@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { updateRaagSecurely, deleteRaagSecurely } from "@/app/actions";
+import { updateRaagSecurely, deleteRaagSecurely, submitRaagEdit, UserRole } from "@/app/actions";
 
-export default function EditRaagModal({ raag }: { raag: any }) {
+export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any; userRole?: UserRole }) {
   const router = useRouter();
 
   // Modal State
@@ -59,19 +59,15 @@ export default function EditRaagModal({ raag }: { raag: any }) {
     };
 
     if (isOpen) {
-      window.addEventListener("keydown", handleKeyDown);
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
       document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
     } else {
-      window.removeEventListener("keydown", handleKeyDown);
-      document.body.style.paddingRight = "";
-      document.body.style.overflow = "";
+      document.body.style.overflow = "unset";
     }
+
     return () => {
+      document.body.style.overflow = "unset";
       window.removeEventListener("keydown", handleKeyDown);
-      document.body.style.paddingRight = "";
-      document.body.style.overflow = "";
     };
   }, [isOpen, toast, confirmDialog, closeModal]);
 
@@ -81,6 +77,11 @@ export default function EditRaagModal({ raag }: { raag: any }) {
     setToast(null);
 
     if (action === 'delete') {
+      if (userRole !== "admin") {
+        setToast({ message: "Only administrators can delete raags.", type: "error" });
+        setIsSubmitting(false);
+        return;
+      }
       try {
         const result = await deleteRaagSecurely(raag.slug);
         
@@ -111,6 +112,17 @@ export default function EditRaagModal({ raag }: { raag: any }) {
     };
 
     try {
+      if (userRole === "contributor") {
+        const result = await submitRaagEdit(raag.slug, payload, raag);
+        if (!result.success) throw new Error(result.error);
+        setToast({ message: "Suggested revisions submitted for administrator approval!", type: "success" });
+        setIsSubmitting(false);
+        setTimeout(() => {
+          closeModal();
+        }, 1500);
+        return;
+      }
+
       const result = await updateRaagSecurely(raag.slug, payload);
       
       if (!result.success) {
@@ -144,9 +156,11 @@ export default function EditRaagModal({ raag }: { raag: any }) {
       <button 
         onClick={() => setIsOpen(true)} 
         className="flex items-center justify-center p-2 bg-white dark:bg-m3-surface-dark hover:bg-gray-50 dark:hover:bg-m3-surface-container-dark text-m3-primary dark:text-m3-primary-dark rounded-full transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-100 dark:border-gray-800" 
-        title="Edit Raag"
+        title={userRole === "contributor" ? "Suggest Edit to Raag" : "Edit Raag"}
       >
-        <span className="material-symbols-rounded text-[1.4rem]">edit</span>
+        <span className="material-symbols-rounded text-[1.4rem]">
+          {userRole === "contributor" ? "edit_note" : "edit"}
+        </span>
       </button>
 
       {/* Edit Modal */}
@@ -162,88 +176,140 @@ export default function EditRaagModal({ raag }: { raag: any }) {
             </div>
             
             <div className="mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Edit Raag</h2>
-              <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Make corrections to <span className="font-bold">{raag.name}</span>.</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>
+                {userRole === "contributor" ? "Suggest Edit to Raag" : "Edit Raag"}
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400">
+                {userRole === "contributor" 
+                  ? "Propose revisions to musical scales, timings, or theoretical descriptions for review."
+                  : "Update the canonical details, performance timings, or scale rules for this raag."}
+              </p>
+              {userRole === "contributor" && (
+                <div className="mt-3 p-3 rounded-2xl bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/15 border border-m3-tertiary/20 flex items-center gap-2 text-xs font-semibold text-m3-tertiary dark:text-m3-tertiary-dark">
+                  <span className="material-symbols-rounded text-base">verified</span>
+                  <span>Community Suggestion: Modifications are queued for Admin verification.</span>
+                </div>
+              )}
             </div>
 
-            <form onSubmit={(e) => handleFormSubmit(e, 'save')} className="space-y-6 md:space-y-8">
-              <div>
-                <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Name</label>
-                <input type="text" required placeholder="e.g. Yaman" value={formName} onChange={(e) => setFormName(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-              </div>
+            <form onSubmit={(e) => handleFormSubmit(e, 'save')} className="space-y-6">
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Thaat</label>
-                  <input type="text" placeholder="e.g. Kalyan" value={formThaat} onChange={(e) => setFormThaat(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Samay (Time)</label>
-                  <input type="text" placeholder="e.g. Evening" value={formSamay} onChange={(e) => setFormSamay(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-bold text-m3-tertiary dark:text-m3-tertiary-dark uppercase tracking-wider mb-2">Vadi</label>
-                  <input type="text" placeholder="e.g. Ga" value={formVadi} onChange={(e) => setFormVadi(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-tertiary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-m3-tertiary dark:text-m3-tertiary-dark uppercase tracking-wider mb-2">Samvadi</label>
-                  <input type="text" placeholder="e.g. Ni" value={formSamvadi} onChange={(e) => setFormSamvadi(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-tertiary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Aaroh</label>
-                  <input type="text" placeholder="e.g. S R G M P D N S" value={formAaroh} onChange={(e) => setFormAaroh(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Avaroh</label>
-                  <input type="text" placeholder="e.g. S N D P M G R S" value={formAvaroh} onChange={(e) => setFormAvaroh(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-                </div>
-              </div>
-
               <div>
-                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Description</label>
-                <textarea 
-                  placeholder="Description of the raag..." 
-                  value={formDescription} 
-                  onChange={(e) => setFormDescription(e.target.value)} 
-                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" 
-                  data-lenis-prevent="true"
-                  onWheel={(e: React.WheelEvent) => e.stopPropagation()}
-                  onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
+                <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Raag Name (Required)</label>
+                <input 
+                  type="text" 
+                  required 
+                  value={formName} 
+                  onChange={(e) => setFormName(e.target.value)} 
+                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-bold" 
                 />
               </div>
 
-              <hr className="border-gray-200 dark:border-m3-surface-high-dark my-2" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Thaat</label>
+                  <input 
+                    type="text" 
+                    value={formThaat} 
+                    onChange={(e) => setFormThaat(e.target.value)} 
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Prahar / Samay</label>
+                  <input 
+                    type="text" 
+                    value={formSamay} 
+                    onChange={(e) => setFormSamay(e.target.value)} 
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                  />
+                </div>
+              </div>
 
-              {/* Toast */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Vadi Swar</label>
+                  <input 
+                    type="text" 
+                    value={formVadi} 
+                    onChange={(e) => setFormVadi(e.target.value)} 
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Samvadi Swar</label>
+                  <input 
+                    type="text" 
+                    value={formSamvadi} 
+                    onChange={(e) => setFormSamvadi(e.target.value)} 
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Aaroh</label>
+                <input 
+                  type="text" 
+                  value={formAaroh} 
+                  onChange={(e) => setFormAaroh(e.target.value)} 
+                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Avaroh</label>
+                <input 
+                  type="text" 
+                  value={formAvaroh} 
+                  onChange={(e) => setFormAvaroh(e.target.value)} 
+                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-m3-tertiary dark:text-m3-tertiary-dark uppercase tracking-wider mb-2">Theoretical Notes / Description</label>
+                <textarea 
+                  value={formDescription} 
+                  onChange={(e) => setFormDescription(e.target.value)} 
+                  rows={4} 
+                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-tertiary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 resize-y m3-scrollbar" 
+                />
+              </div>
+
               {toast && (
-                <div className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold ${toast.type === "error" ? "bg-m3-error/10 dark:bg-m3-error-dark/10 text-m3-error dark:text-m3-error-dark border border-m3-error/20 dark:border-m3-error-dark/20" : "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800/50"}`}>
-                  <span className="material-symbols-rounded text-[1.1rem]">{toast.type === "error" ? "error" : "check_circle"}</span>
-                  <span className="flex-1">{toast.message}</span>
-                  <button type="button" onClick={() => setToast(null)} className="p-0.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors">
-                    <span className="material-symbols-rounded text-[1rem]">close</span>
-                  </button>
+                <div className={`p-4 rounded-2xl border text-sm font-semibold flex items-center gap-2 ${toast.type === 'error' ? 'bg-m3-error/10 border-m3-error/20 text-m3-error dark:text-m3-error-dark' : 'bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300'}`}>
+                  <span className="material-symbols-rounded">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
+                  <span>{toast.message}</span>
                 </div>
               )}
-              
-              <div className="flex gap-3 justify-end">
-                <button 
-                  type="button" 
-                  onClick={() => setConfirmDialog(true)}
-                  disabled={isSubmitting} 
-                  className="flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-                >
-                  <span className="material-symbols-rounded text-[1.4rem]">delete</span>
-                  Delete
-                </button>
+
+              <hr className="border-gray-200 dark:border-m3-surface-high-dark my-4" />
+
+              <div className="flex justify-between items-center">
+                {userRole === "admin" ? (
+                  <button 
+                    type="button" 
+                    onClick={() => setConfirmDialog(true)} 
+                    disabled={isSubmitting} 
+                    className="flex items-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                  >
+                    <span className="material-symbols-rounded text-[1.4rem]">delete</span>
+                    Delete
+                  </button>
+                ) : <div />}
+                
                 <button type="submit" disabled={isSubmitting} className="flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
-                  <span className="material-symbols-rounded text-[1.4rem]">save</span>
-                  <span className="whitespace-nowrap">{isSubmitting ? "Saving..." : "Save Changes"}</span>
+                  <span className="material-symbols-rounded text-[1.4rem]">
+                    {userRole === "contributor" ? "send" : "save"}
+                  </span>
+                  <span className="whitespace-nowrap">
+                    {isSubmitting 
+                      ? "Saving..." 
+                      : userRole === "contributor" 
+                      ? "Submit for Approval" 
+                      : "Save Changes"}
+                  </span>
                 </button>
               </div>
 
