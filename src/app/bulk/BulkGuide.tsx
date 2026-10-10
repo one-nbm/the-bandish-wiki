@@ -37,6 +37,7 @@ const TOP_LEVEL_SNIPPET = `[
     "taal": "Ada Chautala",
     "lay": ["Drut"],
     "composer": "unknown",
+    "tradition": "Gwalior",
     "lyrics": { ... },
     "youtube_renditions": [ ... ],
     "contributor": "Anonymous"
@@ -66,6 +67,7 @@ const FULL_EXAMPLE_SNIPPET = `[
     "taal": "Tintal Madhyalay",
     "lay": ["Madhyalay"],
     "composer": "unknown",
+    "tradition": "Gwalior",
     "lyrics": {
       "english": "jhananan jhan jhananan jhan baaje paayaliya\\npiyaa se milan chali aaj kaminiya\\n\\namiy halaahal madbhare shwet shyam ratanaar\\njiyat marat jhuki jhuki parat jehi chitawat ek baar",
       "devanagari": "झनणन झन झनणन झन बाजे पायलिया\\nपिया से मिलन चली आज कामिनिया\\n\\nअमिय हलाहल मदभरे श्वेत श्याम रतनार\\nजियत मरत झुकी झुकी परत जेही चितवत एक बार"
@@ -131,7 +133,7 @@ export default function BulkGuide() {
               { field: "taal", type: "String (Required)", desc: "The rhythmic cycle name (e.g. \"Tintal\", \"Ektaal\", \"Jhaptal\")." },
               { field: "lay", type: "Array of Strings", desc: "Tempo designations (e.g. [\"Vilambit\"], [\"Madhyalay\"], [\"Drut\"])." },
               { field: "composer", type: "String (Optional)", desc: "If unknown, defaults to \"unknown\". Otherwise, composer name with optional mudra." },
-              { field: "tradition", type: "String (Optional)", desc: "Gharana or musical tradition (e.g. \"Gwalior\", \"Agra\", \"Jaipur-Atrauli\")." },
+              { field: "tradition", type: "String (Optional)", desc: "Gharana musical lineage. Key traditions: \"Gwalior\", \"Agra\", \"Jaipur-Atrauli\", \"Kirana\", \"Indore\", \"Patiala\", \"Delhi\", \"Rampur-Sahaswan\", \"Mewati\", \"Bhendibazaar\", or \"N/A\" for non-khyal/dhrupad compositions. Enables gharana filtering in the catalog." },
               { field: "contributor", type: "String (Optional)", desc: "Contributor name or identifier. Defaults to \"Anonymous\"." }
             ].map((item, idx) => (
               <div key={idx} className="bg-m3-surface dark:bg-m3-surface-dark p-4 rounded-2xl border border-m3-surface-high dark:border-m3-surface-high-dark flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
@@ -144,6 +146,14 @@ export default function BulkGuide() {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="mt-4 p-4 rounded-2xl bg-m3-surface-container/60 dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+            <span className="font-bold text-m3-primary dark:text-m3-primary-dark mr-1 flex items-center gap-1 mb-1">
+              <span className="material-symbols-rounded text-sm">school</span>
+              Gharana Tradition Note:
+            </span>
+            Hindustani bandishes traditionally belong to specific stylistic lineages (Gharanas). When archiving, specify the primary vocal tradition (e.g. <em>Gwalior</em> for classic bandishes, <em>Agra</em> for Nom-Tom style compositions, <em>Jaipur-Atrauli</em> for complex jod-raags). If the bandish is from Dhrupad, Haveli Sangeet, or a generic non-gharana source, use <strong>N/A</strong>.
           </div>
         </section>
 

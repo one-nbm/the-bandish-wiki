@@ -4,6 +4,9 @@ import { useState, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { ReactLenis } from 'lenis/react';
+import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
 import AddRaagModal from "./AddRaagModal";
 import RenditionsToIndexList from "./RenditionsToIndexList";
 
@@ -14,6 +17,7 @@ interface ContributedBandish {
   taal: string;
   composer?: string;
   lay?: string[];
+  tradition?: string;
 }
 
 interface ContributedRaag {
@@ -48,6 +52,9 @@ export default function EditorDashboard({
   const [activeTab, setActiveTab] = useState<"bandishes" | "raags">("bandishes");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Graph View State
+  const [graphCategory, setGraphCategory] = useState<"raag" | "taal" | "tradition">("raag");
+
   const supabase = createClient();
   const router = useRouter();
 
@@ -80,7 +87,8 @@ export default function EditorDashboard({
       (b) =>
         b.title.toLowerCase().includes(q) ||
         b.raag.toLowerCase().includes(q) ||
-        (b.composer && b.composer.toLowerCase().includes(q))
+        (b.composer && b.composer.toLowerCase().includes(q)) ||
+        (b.tradition && b.tradition.toLowerCase().includes(q))
     );
   }, [userBandishes, searchQuery]);
 
@@ -94,6 +102,52 @@ export default function EditorDashboard({
         (r.samay && r.samay.toLowerCase().includes(q))
     );
   }, [userRaags, searchQuery]);
+
+  // Analytics Computation for Material 3 Graph
+  const graphAnalytics = useMemo(() => {
+    const totalBandishes = userBandishes.length;
+
+    // 1. By Raag
+    const raagMap: Record<string, number> = {};
+    // 2. By Taal
+    const taalMap: Record<string, number> = {};
+    // 3. By Tradition
+    const traditionMap: Record<string, number> = {};
+
+    userBandishes.forEach((b) => {
+      const raagName = b.raag?.trim() || "Unknown";
+      raagMap[raagName] = (raagMap[raagName] || 0) + 1;
+
+      const taalName = b.taal?.trim() || "Unspecified";
+      taalMap[taalName] = (taalMap[taalName] || 0) + 1;
+
+      const traditionName = b.tradition?.trim() || "N/A";
+      traditionMap[traditionName] = (traditionMap[traditionName] || 0) + 1;
+    });
+
+    const sortEntries = (map: Record<string, number>) =>
+      Object.entries(map)
+        .map(([label, count]) => ({
+          label,
+          count,
+          percentage: totalBandishes > 0 ? Math.round((count / totalBandishes) * 100) : 0
+        }))
+        .sort((a, b) => b.count - a.count);
+
+    const raagStats = sortEntries(raagMap);
+    const taalStats = sortEntries(taalMap);
+    const traditionStats = sortEntries(traditionMap);
+
+    return {
+      totalBandishes,
+      distinctRaags: Object.keys(raagMap).length,
+      distinctTaals: Object.keys(taalMap).length,
+      distinctTraditions: Object.keys(traditionMap).filter((t) => t !== "N/A").length,
+      raagStats: raagStats.slice(0, 7),
+      taalStats: taalStats.slice(0, 7),
+      traditionStats: traditionStats.slice(0, 7)
+    };
+  }, [userBandishes]);
 
   return (
     <div className="relative z-10 flex flex-col gap-8">
@@ -125,9 +179,9 @@ export default function EditorDashboard({
       {/* Profile Settings Card */}
       <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem]">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark">person</span>
-            Editor Profile Settings
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
+            <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark text-2xl">person</span>
+            <span>Editor Profile Settings</span>
           </h2>
           <span className="text-xs font-bold px-3 py-1 rounded-full bg-m3-primary/10 text-m3-primary dark:bg-m3-primary-dark/10 dark:text-m3-primary-dark">
             Verified Editor
@@ -284,32 +338,212 @@ export default function EditorDashboard({
         </div>
       </div>
 
+      {/* Stylized Material 3 Expressive Contributions Graph */}
+      <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
+              <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark text-2xl">bar_chart</span>
+              <span>Contribution Insights</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-m3-secondary dark:text-m3-secondary-dark mt-1 font-medium">
+              Expressive distribution across raags, rhythmic cycles (taals), and gharana lineages.
+            </p>
+          </div>
+
+          {/* Graph Category Toggle with Spring Pill */}
+          <div className="relative flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setGraphCategory("raag")}
+              className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                graphCategory === "raag"
+                  ? "text-white dark:text-gray-900"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              {graphCategory === "raag" && (
+                <motion.div
+                  layoutId="active-graph-tab"
+                  className="absolute inset-0 bg-m3-primary dark:bg-m3-primary-dark rounded-full -z-10"
+                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                />
+              )}
+              <span>By Raag</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setGraphCategory("taal")}
+              className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                graphCategory === "taal"
+                  ? "text-white dark:text-gray-900"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              {graphCategory === "taal" && (
+                <motion.div
+                  layoutId="active-graph-tab"
+                  className="absolute inset-0 bg-m3-secondary dark:bg-m3-secondary-dark rounded-full -z-10"
+                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                />
+              )}
+              <span>By Taal</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setGraphCategory("tradition")}
+              className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                graphCategory === "tradition"
+                  ? "text-white dark:text-gray-900"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              {graphCategory === "tradition" && (
+                <motion.div
+                  layoutId="active-graph-tab"
+                  className="absolute inset-0 bg-m3-tertiary dark:bg-m3-tertiary-dark rounded-full -z-10"
+                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                />
+              )}
+              <span>Gharana</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Metric Badges Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+              Distinct Raags
+            </span>
+            <span className="text-xl sm:text-2xl font-black text-m3-primary dark:text-m3-primary-dark">
+              {graphAnalytics.distinctRaags}
+            </span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+              Taals Represented
+            </span>
+            <span className="text-xl sm:text-2xl font-black text-m3-secondary dark:text-m3-secondary-dark">
+              {graphAnalytics.distinctTaals}
+            </span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+              Gharana Traditions
+            </span>
+            <span className="text-xl sm:text-2xl font-black text-m3-tertiary dark:text-m3-tertiary-dark">
+              {graphAnalytics.distinctTraditions}
+            </span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+              Total Repertory
+            </span>
+            <span className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">
+              {graphAnalytics.totalBandishes}
+            </span>
+          </div>
+        </div>
+
+        {/* Dynamic Stylized Chart Bars */}
+        {graphAnalytics.totalBandishes === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+            Add bandishes under your contributor name to generate statistical repertoire charts.
+          </div>
+        ) : (
+          <div className="space-y-3.5">
+            {(graphCategory === "raag"
+              ? graphAnalytics.raagStats
+              : graphCategory === "taal"
+              ? graphAnalytics.taalStats
+              : graphAnalytics.traditionStats
+            ).map((item, idx) => {
+              const maxCount =
+                graphCategory === "raag"
+                  ? graphAnalytics.raagStats[0]?.count || 1
+                  : graphCategory === "taal"
+                  ? graphAnalytics.taalStats[0]?.count || 1
+                  : graphAnalytics.traditionStats[0]?.count || 1;
+
+              const relativeWidth = Math.max(8, Math.round((item.count / maxCount) * 100));
+
+              const barColor =
+                graphCategory === "raag"
+                  ? "bg-m3-primary dark:bg-m3-primary-dark"
+                  : graphCategory === "taal"
+                  ? "bg-m3-secondary dark:bg-m3-secondary-dark"
+                  : "bg-m3-tertiary dark:bg-m3-tertiary-dark";
+
+              return (
+                <div key={`${item.label}-${idx}`} className="group">
+                  <div className="flex items-center justify-between text-xs sm:text-sm font-medium mb-1.5">
+                    <span className="text-gray-900 dark:text-white font-bold flex items-center gap-1.5">
+                      <span>{item.label}</span>
+                      {graphCategory === "tradition" && item.label !== "N/A" && (
+                        <span className="text-[11px] text-m3-secondary dark:text-m3-secondary-dark font-normal">
+                          Gharana
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-400 font-mono text-xs">
+                      <strong className="text-gray-900 dark:text-white">{item.count}</strong>{" "}
+                      {item.count === 1 ? "bandish" : "bandishes"} ({item.percentage}%)
+                    </span>
+                  </div>
+
+                  {/* Material 3 Expressive Rounded Pill Track & Bar */}
+                  <div className="h-3.5 w-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark rounded-full overflow-hidden p-0.5">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${relativeWidth}%` }}
+                      transition={{ type: "spring", stiffness: 220, damping: 25, delay: idx * 0.04 }}
+                      className={`h-full rounded-full ${barColor} transition-opacity group-hover:opacity-90`}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Interactive "My Contributions" Management Workspace */}
       <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h2
-              className="text-2xl font-bold text-gray-900 dark:text-white"
-              style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
-            >
-              My Contributions
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
+              <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark text-2xl">library_music</span>
+              <span>My Contributions</span>
             </h2>
             <p className="text-xs sm:text-sm text-m3-secondary dark:text-m3-secondary-dark mt-1 font-medium">
               Browse, inspect, and manage compositions and scales authored under your contributor name.
             </p>
           </div>
 
-          {/* Tab Selector */}
-          <div className="flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0">
+          {/* Tab Selector with Spring-Sliding Pill */}
+          <div className="relative flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0 self-start md:self-auto">
             <button
               type="button"
               onClick={() => setActiveTab("bandishes")}
-              className={`px-5 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors ${
+              className={`relative px-5 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors z-10 ${
                 activeTab === "bandishes"
-                  ? "bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900"
+                  ? "text-white dark:text-gray-900"
                   : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
+              {activeTab === "bandishes" && (
+                <motion.div
+                  layoutId="active-contributions-tab"
+                  className="absolute inset-0 bg-m3-primary dark:bg-m3-primary-dark rounded-full -z-10"
+                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                />
+              )}
               <span className="material-symbols-rounded text-sm">library_music</span>
               <span>Bandishes ({userBandishes.length})</span>
             </button>
@@ -317,12 +551,19 @@ export default function EditorDashboard({
             <button
               type="button"
               onClick={() => setActiveTab("raags")}
-              className={`px-5 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors ${
+              className={`relative px-5 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors z-10 ${
                 activeTab === "raags"
-                  ? "bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900"
+                  ? "text-white dark:text-gray-900"
                   : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
+              {activeTab === "raags" && (
+                <motion.div
+                  layoutId="active-contributions-tab"
+                  className="absolute inset-0 bg-m3-primary dark:bg-m3-primary-dark rounded-full -z-10"
+                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                />
+              )}
               <span className="material-symbols-rounded text-sm">queue_music</span>
               <span>Raags ({userRaags.length})</span>
             </button>
@@ -358,7 +599,7 @@ export default function EditorDashboard({
           </div>
         </div>
 
-        {/* Content Table */}
+        {/* Content Table with Smooth Hover Lenis Scroll and Cutoff Protection */}
         {activeTab === "bandishes" ? (
           filteredBandishes.length === 0 ? (
             <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface/50 dark:bg-m3-surface-dark/50">
@@ -372,7 +613,12 @@ export default function EditorDashboard({
             </div>
           ) : (
             <div className="border border-m3-surface-high dark:border-m3-surface-high-dark rounded-2xl overflow-hidden">
-              <div className="max-h-[360px] overflow-y-auto m3-scrollbar">
+              <ReactLenis
+                options={LENIS_OPTIONS}
+                className="max-h-[380px] overflow-y-auto m3-scrollbar"
+                onWheel={(e: React.WheelEvent) => e.stopPropagation()}
+                onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
+              >
                 <table className="w-full text-left text-xs sm:text-sm">
                   <thead className="sticky top-0 bg-m3-surface dark:bg-m3-surface-dark border-b border-m3-surface-high dark:border-m3-surface-high-dark text-gray-600 dark:text-gray-400 uppercase tracking-wider text-[11px] font-bold z-10">
                     <tr>
@@ -380,7 +626,7 @@ export default function EditorDashboard({
                       <th className="py-3 px-4">Raag</th>
                       <th className="py-3 px-4">Taal</th>
                       <th className="py-3 px-4">Composer</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
+                      <th className="py-3 pl-4 pr-6 sm:pr-8 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-m3-surface-high dark:divide-m3-surface-high-dark bg-white dark:bg-m3-surface-container-dark">
@@ -389,7 +635,7 @@ export default function EditorDashboard({
                         key={b.id}
                         className="hover:bg-m3-surface/60 dark:hover:bg-m3-surface-dark/40 transition-colors"
                       >
-                        <td className="py-3.5 px-4 font-bold text-gray-900 dark:text-white">
+                        <td className="py-3.5 px-4 font-bold text-gray-900 dark:text-white max-w-[220px] truncate">
                           <Link
                             href={`/bandish/${b.id}`}
                             className="hover:text-m3-primary dark:hover:text-m3-primary-dark transition-colors"
@@ -397,14 +643,19 @@ export default function EditorDashboard({
                             {b.title}
                           </Link>
                         </td>
-                        <td className="py-3.5 px-4 text-m3-secondary dark:text-m3-secondary-dark font-medium">
+                        <td className="py-3.5 px-4 text-m3-secondary dark:text-m3-secondary-dark font-medium whitespace-nowrap">
                           {b.raag}
                         </td>
-                        <td className="py-3.5 px-4 text-gray-600 dark:text-gray-300">{b.taal}</td>
+                        <td className="py-3.5 px-4 text-gray-600 dark:text-gray-300 whitespace-nowrap">{b.taal}</td>
                         <td className="py-3.5 px-4 text-gray-600 dark:text-gray-400 capitalize">
-                          {b.composer || "unknown"}
+                          <div className="font-medium">{b.composer || "unknown"}</div>
+                          {b.tradition && b.tradition !== "N/A" && (
+                            <div className="text-[11px] text-m3-tertiary dark:text-m3-tertiary-dark font-medium">
+                              {b.tradition}
+                            </div>
+                          )}
                         </td>
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="py-3.5 pl-4 pr-6 sm:pr-8 text-right whitespace-nowrap">
                           <Link
                             href={`/bandish/${b.id}`}
                             className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark hover:bg-m3-primary/10 transition-colors"
@@ -417,7 +668,7 @@ export default function EditorDashboard({
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </ReactLenis>
             </div>
           )
         ) : filteredRaags.length === 0 ? (
@@ -432,14 +683,19 @@ export default function EditorDashboard({
           </div>
         ) : (
           <div className="border border-m3-surface-high dark:border-m3-surface-high-dark rounded-2xl overflow-hidden">
-            <div className="max-h-[360px] overflow-y-auto m3-scrollbar">
+            <ReactLenis
+              options={LENIS_OPTIONS}
+              className="max-h-[380px] overflow-y-auto m3-scrollbar"
+              onWheel={(e: React.WheelEvent) => e.stopPropagation()}
+              onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
+            >
               <table className="w-full text-left text-xs sm:text-sm">
                 <thead className="sticky top-0 bg-m3-surface dark:bg-m3-surface-dark border-b border-m3-surface-high dark:border-m3-surface-high-dark text-gray-600 dark:text-gray-400 uppercase tracking-wider text-[11px] font-bold z-10">
                   <tr>
                     <th className="py-3 px-4">Raag Name</th>
                     <th className="py-3 px-4">Thaat</th>
                     <th className="py-3 px-4">Samay (Time)</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                    <th className="py-3 pl-4 pr-6 sm:pr-8 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-m3-surface-high dark:divide-m3-surface-high-dark bg-white dark:bg-m3-surface-container-dark">
@@ -448,7 +704,7 @@ export default function EditorDashboard({
                       key={r.id}
                       className="hover:bg-m3-surface/60 dark:hover:bg-m3-surface-dark/40 transition-colors"
                     >
-                      <td className="py-3.5 px-4 font-bold text-gray-900 dark:text-white">
+                      <td className="py-3.5 px-4 font-bold text-gray-900 dark:text-white whitespace-nowrap">
                         <Link
                           href={`/raag/${r.slug}`}
                           className="hover:text-m3-primary dark:hover:text-m3-primary-dark transition-colors"
@@ -456,11 +712,11 @@ export default function EditorDashboard({
                           {r.name}
                         </Link>
                       </td>
-                      <td className="py-3.5 px-4 text-m3-secondary dark:text-m3-secondary-dark font-medium">
+                      <td className="py-3.5 px-4 text-m3-secondary dark:text-m3-secondary-dark font-medium whitespace-nowrap">
                         {r.thaat || "N/A"}
                       </td>
-                      <td className="py-3.5 px-4 text-gray-600 dark:text-gray-300">{r.samay || "N/A"}</td>
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-3.5 px-4 text-gray-600 dark:text-gray-300 whitespace-nowrap">{r.samay || "N/A"}</td>
+                      <td className="py-3.5 pl-4 pr-6 sm:pr-8 text-right whitespace-nowrap">
                         <Link
                           href={`/raag/${r.slug}`}
                           className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark hover:bg-m3-primary/10 transition-colors"
@@ -473,7 +729,7 @@ export default function EditorDashboard({
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ReactLenis>
           </div>
         )}
       </div>

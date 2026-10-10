@@ -17,7 +17,7 @@ export default async function EditorPage() {
   // Fetch counts and records
   const { data: userBandishes, count: bandishCount } = await supabase
     .from("bandishes")
-    .select("id, title, raag, taal, composer, lay", { count: "exact" })
+    .select("id, title, raag, taal, composer, lay, tradition", { count: "exact" })
     .eq("contributor", contributorName)
     .order("title", { ascending: true });
     

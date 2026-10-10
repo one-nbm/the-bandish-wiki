@@ -41,6 +41,7 @@ const SAMPLE_PAYLOAD: NormalizedBandish[] = [
     taal: "Tintal Madhyalay",
     lay: ["Madhyalay"],
     composer: "unknown",
+    tradition: "Gwalior",
     lyrics: {
       english: "jhananan jhan jhananan jhan baaje paayaliya\npiyaa se milan chali aaj kaminiya",
       devanagari: "झनणन झन झनणन झन बाजे पायलिया\nपिया से मिलन चली आज कामिनिया"
@@ -63,6 +64,7 @@ const SAMPLE_PAYLOAD: NormalizedBandish[] = [
     taal: "Tintal Madhyalay",
     lay: ["Madhyalay"],
     composer: "Sadarang",
+    tradition: "Kirana",
     lyrics: {
       english: "eri aali piya bina sakhi kal na parat mohe ghari pal chhin din",
       devanagari: "एरी आली पिया बिना सखी कल न परत मोहे घरी पल छिन दिन"
@@ -151,6 +153,7 @@ export default function BulkUpload() {
         taal: item.taal ? String(item.taal).trim() : "Tintal",
         lay,
         composer: item.composer ? String(item.composer).trim() : "unknown",
+        tradition: item.tradition ? String(item.tradition).trim() : "N/A",
         lyrics: item.lyrics && typeof item.lyrics === "object" ? {
           english: item.lyrics.english || "",
           devanagari: item.lyrics.devanagari || ""
@@ -768,8 +771,13 @@ export default function BulkUpload() {
                                     : "No lay"}
                                 </div>
                               </td>
-                              <td className="py-3.5 px-4 text-gray-600 dark:text-gray-400 capitalize text-xs">
-                                {item.bandish.composer || "unknown"}
+                              <td className="py-3.5 px-4 text-gray-600 dark:text-gray-400 text-xs">
+                                <div className="capitalize font-medium">{item.bandish.composer || "unknown"}</div>
+                                {item.bandish.tradition && item.bandish.tradition !== "N/A" && (
+                                  <div className="text-[11px] text-m3-tertiary dark:text-m3-tertiary-dark font-medium">
+                                    {item.bandish.tradition} Gharana
+                                  </div>
+                                )}
                               </td>
                               <td className="py-3.5 px-4 text-center font-mono text-xs text-gray-600 dark:text-gray-300">
                                 {item.bandish.youtube_renditions?.length || 0}

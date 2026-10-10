@@ -67,9 +67,9 @@ export default function RenditionsToIndexList() {
     <div className="bg-white dark:bg-m3-surface-container-dark p-6 sm:p-8 rounded-[2.5rem] border border-m3-surface-high dark:border-m3-surface-high-dark flex flex-col min-h-[460px]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark">queue_music</span>
-            Reference Recording Staging Queue
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
+            <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark text-2xl">queue_music</span>
+            <span>Reference Recording Staging Queue</span>
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Performances queued by editors for cataloging, transcription, and linking to wiki bandishes.
