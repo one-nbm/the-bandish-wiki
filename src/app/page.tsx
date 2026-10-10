@@ -6,14 +6,14 @@ import Fuse from "fuse.js";
 import { createClient } from "@/utils/supabase/client";
 import { useTheme } from "./ThemeProvider";
 import { M3LoadingIndicator } from "@alerix/m3-loading-indicator/react";
-import { checkIsEditor, getUserRole, UserRole, addBandishSecurely, updateBandishSecurely, deleteBandishSecurely, submitBandishContribution, submitBandishEdit } from "./actions";
+import { checkIsEditor, getUserRole, UserRole } from "./actions";
 import WelcomeScreen from "@/components/WelcomeScreen";
 import { BandishCard } from "@/components/BandishCard";
 import { BandishModal } from "@/components/BandishModal";
+import BandishFormModal from "@/components/BandishFormModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReactLenis } from 'lenis/react';
 import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
-import FormCombobox from "@/components/FormCombobox";
 
 export default function Home() {
   const supabase = createClient();
@@ -103,21 +103,7 @@ export default function Home() {
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isInfoClosing, setIsInfoClosing] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [isAddClosing, setIsAddClosing] = useState(false);
   const [editingBandish, setEditingBandish] = useState<any | null>(null);
-  const [isEditClosing, setIsEditClosing] = useState(false);
-
-  // --- 4. UNIFIED FORM STATES (Used for both Add and Edit) ---
-  const [formTitle, setFormTitle] = useState("");
-  const [formRaag, setFormRaag] = useState("");
-  const [formTaal, setFormTaal] = useState("");
-  const [formLay, setFormLay] = useState("");
-  const [formComposer, setFormComposer] = useState("");
-  const [formTradition, setFormTradition] = useState("");
-  const [formEnglish, setFormEnglish] = useState("");
-  const [formDevanagari, setFormDevanagari] = useState("");
-  const [adminPasscode, setAdminPasscode] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string, type: 'error' | 'success' } | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ message: string, onConfirm: () => void } | null>(null);
   const [isViewOptionsOpen, setIsViewOptionsOpen] = useState(false);
@@ -199,40 +185,48 @@ export default function Home() {
   }, []);
   const closeInfoModal = () => { setIsInfoClosing(true); setTimeout(() => { setIsInfoOpen(false); setIsInfoClosing(false); }, 300); };
 
-  const clearForm = () => {
-    setFormTitle(""); setFormRaag(""); setFormTaal(""); setFormLay(""); setFormComposer(""); setFormTradition("");
-    setFormEnglish(""); setFormDevanagari(""); setAdminPasscode("");
-  };
-
-  const closeAddModal = () => {
-    setIsAddClosing(true);
-    setTimeout(() => { setIsAddOpen(false); setIsAddClosing(false); clearForm(); }, 300);
-  };
-
-  const closeEditModal = (bandishOverride?: any, forceClose?: boolean) => {
-    setIsEditClosing(true);
-    const isEvent = bandishOverride && bandishOverride.nativeEvent;
-    const bandishToRestore = (!forceClose && !isEvent && bandishOverride) ? bandishOverride : (!forceClose ? editingBandish : null);
-    
-    if (bandishToRestore) {
-      setSelectedBandish(bandishToRestore);
-    }
-    setTimeout(() => { setEditingBandish(null); setIsEditClosing(false); clearForm(); }, 300);
-  };
-
   const openEditModal = (bandish: any) => {
     setEditingBandish(bandish);
-    setFormTitle(bandish.title);
-    setFormRaag(bandish.raag);
-    setFormTaal(bandish.taal);
-    setFormLay((bandish.lay || []).join(", "));
-    setFormComposer(bandish.composer);
-    setFormTradition(bandish.tradition || "");
-    setFormEnglish(bandish.lyrics.english);
-    setFormDevanagari(bandish.lyrics.devanagari || "");
-    // Close the viewing modal instantly without animation to transition smoothly to edit
+    // Close the viewing modal without animation to transition smoothly to edit
     setSelectedBandish(null);
   };
+
+  const maxExistingId = useMemo(() => {
+    const currentIds = baseData.map(b => parseInt(b.id, 10)).filter(n => !isNaN(n));
+    return currentIds.length > 0 ? Math.max(...currentIds) : 0;
+  }, [baseData]);
+
+  const handleBandishModalSuccess = useCallback((action: "add" | "edit" | "delete", data?: any, id?: string) => {
+    if (action === "add") {
+      if (userRole === "contributor") {
+        setToast({ message: "New bandish submitted for administrator approval!", type: 'success' });
+      } else {
+        if (data) {
+          setBaseData(prev => [data, ...prev]);
+        }
+        setToast({ message: "Bandish published successfully!", type: 'success' });
+      }
+      setIsAddOpen(false);
+    } else if (action === "edit") {
+      if (userRole === "contributor") {
+        setToast({ message: "Suggested edits submitted for administrator approval!", type: 'success' });
+      } else {
+        if (data && id) {
+          setBaseData(prev => prev.map(b => b.id === id ? data : b));
+          setSelectedBandish(data);
+        }
+        setToast({ message: "Bandish updated successfully!", type: 'success' });
+      }
+      setEditingBandish(null);
+    } else if (action === "delete") {
+      if (id) {
+        setBaseData(prev => prev.filter(b => b.id !== id));
+      }
+      setEditingBandish(null);
+      setSelectedBandish(null);
+      setToast({ message: "Bandish deleted.", type: 'success' });
+    }
+  }, [userRole]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -240,10 +234,7 @@ export default function Home() {
         if (toast) setToast(null);
         else if (confirmDialog) setConfirmDialog(null);
         else if (isViewOptionsOpen) setIsViewOptionsOpen(false);
-        else if (isAddOpen) closeAddModal();
-        else if (editingBandish) closeEditModal();
         else if (isInfoOpen) closeInfoModal();
-        // Note: selectedBandish / BandishModal handles its own Escape key internally with animation
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
@@ -264,115 +255,7 @@ export default function Home() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("reset-browsing", handleResetBrowsing);
     };
-  }, [toast, confirmDialog, isViewOptionsOpen, isAddOpen, editingBandish, isInfoOpen]);
-
-  const handleFormSubmit = async (e: React.FormEvent, isEdit: boolean, action: 'save' | 'delete' = 'save') => {
-    e.preventDefault();
-
-    if (action !== 'delete') {
-      const isPasscodeRequired = userRole === "admin";
-      if (!formTitle || !formRaag || !formTaal || !formComposer || !formEnglish || (isPasscodeRequired && !adminPasscode)) {
-        setToast({ message: "Please fill in all required fields.", type: 'error' });
-        return;
-      }
-    }
-
-    setIsSubmitting(true);
-
-    if (action === 'delete') {
-      if (userRole !== "admin") {
-        setToast({ message: "Only administrators can delete bandishes.", type: 'error' });
-        setIsSubmitting(false);
-        return;
-      }
-      try {
-        const result = await deleteBandishSecurely(editingBandish.id);
-        if (!result.success) throw new Error(result.error);
-
-        setBaseData(prev => prev.filter(b => b.id !== editingBandish.id));
-        closeEditModal(null, true);
-      } catch (error: any) {
-        console.error("❌ SUPABASE ERROR:", error);
-        setToast({ message: `Database Error: ${error.message || "Check console for details"}`, type: 'error' });
-      } finally {
-        setIsSubmitting(false);
-      }
-      return;
-    }
-
-    // --- Calculate next sequential ID if adding directly as admin ---
-    let nextId = "";
-    if (!isEdit && userRole === "admin") {
-      const currentIds = baseData.map(b => parseInt(b.id, 10)).filter(n => !isNaN(n));
-      const maxId = currentIds.length > 0 ? Math.max(...currentIds) : 0;
-      nextId = String(maxId + 1).padStart(4, '0');
-    }
-
-    // Prepare payload
-    const payload: any = {
-      title: formTitle,
-      raag: formRaag,
-      taal: formTaal,
-      lay: formLay.split(',').map(s => s.trim()).filter(Boolean),
-      composer: formComposer,
-      tradition: formTradition || null,
-      lyrics: {
-        english: formEnglish,
-        devanagari: formDevanagari || "",
-      },
-      contributor: contributorName,
-    };
-
-    if (!isEdit && nextId) {
-      payload.id = nextId;
-    }
-
-    try {
-      // Contributor Flow: Submits to approval queue
-      if (userRole === "contributor") {
-        if (isEdit && editingBandish) {
-          const result = await submitBandishEdit(editingBandish.id, payload, editingBandish);
-          if (!result.success) throw new Error(result.error);
-          setToast({ message: "Suggested edits submitted for administrator approval!", type: 'success' });
-          closeEditModal(null);
-        } else {
-          const result = await submitBandishContribution(payload);
-          if (!result.success) throw new Error(result.error);
-          setToast({ message: "New bandish submitted for administrator approval!", type: 'success' });
-          closeAddModal();
-        }
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Admin Flow: Direct publish/update
-      if (isEdit && editingBandish) {
-        const result = await updateBandishSecurely(editingBandish.id, payload);
-        if (!result.success) throw new Error(result.error);
-
-        let updatedBandish = editingBandish;
-        if (result.data && result.data.length > 0) {
-          updatedBandish = result.data[0];
-          setBaseData(prev => prev.map(b => b.id === editingBandish.id ? updatedBandish : b));
-        }
-        closeEditModal(updatedBandish);
-      } else {
-        const result = await addBandishSecurely(payload);
-        if (!result.success) throw new Error(result.error);
-
-        if (result.data && result.data.length > 0) {
-          setBaseData(prev => [result.data[0], ...prev]);
-        }
-        closeAddModal();
-      }
-
-    } catch (error: any) {
-      console.error("❌ ERROR:", error);
-      setToast({ message: `Error: ${error.message || "Failed to process request"}`, type: 'error' });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  }, [toast, confirmDialog, isViewOptionsOpen, isInfoOpen]);
 
   const toggleFilter = useCallback((key: string, value: string) => {
     setActiveFilters((prev) => {
@@ -557,125 +440,6 @@ export default function Home() {
     );
   };
 
-  // --- 9. SHARED FORM JSX (Used by Add and Edit Modals) ---
-  const renderForm = (isEdit: boolean) => (
-    <form noValidate onSubmit={(e) => handleFormSubmit(e, isEdit)} className="space-y-6 md:space-y-8">
-      <div>
-        <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Title</label>
-        <input type="text" autoFocus required placeholder="e.g. Hori Khelan Ko" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormCombobox
-          label="Raag"
-          value={formRaag}
-          onChange={setFormRaag}
-          suggestions={allRaags}
-          placeholder="e.g. Des"
-          required
-          quickPills={["Yaman", "Bhairav", "Bageshri", "Bhoopali", "Darbari", "Kafi"]}
-        />
-        <FormCombobox
-          label="Taal"
-          value={formTaal}
-          onChange={setFormTaal}
-          suggestions={allTaals}
-          placeholder="e.g. Tintal"
-          required
-          quickPills={["Tintal", "Ektaal", "Jhaptal", "Rupak", "Keherwa", "Dadra"]}
-        />
-        <FormCombobox
-          label="Lay (Comma Separated)"
-          value={formLay}
-          onChange={setFormLay}
-          suggestions={allLays}
-          placeholder="e.g. Vilambit, Drut"
-          isMulti
-          quickPills={["Vilambit", "Madhya", "Drut", "Ati Drut"]}
-        />
-        <div>
-          <label className="block text-xs font-bold text-m3-tertiary dark:text-m3-tertiary-dark uppercase tracking-wider mb-2">Composer</label>
-          <input type="text" required placeholder="e.g. Traditional" value={formComposer} onChange={(e) => setFormComposer(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-tertiary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Gharana / Tradition</label>
-          <input type="text" placeholder="e.g. Agra, Gwalior" value={formTradition} onChange={(e) => setFormTradition(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-        </div>
-      </div>
-      <div>
-        <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">English Transliteration (Required)</label>
-        <textarea 
-          required 
-          placeholder="Enter the phonetic lyrics here..." 
-          value={formEnglish} 
-          onChange={(e) => setFormEnglish(e.target.value)} 
-          className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" 
-          data-lenis-prevent="true"
-          onWheel={(e: React.WheelEvent) => e.stopPropagation()}
-          onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
-        />
-      </div>
-      <div>
-        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Devanagari Script (Optional)</label>
-        <textarea 
-          placeholder="होली खेलन को चले कन्हैयाँ..." 
-          value={formDevanagari} 
-          onChange={(e) => setFormDevanagari(e.target.value)} 
-          className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 min-h-[140px] resize-y m3-scrollbar" 
-          data-lenis-prevent="true"
-          onWheel={(e: React.WheelEvent) => e.stopPropagation()}
-          onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
-        />
-      </div>
-      <hr className="border-gray-200 dark:border-m3-surface-high-dark my-2" />
-      <div className="flex flex-col md:flex-row gap-6 items-end">
-        {userRole === "admin" ? (
-          <div className="w-full">
-            <label className="flex items-center gap-1.5 text-xs font-bold text-m3-error dark:text-m3-error-dark uppercase tracking-wider mb-2">
-              <span className="material-symbols-rounded text-[1.1rem]">lock</span> Admin Passcode
-            </label>
-            <input type="password" required placeholder="Enter the secret password to publish" value={adminPasscode} onChange={(e) => setAdminPasscode(e.target.value)} className="w-full bg-m3-error/10 dark:bg-m3-error-dark/10 text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-error dark:focus:ring-m3-error-dark transition-all duration-300 placeholder-m3-error/50 dark:placeholder-m3-error-dark/50" />
-          </div>
-        ) : (
-          <div className="w-full p-4 rounded-2xl bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/15 border border-m3-tertiary/20 flex items-center gap-3 text-xs sm:text-sm text-m3-tertiary dark:text-m3-tertiary-dark font-medium">
-            <span className="material-symbols-rounded text-xl shrink-0">verified</span>
-            <span>
-              <strong>Community Contribution:</strong> Your submission will be reviewed by an administrator before appearing live on the wiki.
-            </span>
-          </div>
-        )}
-        <div className="flex gap-3 w-full md:w-auto shrink-0">
-          {isEdit && userRole === "admin" && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                setConfirmDialog({
-                  message: "Are you sure you want to delete this bandish?",
-                  onConfirm: () => handleFormSubmit(e as unknown as React.FormEvent, true, 'delete')
-                });
-              }}
-              disabled={isSubmitting}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
-            >
-              <span className="material-symbols-rounded text-[1.4rem]">delete</span>
-              <span className="md:hidden lg:inline">Delete</span>
-            </button>
-          )}
-          <button type="submit" disabled={isSubmitting} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 px-8 py-4 rounded-[1.5rem] font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 disabled:opacity-50 disabled:hover:scale-100">
-            <span className="material-symbols-rounded text-[1.4rem]">{userRole === "contributor" ? "send" : isEdit ? 'save' : 'publish'}</span>
-            <span className="whitespace-nowrap">
-              {isSubmitting 
-                ? (isEdit ? "Saving..." : "Publishing...") 
-                : userRole === "contributor"
-                ? (isEdit ? "Submit for Approval" : "Submit for Approval")
-                : (isEdit ? "Save Changes" : "Publish")}
-            </span>
-          </button>
-        </div>
-      </div>
-    </form>
-  );
-
   return (
     <main className="min-h-screen bg-transparent transition-colors duration-500 relative font-sans">
       <AnimatePresence mode="wait">
@@ -762,7 +526,7 @@ export default function Home() {
 
                         {/* Add Button */}
                         {userRole === "admin" || userRole === "contributor" ? (
-                          <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="group flex items-center justify-center w-[3.5rem] h-[3.5rem] sm:w-auto sm:px-6 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 shrink-0" title={userRole === "admin" ? "Add a new Bandish" : "Contribute a new Bandish"}>
+                          <button onClick={() => setIsAddOpen(true)} className="group flex items-center justify-center w-[3.5rem] h-[3.5rem] sm:w-auto sm:px-6 bg-m3-primary hover:bg-m3-primary/90 dark:bg-m3-primary-dark dark:hover:bg-m3-primary-dark/90 text-white dark:text-gray-900 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 shrink-0" title={userRole === "admin" ? "Add a new Bandish" : "Contribute a new Bandish"}>
                             <span className="material-symbols-rounded text-[1.5rem]">add</span>
                             <span className="hidden sm:block font-bold text-sm ml-1">Add</span>
                           </button>
@@ -839,7 +603,7 @@ export default function Home() {
                         </button>
                       )}
                       {userRole === "admin" || userRole === "contributor" ? (
-                        <button onClick={() => { clearForm(); setIsAddOpen(true); }} className="px-6 py-3 rounded-full font-bold text-white bg-m3-primary dark:bg-m3-primary-dark hover:bg-m3-primary/90 transition-transform active:scale-95 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05]">
+                        <button onClick={() => setIsAddOpen(true)} className="px-6 py-3 rounded-full font-bold text-white bg-m3-primary dark:bg-m3-primary-dark hover:bg-m3-primary/90 transition-transform active:scale-95 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05]">
                           Add New Bandish
                         </button>
                       ) : (
@@ -939,63 +703,37 @@ export default function Home() {
       )}
 
 
-      {/* --- ADD MODAL --- */}
-      {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" onClick={closeAddModal}>
-          <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isAddClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
-          <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isAddClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
-            <ReactLenis 
-              options={LENIS_OPTIONS} 
-              data-lenis-prevent="true"
-              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar overscroll-contain"
-              onWheel={(e: React.WheelEvent) => e.stopPropagation()}
-              onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
-            >
-              <div className="p-8 md:p-12">
-                <div className="absolute top-6 right-6 md:top-8 md:right-8">
-                  <button onClick={closeAddModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
-                    <span className="material-symbols-rounded">close</span>
-                  </button>
-                </div>
-                <div className="mb-8">
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Add New Bandish</h2>
-                  <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Contribute to the Wiki database.</p>
-                </div>
-                {renderForm(false)}
-              </div>
-            </ReactLenis>
-          </div>
-        </div>
-      )}
+      {/* --- ADD BANDISH MODAL --- */}
+      <BandishFormModal
+        isOpen={isAddOpen}
+        isEdit={false}
+        userRole={userRole}
+        contributorName={contributorName}
+        allRaags={allRaags}
+        allTaals={allTaals}
+        allLays={allLays}
+        maxExistingId={maxExistingId}
+        onClose={() => setIsAddOpen(false)}
+        onSuccess={handleBandishModalSuccess}
+      />
 
-      {/* --- EDIT MODAL --- */}
-      {editingBandish && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" onClick={closeEditModal}>
-          <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isEditClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
-          <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isEditClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
-            <ReactLenis 
-              options={LENIS_OPTIONS} 
-              data-lenis-prevent="true"
-              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar overscroll-contain"
-              onWheel={(e: React.WheelEvent) => e.stopPropagation()}
-              onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
-            >
-              <div className="p-8 md:p-12">
-                <div className="absolute top-6 right-6 md:top-8 md:right-8">
-                  <button onClick={closeEditModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
-                    <span className="material-symbols-rounded">close</span>
-                  </button>
-                </div>
-                <div className="mb-8">
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Edit Bandish</h2>
-                  <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Make corrections to <span className="font-bold">{editingBandish.title}</span>.</p>
-                </div>
-                {renderForm(true)}
-              </div>
-            </ReactLenis>
-          </div>
-        </div>
-      )}
+      {/* --- EDIT BANDISH MODAL --- */}
+      <BandishFormModal
+        isOpen={Boolean(editingBandish)}
+        isEdit={true}
+        bandish={editingBandish}
+        userRole={userRole}
+        contributorName={contributorName}
+        allRaags={allRaags}
+        allTaals={allTaals}
+        allLays={allLays}
+        onClose={() => {
+          const prev = editingBandish;
+          setEditingBandish(null);
+          if (prev) setSelectedBandish(prev);
+        }}
+        onSuccess={handleBandishModalSuccess}
+      />
 
       {/* --- EXPANDED BANDISH MODAL (GPU-accelerated FLIP animation) --- */}
       <AnimatePresence onExitComplete={() => setIsModalAnimating(false)}>
