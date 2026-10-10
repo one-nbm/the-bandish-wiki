@@ -23,7 +23,7 @@ export default async function EditorPage() {
     
   const { data: userRaags, count: raagCount } = await supabase
     .from("raags")
-    .select("id, name, slug, thaat, samay", { count: "exact" })
+    .select("id, name, slug, thaat, samay, vadi, samvadi", { count: "exact" })
     .eq("contributor", contributorName)
     .order("name", { ascending: true });
 

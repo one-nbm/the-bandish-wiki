@@ -26,6 +26,8 @@ interface ContributedRaag {
   slug: string;
   thaat?: string;
   samay?: string;
+  vadi?: string;
+  samvadi?: string;
 }
 
 interface EditorDashboardProps {
@@ -52,8 +54,9 @@ export default function EditorDashboard({
   const [activeTab, setActiveTab] = useState<"bandishes" | "raags">("bandishes");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Graph View State
-  const [graphCategory, setGraphCategory] = useState<"raag" | "taal" | "tradition">("raag");
+  // Graph View Category State
+  const [bandishCategory, setBandishCategory] = useState<"raag" | "taal" | "tradition">("raag");
+  const [raagCategory, setRaagCategory] = useState<"thaat" | "samay" | "vadi">("thaat");
 
   const supabase = createClient();
   const router = useRouter();
@@ -103,15 +106,12 @@ export default function EditorDashboard({
     );
   }, [userRaags, searchQuery]);
 
-  // Analytics Computation for Material 3 Graph
-  const graphAnalytics = useMemo(() => {
+  // Analytics Computation for Bandishes
+  const bandishAnalytics = useMemo(() => {
     const totalBandishes = userBandishes.length;
 
-    // 1. By Raag
     const raagMap: Record<string, number> = {};
-    // 2. By Taal
     const taalMap: Record<string, number> = {};
-    // 3. By Tradition
     const traditionMap: Record<string, number> = {};
 
     userBandishes.forEach((b) => {
@@ -148,6 +148,49 @@ export default function EditorDashboard({
       traditionStats: traditionStats.slice(0, 7)
     };
   }, [userBandishes]);
+
+  // Analytics Computation for Raags
+  const raagAnalytics = useMemo(() => {
+    const totalRaags = userRaags.length;
+
+    const thaatMap: Record<string, number> = {};
+    const samayMap: Record<string, number> = {};
+    const vadiMap: Record<string, number> = {};
+
+    userRaags.forEach((r) => {
+      const thaatName = r.thaat?.trim() || "Unassigned";
+      thaatMap[thaatName] = (thaatMap[thaatName] || 0) + 1;
+
+      const samayName = r.samay?.trim() || "Unspecified";
+      samayMap[samayName] = (samayMap[samayName] || 0) + 1;
+
+      const vadiName = r.vadi?.trim() || "Unspecified";
+      vadiMap[vadiName] = (vadiMap[vadiName] || 0) + 1;
+    });
+
+    const sortEntries = (map: Record<string, number>) =>
+      Object.entries(map)
+        .map(([label, count]) => ({
+          label,
+          count,
+          percentage: totalRaags > 0 ? Math.round((count / totalRaags) * 100) : 0
+        }))
+        .sort((a, b) => b.count - a.count);
+
+    const thaatStats = sortEntries(thaatMap);
+    const samayStats = sortEntries(samayMap);
+    const vadiStats = sortEntries(vadiMap);
+
+    return {
+      totalRaags,
+      distinctThaats: Object.keys(thaatMap).filter((t) => t !== "Unassigned").length,
+      distinctSamays: Object.keys(samayMap).filter((s) => s !== "Unspecified").length,
+      distinctVadis: Object.keys(vadiMap).filter((v) => v !== "Unspecified").length,
+      thaatStats: thaatStats.slice(0, 7),
+      samayStats: samayStats.slice(0, 7),
+      vadiStats: vadiStats.slice(0, 7)
+    };
+  }, [userRaags]);
 
   return (
     <div className="relative z-10 flex flex-col gap-8">
@@ -255,13 +298,9 @@ export default function EditorDashboard({
               : "bg-white dark:bg-m3-surface-container-dark border-m3-surface-high dark:border-m3-surface-high-dark hover:-translate-y-1"
           }`}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4">
             <span className="material-symbols-rounded text-3xl text-m3-primary dark:text-m3-primary-dark">
               library_music
-            </span>
-            <span className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark flex items-center gap-0.5">
-              <span>View list</span>
-              <span className="material-symbols-rounded text-sm">arrow_forward</span>
             </span>
           </div>
           <div>
@@ -282,13 +321,9 @@ export default function EditorDashboard({
               : "bg-white dark:bg-m3-surface-container-dark border-m3-surface-high dark:border-m3-surface-high-dark hover:-translate-y-1"
           }`}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4">
             <span className="material-symbols-rounded text-3xl text-m3-primary dark:text-m3-primary-dark">
               queue_music
-            </span>
-            <span className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark flex items-center gap-0.5">
-              <span>View list</span>
-              <span className="material-symbols-rounded text-sm">arrow_forward</span>
             </span>
           </div>
           <div>
@@ -338,145 +373,308 @@ export default function EditorDashboard({
         </div>
       </div>
 
-      {/* Stylized Material 3 Expressive Contributions Graph */}
+      {/* Stylized Material 3 Expressive Contributions Graph (Synchronized with activeTab) */}
       <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
               <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark text-2xl">bar_chart</span>
-              <span>Contribution Insights</span>
+              <span>{activeTab === "bandishes" ? "Bandish Insights" : "Raag Insights"}</span>
             </h2>
             <p className="text-xs sm:text-sm text-m3-secondary dark:text-m3-secondary-dark mt-1 font-medium">
-              Expressive distribution across raags, rhythmic cycles (taals), and gharana lineages.
+              {activeTab === "bandishes"
+                ? "Expressive distribution across raags, rhythmic cycles (taals), and gharana lineages."
+                : "Expressive distribution across parent thaats, performance times (samay), and primary notes (vadi)."}
             </p>
           </div>
 
           {/* Graph Category Toggle with Spring Pill */}
-          <div className="relative flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0 self-start sm:self-auto">
-            <button
-              type="button"
-              onClick={() => setGraphCategory("raag")}
-              className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
-                graphCategory === "raag"
-                  ? "text-white dark:text-gray-900"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              }`}
-            >
-              {graphCategory === "raag" && (
-                <motion.div
-                  layoutId="active-graph-tab"
-                  className="absolute inset-0 bg-m3-primary dark:bg-m3-primary-dark rounded-full -z-10"
-                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
-                />
-              )}
-              <span>By Raag</span>
-            </button>
+          {activeTab === "bandishes" ? (
+            <div className="relative flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setBandishCategory("raag")}
+                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                  bandishCategory === "raag"
+                    ? "text-white dark:text-gray-900"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                {bandishCategory === "raag" && (
+                  <motion.div
+                    layoutId="active-bandish-graph-tab"
+                    className="absolute inset-0 bg-m3-primary dark:bg-m3-primary-dark rounded-full -z-10"
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                  />
+                )}
+                <span>By Raag</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setGraphCategory("taal")}
-              className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
-                graphCategory === "taal"
-                  ? "text-white dark:text-gray-900"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              }`}
-            >
-              {graphCategory === "taal" && (
-                <motion.div
-                  layoutId="active-graph-tab"
-                  className="absolute inset-0 bg-m3-secondary dark:bg-m3-secondary-dark rounded-full -z-10"
-                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
-                />
-              )}
-              <span>By Taal</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setBandishCategory("taal")}
+                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                  bandishCategory === "taal"
+                    ? "text-white dark:text-gray-900"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                {bandishCategory === "taal" && (
+                  <motion.div
+                    layoutId="active-bandish-graph-tab"
+                    className="absolute inset-0 bg-m3-secondary dark:bg-m3-secondary-dark rounded-full -z-10"
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                  />
+                )}
+                <span>By Taal</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setGraphCategory("tradition")}
-              className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
-                graphCategory === "tradition"
-                  ? "text-white dark:text-gray-900"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              }`}
-            >
-              {graphCategory === "tradition" && (
-                <motion.div
-                  layoutId="active-graph-tab"
-                  className="absolute inset-0 bg-m3-tertiary dark:bg-m3-tertiary-dark rounded-full -z-10"
-                  transition={{ type: "spring", stiffness: 450, damping: 32 }}
-                />
-              )}
-              <span>Gharana</span>
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => setBandishCategory("tradition")}
+                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                  bandishCategory === "tradition"
+                    ? "text-white dark:text-gray-900"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                {bandishCategory === "tradition" && (
+                  <motion.div
+                    layoutId="active-bandish-graph-tab"
+                    className="absolute inset-0 bg-m3-tertiary dark:bg-m3-tertiary-dark rounded-full -z-10"
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                  />
+                )}
+                <span>Gharana</span>
+              </button>
+            </div>
+          ) : (
+            <div className="relative flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setRaagCategory("thaat")}
+                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                  raagCategory === "thaat"
+                    ? "text-white dark:text-gray-900"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                {raagCategory === "thaat" && (
+                  <motion.div
+                    layoutId="active-raag-graph-tab"
+                    className="absolute inset-0 bg-m3-primary dark:bg-m3-primary-dark rounded-full -z-10"
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                  />
+                )}
+                <span>By Thaat</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRaagCategory("samay")}
+                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                  raagCategory === "samay"
+                    ? "text-white dark:text-gray-900"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                {raagCategory === "samay" && (
+                  <motion.div
+                    layoutId="active-raag-graph-tab"
+                    className="absolute inset-0 bg-m3-secondary dark:bg-m3-secondary-dark rounded-full -z-10"
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                  />
+                )}
+                <span>By Samay (Time)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRaagCategory("vadi")}
+                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                  raagCategory === "vadi"
+                    ? "text-white dark:text-gray-900"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                {raagCategory === "vadi" && (
+                  <motion.div
+                    layoutId="active-raag-graph-tab"
+                    className="absolute inset-0 bg-m3-tertiary dark:bg-m3-tertiary-dark rounded-full -z-10"
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                  />
+                )}
+                <span>Vadi Swara</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Metric Badges Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
-              Distinct Raags
-            </span>
-            <span className="text-xl sm:text-2xl font-black text-m3-primary dark:text-m3-primary-dark">
-              {graphAnalytics.distinctRaags}
-            </span>
-          </div>
+        {activeTab === "bandishes" ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+                Total Repertory
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">
+                {bandishAnalytics.totalBandishes}
+              </span>
+            </div>
 
-          <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
-              Taals Represented
-            </span>
-            <span className="text-xl sm:text-2xl font-black text-m3-secondary dark:text-m3-secondary-dark">
-              {graphAnalytics.distinctTaals}
-            </span>
-          </div>
+            <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+                Raags Authored
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-m3-primary dark:text-m3-primary-dark">
+                {userRaags.length}
+              </span>
+            </div>
 
-          <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
-              Gharana Traditions
-            </span>
-            <span className="text-xl sm:text-2xl font-black text-m3-tertiary dark:text-m3-tertiary-dark">
-              {graphAnalytics.distinctTraditions}
-            </span>
-          </div>
+            <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+                Taals Represented
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-m3-secondary dark:text-m3-secondary-dark">
+                {bandishAnalytics.distinctTaals}
+              </span>
+            </div>
 
-          <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
-              Total Repertory
-            </span>
-            <span className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">
-              {graphAnalytics.totalBandishes}
-            </span>
+            <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+                Gharana Traditions
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-m3-tertiary dark:text-m3-tertiary-dark">
+                {bandishAnalytics.distinctTraditions}
+              </span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+                Raags Authored
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-m3-primary dark:text-m3-primary-dark">
+                {raagAnalytics.totalRaags}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+                Parent Thaats
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-m3-secondary dark:text-m3-secondary-dark">
+                {raagAnalytics.distinctThaats}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+                Performance Samays
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-m3-tertiary dark:text-m3-tertiary-dark">
+                {raagAnalytics.distinctSamays}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+                Vadi Swaras
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">
+                {raagAnalytics.distinctVadis}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Dynamic Stylized Chart Bars */}
-        {graphAnalytics.totalBandishes === 0 ? (
+        {activeTab === "bandishes" ? (
+          bandishAnalytics.totalBandishes === 0 ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+              Add bandishes under your contributor name to generate statistical repertoire charts.
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {(bandishCategory === "raag"
+                ? bandishAnalytics.raagStats
+                : bandishCategory === "taal"
+                ? bandishAnalytics.taalStats
+                : bandishAnalytics.traditionStats
+              ).map((item, idx) => {
+                const maxCount =
+                  bandishCategory === "raag"
+                    ? bandishAnalytics.raagStats[0]?.count || 1
+                    : bandishCategory === "taal"
+                    ? bandishAnalytics.taalStats[0]?.count || 1
+                    : bandishAnalytics.traditionStats[0]?.count || 1;
+
+                const relativeWidth = Math.max(8, Math.round((item.count / maxCount) * 100));
+
+                const barColor =
+                  bandishCategory === "raag"
+                    ? "bg-m3-primary dark:bg-m3-primary-dark"
+                    : bandishCategory === "taal"
+                    ? "bg-m3-secondary dark:bg-m3-secondary-dark"
+                    : "bg-m3-tertiary dark:bg-m3-tertiary-dark";
+
+                return (
+                  <div key={`${item.label}-${idx}`} className="group">
+                    <div className="flex items-center justify-between text-xs sm:text-sm font-medium mb-1.5">
+                      <span className="text-gray-900 dark:text-white font-bold flex items-center gap-1.5">
+                        <span>{item.label}</span>
+                        {bandishCategory === "tradition" && item.label !== "N/A" && (
+                          <span className="text-[11px] text-m3-secondary dark:text-m3-secondary-dark font-normal">
+                            Gharana
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-gray-500 dark:text-gray-400 font-mono text-xs">
+                        <strong className="text-gray-900 dark:text-white">{item.count}</strong>{" "}
+                        {item.count === 1 ? "bandish" : "bandishes"} ({item.percentage}%)
+                      </span>
+                    </div>
+
+                    {/* Material 3 Expressive Rounded Pill Track & Bar */}
+                    <div className="h-3.5 w-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark rounded-full overflow-hidden p-0.5">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${relativeWidth}%` }}
+                        transition={{ type: "spring", stiffness: 220, damping: 25, delay: idx * 0.04 }}
+                        className={`h-full rounded-full ${barColor} transition-opacity group-hover:opacity-90`}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        ) : raagAnalytics.totalRaags === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
-            Add bandishes under your contributor name to generate statistical repertoire charts.
+            Add raags under your contributor name to generate scale and classification charts.
           </div>
         ) : (
           <div className="space-y-3.5">
-            {(graphCategory === "raag"
-              ? graphAnalytics.raagStats
-              : graphCategory === "taal"
-              ? graphAnalytics.taalStats
-              : graphAnalytics.traditionStats
+            {(raagCategory === "thaat"
+              ? raagAnalytics.thaatStats
+              : raagCategory === "samay"
+              ? raagAnalytics.samayStats
+              : raagAnalytics.vadiStats
             ).map((item, idx) => {
               const maxCount =
-                graphCategory === "raag"
-                  ? graphAnalytics.raagStats[0]?.count || 1
-                  : graphCategory === "taal"
-                  ? graphAnalytics.taalStats[0]?.count || 1
-                  : graphAnalytics.traditionStats[0]?.count || 1;
+                raagCategory === "thaat"
+                  ? raagAnalytics.thaatStats[0]?.count || 1
+                  : raagCategory === "samay"
+                  ? raagAnalytics.samayStats[0]?.count || 1
+                  : raagAnalytics.vadiStats[0]?.count || 1;
 
               const relativeWidth = Math.max(8, Math.round((item.count / maxCount) * 100));
 
               const barColor =
-                graphCategory === "raag"
+                raagCategory === "thaat"
                   ? "bg-m3-primary dark:bg-m3-primary-dark"
-                  : graphCategory === "taal"
+                  : raagCategory === "samay"
                   ? "bg-m3-secondary dark:bg-m3-secondary-dark"
                   : "bg-m3-tertiary dark:bg-m3-tertiary-dark";
 
@@ -485,15 +683,20 @@ export default function EditorDashboard({
                   <div className="flex items-center justify-between text-xs sm:text-sm font-medium mb-1.5">
                     <span className="text-gray-900 dark:text-white font-bold flex items-center gap-1.5">
                       <span>{item.label}</span>
-                      {graphCategory === "tradition" && item.label !== "N/A" && (
+                      {raagCategory === "thaat" && item.label !== "Unassigned" && (
                         <span className="text-[11px] text-m3-secondary dark:text-m3-secondary-dark font-normal">
-                          Gharana
+                          Parent Thaat
+                        </span>
+                      )}
+                      {raagCategory === "vadi" && item.label !== "Unspecified" && (
+                        <span className="text-[11px] text-m3-tertiary dark:text-m3-tertiary-dark font-normal">
+                          Vadi Note
                         </span>
                       )}
                     </span>
                     <span className="text-gray-500 dark:text-gray-400 font-mono text-xs">
                       <strong className="text-gray-900 dark:text-white">{item.count}</strong>{" "}
-                      {item.count === 1 ? "bandish" : "bandishes"} ({item.percentage}%)
+                      {item.count === 1 ? "raag" : "raags"} ({item.percentage}%)
                     </span>
                   </div>
 
