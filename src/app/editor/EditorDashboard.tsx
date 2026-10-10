@@ -57,6 +57,8 @@ export default function EditorDashboard({
   // Graph View Category State
   const [bandishCategory, setBandishCategory] = useState<"raag" | "taal" | "tradition">("raag");
   const [raagCategory, setRaagCategory] = useState<"thaat" | "samay" | "vadi">("thaat");
+  const [activeColumnIndex, setActiveColumnIndex] = useState<number>(0);
+  const [hoveredColumnIndex, setHoveredColumnIndex] = useState<number | null>(null);
 
   const supabase = createClient();
   const router = useRouter();
@@ -191,6 +193,34 @@ export default function EditorDashboard({
       vadiStats: vadiStats.slice(0, 7)
     };
   }, [userRaags]);
+
+  // Active statistics for Google Health Style Graph
+  const currentChartStats = useMemo(() => {
+    if (activeTab === "bandishes") {
+      if (bandishCategory === "raag") return bandishAnalytics.raagStats;
+      if (bandishCategory === "taal") return bandishAnalytics.taalStats;
+      return bandishAnalytics.traditionStats;
+    } else {
+      if (raagCategory === "thaat") return raagAnalytics.thaatStats;
+      if (raagCategory === "samay") return raagAnalytics.samayStats;
+      return raagAnalytics.vadiStats;
+    }
+  }, [activeTab, bandishCategory, raagCategory, bandishAnalytics, raagAnalytics]);
+
+  const maxStatCount = useMemo(() => {
+    return currentChartStats.length > 0 ? Math.max(...currentChartStats.map((s) => s.count)) : 1;
+  }, [currentChartStats]);
+
+  const avgStatCount = useMemo(() => {
+    if (currentChartStats.length === 0) return 0;
+    const sum = currentChartStats.reduce((acc, curr) => acc + curr.count, 0);
+    return Math.round((sum / currentChartStats.length) * 10) / 10;
+  }, [currentChartStats]);
+
+  const selectedItem = useMemo(() => {
+    const idx = hoveredColumnIndex !== null ? hoveredColumnIndex : activeColumnIndex;
+    return currentChartStats[idx] || currentChartStats[0] || null;
+  }, [hoveredColumnIndex, activeColumnIndex, currentChartStats]);
 
   return (
     <div className="relative z-10 flex flex-col gap-8">
@@ -373,27 +403,42 @@ export default function EditorDashboard({
         </div>
       </div>
 
-      {/* Stylized Material 3 Expressive Contributions Graph (Synchronized with activeTab) */}
+      {/* Google Health Inspired Expressive Contributions Graph */}
       <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem]">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        {/* Header with Google Health Top Metric Hierarchy */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
-              <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark text-2xl">bar_chart</span>
-              <span>{activeTab === "bandishes" ? "Bandish Insights" : "Raag Insights"}</span>
-            </h2>
-            <p className="text-xs sm:text-sm text-m3-secondary dark:text-m3-secondary-dark mt-1 font-medium">
+            <span className="text-xs font-bold uppercase tracking-wider text-m3-secondary dark:text-m3-secondary-dark">
+              {activeTab === "bandishes" ? "Repertoire Breakdown" : "Canonical Scale Distribution"}
+            </span>
+            <div className="flex items-baseline gap-3 mt-1">
+              <h2 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                {activeTab === "bandishes"
+                  ? `${userBandishes.length} ${userBandishes.length === 1 ? "Bandish" : "Bandishes"}`
+                  : `${userRaags.length} ${userRaags.length === 1 ? "Raag" : "Raags"}`}
+              </h2>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-gray-600 dark:text-gray-300">
+                {activeTab === "bandishes"
+                  ? `${bandishAnalytics.distinctRaags} raags covered`
+                  : `${raagAnalytics.distinctThaats} parent thaats`}
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
               {activeTab === "bandishes"
-                ? "Expressive distribution across raags, rhythmic cycles (taals), and gharana lineages."
-                : "Expressive distribution across parent thaats, performance times (samay), and primary notes (vadi)."}
+                ? "Distribution across compositions, rhythmic cycles (taals), and gharanas."
+                : "Distribution across parent thaats, performance times (samay), and dominant swaras (vadi)."}
             </p>
           </div>
 
-          {/* Graph Category Toggle with Spring Pill */}
+          {/* Category Toggle Pills with Spring Transition */}
           {activeTab === "bandishes" ? (
             <div className="relative flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0 self-start sm:self-auto">
               <button
                 type="button"
-                onClick={() => setBandishCategory("raag")}
+                onClick={() => {
+                  setBandishCategory("raag");
+                  setActiveColumnIndex(0);
+                }}
                 className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
                   bandishCategory === "raag"
                     ? "text-white dark:text-gray-900"
@@ -403,7 +448,7 @@ export default function EditorDashboard({
                 {bandishCategory === "raag" && (
                   <motion.div
                     layoutId="active-bandish-graph-tab"
-                    className="absolute inset-0 bg-m3-primary dark:bg-m3-primary-dark rounded-full -z-10"
+                    className="absolute inset-0 bg-[#00A88F] dark:bg-[#00C4A7] rounded-full -z-10"
                     transition={{ type: "spring", stiffness: 450, damping: 32 }}
                   />
                 )}
@@ -412,7 +457,10 @@ export default function EditorDashboard({
 
               <button
                 type="button"
-                onClick={() => setBandishCategory("taal")}
+                onClick={() => {
+                  setBandishCategory("taal");
+                  setActiveColumnIndex(0);
+                }}
                 className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
                   bandishCategory === "taal"
                     ? "text-white dark:text-gray-900"
@@ -422,7 +470,7 @@ export default function EditorDashboard({
                 {bandishCategory === "taal" && (
                   <motion.div
                     layoutId="active-bandish-graph-tab"
-                    className="absolute inset-0 bg-m3-secondary dark:bg-m3-secondary-dark rounded-full -z-10"
+                    className="absolute inset-0 bg-[#3B82F6] dark:bg-[#60A5FA] rounded-full -z-10"
                     transition={{ type: "spring", stiffness: 450, damping: 32 }}
                   />
                 )}
@@ -431,7 +479,10 @@ export default function EditorDashboard({
 
               <button
                 type="button"
-                onClick={() => setBandishCategory("tradition")}
+                onClick={() => {
+                  setBandishCategory("tradition");
+                  setActiveColumnIndex(0);
+                }}
                 className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
                   bandishCategory === "tradition"
                     ? "text-white dark:text-gray-900"
@@ -441,7 +492,7 @@ export default function EditorDashboard({
                 {bandishCategory === "tradition" && (
                   <motion.div
                     layoutId="active-bandish-graph-tab"
-                    className="absolute inset-0 bg-m3-tertiary dark:bg-m3-tertiary-dark rounded-full -z-10"
+                    className="absolute inset-0 bg-[#F59E0B] dark:bg-[#FBBF24] rounded-full -z-10"
                     transition={{ type: "spring", stiffness: 450, damping: 32 }}
                   />
                 )}
@@ -452,7 +503,10 @@ export default function EditorDashboard({
             <div className="relative flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0 self-start sm:self-auto">
               <button
                 type="button"
-                onClick={() => setRaagCategory("thaat")}
+                onClick={() => {
+                  setRaagCategory("thaat");
+                  setActiveColumnIndex(0);
+                }}
                 className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
                   raagCategory === "thaat"
                     ? "text-white dark:text-gray-900"
@@ -462,7 +516,7 @@ export default function EditorDashboard({
                 {raagCategory === "thaat" && (
                   <motion.div
                     layoutId="active-raag-graph-tab"
-                    className="absolute inset-0 bg-m3-primary dark:bg-m3-primary-dark rounded-full -z-10"
+                    className="absolute inset-0 bg-[#00A88F] dark:bg-[#00C4A7] rounded-full -z-10"
                     transition={{ type: "spring", stiffness: 450, damping: 32 }}
                   />
                 )}
@@ -471,7 +525,10 @@ export default function EditorDashboard({
 
               <button
                 type="button"
-                onClick={() => setRaagCategory("samay")}
+                onClick={() => {
+                  setRaagCategory("samay");
+                  setActiveColumnIndex(0);
+                }}
                 className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
                   raagCategory === "samay"
                     ? "text-white dark:text-gray-900"
@@ -481,7 +538,7 @@ export default function EditorDashboard({
                 {raagCategory === "samay" && (
                   <motion.div
                     layoutId="active-raag-graph-tab"
-                    className="absolute inset-0 bg-m3-secondary dark:bg-m3-secondary-dark rounded-full -z-10"
+                    className="absolute inset-0 bg-[#3B82F6] dark:bg-[#60A5FA] rounded-full -z-10"
                     transition={{ type: "spring", stiffness: 450, damping: 32 }}
                   />
                 )}
@@ -490,7 +547,10 @@ export default function EditorDashboard({
 
               <button
                 type="button"
-                onClick={() => setRaagCategory("vadi")}
+                onClick={() => {
+                  setRaagCategory("vadi");
+                  setActiveColumnIndex(0);
+                }}
                 className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
                   raagCategory === "vadi"
                     ? "text-white dark:text-gray-900"
@@ -500,7 +560,7 @@ export default function EditorDashboard({
                 {raagCategory === "vadi" && (
                   <motion.div
                     layoutId="active-raag-graph-tab"
-                    className="absolute inset-0 bg-m3-tertiary dark:bg-m3-tertiary-dark rounded-full -z-10"
+                    className="absolute inset-0 bg-[#F59E0B] dark:bg-[#FBBF24] rounded-full -z-10"
                     transition={{ type: "spring", stiffness: 450, damping: 32 }}
                   />
                 )}
@@ -510,9 +570,137 @@ export default function EditorDashboard({
           )}
         </div>
 
-        {/* Metric Badges Row */}
+        {/* Google Health Vertical Capsule Chart Canvas */}
+        {currentChartStats.length === 0 ? (
+          <div className="text-center py-12 px-4 rounded-3xl border border-dashed border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface/40 dark:bg-m3-surface-dark/40 my-4">
+            <span className="material-symbols-rounded text-3xl text-gray-400 mb-2">bar_chart</span>
+            <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+              No statistical distribution data available yet.
+            </p>
+          </div>
+        ) : (
+          <div className="my-6">
+            <div className="relative h-64 sm:h-72 w-full pt-8 pb-10 flex flex-col justify-end">
+              {/* Benchmark / Average Horizontal Dashed Line (Google Health target benchmark) */}
+              {avgStatCount > 0 && (
+                <div
+                  className="absolute left-0 right-0 z-0 pointer-events-none flex items-center"
+                  style={{
+                    bottom: `calc(40px + ${Math.min(80, Math.max(20, (avgStatCount / maxStatCount) * 65))}%)`
+                  }}
+                >
+                  <div className="w-full border-b border-dashed border-[#00A88F]/40 dark:border-[#00C4A7]/40" />
+                  <span className="absolute right-0 -translate-y-1/2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-[#00A88F] dark:text-[#00C4A7]">
+                    Avg: {avgStatCount}
+                  </span>
+                </div>
+              )}
+
+              {/* 7 Vertical Pill Columns Grid */}
+              <div
+                className="grid gap-2 sm:gap-4 h-full items-end relative z-10"
+                style={{
+                  gridTemplateColumns: `repeat(${currentChartStats.length}, minmax(0, 1fr))`
+                }}
+              >
+                {currentChartStats.map((item, idx) => {
+                  const isSelected = (hoveredColumnIndex ?? activeColumnIndex) === idx;
+                  const isAboveAverage = item.count >= avgStatCount;
+                  const heightPercent = Math.max(22, Math.round((item.count / maxStatCount) * 100));
+
+                  // Google Health signature pill color (mint by default, or category-themed)
+                  const pillColor =
+                    (activeTab === "bandishes" && bandishCategory === "taal") ||
+                    (activeTab === "raags" && raagCategory === "samay")
+                      ? "bg-[#3B82F6] dark:bg-[#60A5FA]"
+                      : (activeTab === "bandishes" && bandishCategory === "tradition") ||
+                        (activeTab === "raags" && raagCategory === "vadi")
+                      ? "bg-[#F59E0B] dark:bg-[#FBBF24]"
+                      : "bg-[#00A88F] dark:bg-[#00C4A7]";
+
+                  return (
+                    <button
+                      key={`${item.label}-${idx}`}
+                      type="button"
+                      onClick={() => setActiveColumnIndex(idx)}
+                      onMouseEnter={() => setHoveredColumnIndex(idx)}
+                      onMouseLeave={() => setHoveredColumnIndex(null)}
+                      onFocus={() => setActiveColumnIndex(idx)}
+                      className="group flex flex-col items-center h-full justify-end cursor-pointer outline-none transition-transform duration-200"
+                    >
+                      {/* Vertical Capsule Bar Track */}
+                      <div className="relative w-full max-w-[42px] sm:max-w-[48px] h-full flex flex-col justify-end items-center">
+                        {/* Rounded Pill Fill */}
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: `${heightPercent}%` }}
+                          transition={{ type: "spring", stiffness: 240, damping: 26, delay: idx * 0.03 }}
+                          className={`w-full rounded-full ${pillColor} relative flex flex-col items-center justify-start pt-1.5 transition-all duration-200 ${
+                            isSelected ? "ring-2 ring-m3-primary dark:ring-m3-primary-dark opacity-100" : "opacity-90 group-hover:opacity-100"
+                          }`}
+                        >
+                          {/* Top Badge (Google Health Checkmark / Star Rosette Badge) */}
+                          {isAboveAverage && (
+                            <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white dark:bg-gray-950 text-gray-900 dark:text-white flex items-center justify-center border border-black/10 dark:border-white/10 shrink-0">
+                              <span className="material-symbols-rounded text-[10px] sm:text-xs font-bold leading-none">
+                                {idx === 0 ? "star" : "check"}
+                              </span>
+                            </div>
+                          )}
+                        </motion.div>
+                      </div>
+
+                      {/* X-Axis Day / Category Label (Google Health style rounded letter pill) */}
+                      <div className="mt-2.5 flex flex-col items-center">
+                        <span
+                          className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold transition-all ${
+                            isSelected
+                              ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900 font-black"
+                              : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                          }`}
+                        >
+                          {item.label.slice(0, 1).toUpperCase()}
+                        </span>
+                        <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 font-semibold mt-0.5">
+                          {item.count}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Bottom Status Chip (Google Health "301 cal left" style pill) */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-m3-surface-high dark:border-m3-surface-high-dark">
+              {selectedItem ? (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-xs font-bold text-gray-800 dark:text-gray-200">
+                  <span className="material-symbols-rounded text-sm text-[#00A88F] dark:text-[#00C4A7]">
+                    insights
+                  </span>
+                  <span>
+                    <strong className="text-gray-900 dark:text-white">{selectedItem.label}</strong>:{" "}
+                    {selectedItem.count}{" "}
+                    {activeTab === "bandishes"
+                      ? selectedItem.count === 1 ? "bandish" : "bandishes"
+                      : selectedItem.count === 1 ? "raag" : "raags"}{" "}
+                    ({selectedItem.percentage}% of repertory)
+                  </span>
+                </div>
+              ) : (
+                <div />
+              )}
+
+              <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                Click or hover columns to inspect breakdown
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Metric Badges Row (Preserved for high-level numbers) */}
         {activeTab === "bandishes" ? (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
             <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
                 Total Repertory
@@ -550,7 +738,7 @@ export default function EditorDashboard({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
             <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
                 Raags Authored
@@ -586,132 +774,6 @@ export default function EditorDashboard({
                 {raagAnalytics.distinctVadis}
               </span>
             </div>
-          </div>
-        )}
-
-        {/* Dynamic Stylized Chart Bars */}
-        {activeTab === "bandishes" ? (
-          bandishAnalytics.totalBandishes === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
-              Add bandishes under your contributor name to generate statistical repertoire charts.
-            </div>
-          ) : (
-            <div className="space-y-3.5">
-              {(bandishCategory === "raag"
-                ? bandishAnalytics.raagStats
-                : bandishCategory === "taal"
-                ? bandishAnalytics.taalStats
-                : bandishAnalytics.traditionStats
-              ).map((item, idx) => {
-                const maxCount =
-                  bandishCategory === "raag"
-                    ? bandishAnalytics.raagStats[0]?.count || 1
-                    : bandishCategory === "taal"
-                    ? bandishAnalytics.taalStats[0]?.count || 1
-                    : bandishAnalytics.traditionStats[0]?.count || 1;
-
-                const relativeWidth = Math.max(8, Math.round((item.count / maxCount) * 100));
-
-                const barColor =
-                  bandishCategory === "raag"
-                    ? "bg-m3-primary dark:bg-m3-primary-dark"
-                    : bandishCategory === "taal"
-                    ? "bg-m3-secondary dark:bg-m3-secondary-dark"
-                    : "bg-m3-tertiary dark:bg-m3-tertiary-dark";
-
-                return (
-                  <div key={`${item.label}-${idx}`} className="group">
-                    <div className="flex items-center justify-between text-xs sm:text-sm font-medium mb-1.5">
-                      <span className="text-gray-900 dark:text-white font-bold flex items-center gap-1.5">
-                        <span>{item.label}</span>
-                        {bandishCategory === "tradition" && item.label !== "N/A" && (
-                          <span className="text-[11px] text-m3-secondary dark:text-m3-secondary-dark font-normal">
-                            Gharana
-                          </span>
-                        )}
-                      </span>
-                      <span className="text-gray-500 dark:text-gray-400 font-mono text-xs">
-                        <strong className="text-gray-900 dark:text-white">{item.count}</strong>{" "}
-                        {item.count === 1 ? "bandish" : "bandishes"} ({item.percentage}%)
-                      </span>
-                    </div>
-
-                    {/* Material 3 Expressive Rounded Pill Track & Bar */}
-                    <div className="h-3.5 w-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark rounded-full overflow-hidden p-0.5">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${relativeWidth}%` }}
-                        transition={{ type: "spring", stiffness: 220, damping: 25, delay: idx * 0.04 }}
-                        className={`h-full rounded-full ${barColor} transition-opacity group-hover:opacity-90`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )
-        ) : raagAnalytics.totalRaags === 0 ? (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
-            Add raags under your contributor name to generate scale and classification charts.
-          </div>
-        ) : (
-          <div className="space-y-3.5">
-            {(raagCategory === "thaat"
-              ? raagAnalytics.thaatStats
-              : raagCategory === "samay"
-              ? raagAnalytics.samayStats
-              : raagAnalytics.vadiStats
-            ).map((item, idx) => {
-              const maxCount =
-                raagCategory === "thaat"
-                  ? raagAnalytics.thaatStats[0]?.count || 1
-                  : raagCategory === "samay"
-                  ? raagAnalytics.samayStats[0]?.count || 1
-                  : raagAnalytics.vadiStats[0]?.count || 1;
-
-              const relativeWidth = Math.max(8, Math.round((item.count / maxCount) * 100));
-
-              const barColor =
-                raagCategory === "thaat"
-                  ? "bg-m3-primary dark:bg-m3-primary-dark"
-                  : raagCategory === "samay"
-                  ? "bg-m3-secondary dark:bg-m3-secondary-dark"
-                  : "bg-m3-tertiary dark:bg-m3-tertiary-dark";
-
-              return (
-                <div key={`${item.label}-${idx}`} className="group">
-                  <div className="flex items-center justify-between text-xs sm:text-sm font-medium mb-1.5">
-                    <span className="text-gray-900 dark:text-white font-bold flex items-center gap-1.5">
-                      <span>{item.label}</span>
-                      {raagCategory === "thaat" && item.label !== "Unassigned" && (
-                        <span className="text-[11px] text-m3-secondary dark:text-m3-secondary-dark font-normal">
-                          Parent Thaat
-                        </span>
-                      )}
-                      {raagCategory === "vadi" && item.label !== "Unspecified" && (
-                        <span className="text-[11px] text-m3-tertiary dark:text-m3-tertiary-dark font-normal">
-                          Vadi Note
-                        </span>
-                      )}
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-400 font-mono text-xs">
-                      <strong className="text-gray-900 dark:text-white">{item.count}</strong>{" "}
-                      {item.count === 1 ? "raag" : "raags"} ({item.percentage}%)
-                    </span>
-                  </div>
-
-                  {/* Material 3 Expressive Rounded Pill Track & Bar */}
-                  <div className="h-3.5 w-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark rounded-full overflow-hidden p-0.5">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${relativeWidth}%` }}
-                      transition={{ type: "spring", stiffness: 220, damping: 25, delay: idx * 0.04 }}
-                      className={`h-full rounded-full ${barColor} transition-opacity group-hover:opacity-90`}
-                    />
-                  </div>
-                </div>
-              );
-            })}
           </div>
         )}
       </div>
