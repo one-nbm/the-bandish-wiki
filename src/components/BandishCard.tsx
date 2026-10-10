@@ -36,9 +36,9 @@ export const BandishCard = memo(({
 
   return (
     <motion.div
-      initial={disableEntranceAnimation ? { opacity: 0, scale: 0.95 } : false}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1 } }}
+      initial={disableEntranceAnimation ? { opacity: 0 } : false}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.1 } }}
       transition={{ duration: 0.15, ease: "easeOut" }}
       ref={cardRef as any}
       onClick={handleClick}

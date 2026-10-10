@@ -45,24 +45,18 @@ body {
 }
 
 /* --- CARD HOVER LIFT ---
-   Pure CSS compositor-thread hover. Zero JS — no Framer spring overhead.
-   will-change promotes each card to its own GPU compositor layer immediately,
-   so the first hover is instant with no layer-promotion stutter.
-
-   CSS uses the transition defined at the TARGET state:
-   - Hovering IN: uses the :hover rule's transition (springy overshoot)
-   - Hovering OUT: uses the base rule's transition (smooth ease-out settle)
+   Pure CSS compositor-thread hover.
+   Uses transform: translateY with smooth cubic-bezier easing.
+   No translateZ(0) to prevent layer explosion and fragmentation in CSS multi-column.
+   No box-shadow in transitions to adhere to flat design system.
 */
 .bandish-card {
-  will-change: transform;
-  transform: translateY(0) translateZ(0);
-  /* Leave transition: fast smooth ease */
-  transition: transform 280ms ease-out;
+  transform: translateY(0);
+  transition: transform 250ms cubic-bezier(0.2, 0, 0, 1);
 }
 .bandish-card:hover {
-  transform: translateY(-8px) translateZ(0);
-  /* Enter transition: slight overshoot spring for premium feel */
-  transition: transform 300ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  transform: translateY(-6px);
+  transition: transform 250ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 
@@ -153,5 +147,18 @@ html.lenis, html.lenis body {
 
 .lenis.lenis-smooth iframe {
   pointer-events: none;
+}
+
+/* Prevent hover churn, style recalculations, and layout thrashing during active scrolling */
+html.lenis-scrolling *,
+html.is-pointer-scrolling * {
+  pointer-events: none !important;
+}
+
+/* Prevent Material Symbols icons from inheriting text underlines or text decorations */
+.material-symbols-rounded {
+  display: inline-block;
+  text-decoration: none !important;
+  vertical-align: middle;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useCallback, startTransition, forwardRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, useDeferredValue } from "react";
 import Link from "next/link";
 import Fuse from "fuse.js";
 import { createClient } from "@/utils/supabase/client";
@@ -14,43 +14,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ReactLenis } from 'lenis/react';
 import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
 
-const FastSearchInput = forwardRef<HTMLInputElement, {
-  initialValue: string;
-  onSearchChange: (val: string) => void;
-  className?: string;
-  placeholder?: string;
-}>(({ initialValue, onSearchChange, className, placeholder }, ref) => {
-  const [localValue, setLocalValue] = useState(initialValue);
-
-  // Sync with external resets (like when a filter clears the search)
-  useEffect(() => {
-    setLocalValue(initialValue);
-  }, [initialValue]);
-
-  return (
-    <input
-      ref={ref}
-      type="text"
-      value={localValue}
-      onChange={(e) => {
-        const val = e.target.value;
-        setLocalValue(val);
-        startTransition(() => {
-          onSearchChange(val);
-        });
-      }}
-      className={className}
-      placeholder={placeholder}
-    />
-  );
-});
-
 export default function Home() {
   const supabase = createClient();
   const { isDarkMode, toggleDarkMode } = useTheme();
 
   // --- 1. SEARCH & FILTER STATES ---
   const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
   const [language, setLanguage] = useState("english");
   const [activeFilters, setActiveFilters] = useState<{ key: string, value: string }[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -376,11 +346,11 @@ export default function Home() {
   const fuseBandishes = useMemo(() => new Fuse(preSearchData, { keys: ["title", "raag", "composer", "taal", "lay"], threshold: 0.4 }), [preSearchData]);
 
   const processedData = useMemo(() => {
-    if (query) {
-      return fuseBandishes.search(query).map((result) => result.item);
+    if (deferredQuery) {
+      return fuseBandishes.search(deferredQuery).map((result) => result.item);
     }
     return preSearchData;
-  }, [preSearchData, query, fuseBandishes]);
+  }, [preSearchData, deferredQuery, fuseBandishes]);
 
   const bandishCount = processedData.length;
   const uniqueRaagsCount = new Set(processedData.map((b) => b.raag)).size;
@@ -392,20 +362,20 @@ export default function Home() {
   const fuseComposers = useMemo(() => new Fuse(allComposers, { threshold: 0.4 }), [allComposers]);
 
   const suggestedRaag = useMemo(() => {
-    const cleanQuery = query.trim();
+    const cleanQuery = deferredQuery.trim();
     if (!cleanQuery || cleanQuery.length < 3) return null;
     const results = fuseRaags.search(cleanQuery);
     if (results.length > 0 && !activeFilters.some(f => f.key === "raag" && f.value === results[0].item)) return results[0].item;
     return null;
-  }, [query, fuseRaags, activeFilters]);
+  }, [deferredQuery, fuseRaags, activeFilters]);
 
   const suggestedComposer = useMemo(() => {
-    const cleanQuery = query.trim();
+    const cleanQuery = deferredQuery.trim();
     if (!cleanQuery || cleanQuery.length < 3) return null;
     const results = fuseComposers.search(cleanQuery);
     if (results.length > 0 && !activeFilters.some(f => f.key === "composer" && f.value === results[0].item)) return results[0].item;
     return null;
-  }, [query, fuseComposers, activeFilters]);
+  }, [deferredQuery, fuseComposers, activeFilters]);
 
   // --- 8. MEMOIZED GRID ---
   const selectedBandishId = selectedBandish?.id ?? null;
@@ -424,7 +394,7 @@ export default function Home() {
     return (
       <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
         {suggestedRaag && (
-          <div className="group relative bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 p-6 md:p-8 rounded-3xl border border-m3-secondary/20 flex flex-col items-start break-inside-avoid mb-4 transition duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01] transform-gpu">
+          <div className="group relative bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 p-6 md:p-8 rounded-[1.5rem] border border-m3-secondary/20 flex flex-col items-start break-inside-avoid mb-4 transition duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01] transform-gpu">
             <div className="flex items-center gap-3 mb-4">
               <span className="material-symbols-rounded text-[2rem] text-m3-secondary dark:text-m3-secondary-dark">manage_search</span>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">Looking for Raag {suggestedRaag}?</h2>
@@ -433,14 +403,14 @@ export default function Home() {
             <div className="flex flex-wrap gap-3 mt-1">
               <button
                 onClick={() => { toggleFilter("raag", suggestedRaag); setQuery(""); }}
-                className="flex items-center gap-2 bg-m3-secondary hover:bg-m3-secondary/90 dark:bg-m3-secondary-dark dark:hover:bg-m3-secondary-dark/90 text-white dark:text-gray-900 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95"
+                className="flex items-center gap-2 bg-m3-secondary hover:bg-m3-secondary/90 dark:bg-m3-secondary-dark dark:hover:bg-m3-secondary-dark/90 text-white dark:text-gray-900 px-5 py-2.5 rounded-3xl text-sm font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95"
               >
                 <span className="material-symbols-rounded text-[1.2rem]">filter_list</span>
                 Filter by {suggestedRaag}
               </button>
               <Link
                 href={`/raag/${suggestedRaag.toLowerCase().replace(/\s+/g, '-')}`}
-                className="flex items-center gap-2 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 group"
+                className="flex items-center gap-2 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark px-5 py-2.5 rounded-3xl text-sm font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95 group"
               >
                 <span className="material-symbols-rounded text-[1.2rem] transition-transform group-hover:scale-110">menu_book</span>
                 Read Raag Wiki
@@ -450,13 +420,13 @@ export default function Home() {
         )}
 
         {suggestedComposer && (
-          <div className="group relative bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 p-6 md:p-8 rounded-3xl border border-m3-tertiary/20 flex flex-col items-start break-inside-avoid mb-4 transition duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01] transform-gpu">
+          <div className="group relative bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 p-6 md:p-8 rounded-[1.5rem] border border-m3-tertiary/20 flex flex-col items-start break-inside-avoid mb-4 transition duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-2 hover:scale-[1.01] transform-gpu">
             <div className="flex items-center gap-3 mb-4">
               <span className="material-symbols-rounded text-[2rem] text-m3-tertiary dark:text-m3-tertiary-dark">person_search</span>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">Looking for {suggestedComposer}?</h2>
             </div>
             <p className="text-gray-700 dark:text-gray-300 mb-6 text-[1.05rem]">Switch to a tag filter to see a clean list of all bandishes by this composer.</p>
-            <button onClick={() => { toggleFilter("composer", suggestedComposer); setQuery(""); }} className="flex items-center gap-2 bg-m3-tertiary hover:bg-m3-tertiary/90 dark:bg-m3-tertiary-dark dark:hover:bg-m3-tertiary-dark/90 text-white dark:text-gray-900 px-6 py-3 rounded-full font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95">
+            <button onClick={() => { toggleFilter("composer", suggestedComposer); setQuery(""); }} className="flex items-center gap-2 bg-m3-tertiary hover:bg-m3-tertiary/90 dark:bg-m3-tertiary-dark dark:hover:bg-m3-tertiary-dark/90 text-white dark:text-gray-900 px-6 py-3 rounded-3xl font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.05] active:scale-95">
               <span className="material-symbols-rounded text-[1.2rem]">filter_list</span> Filter by {suggestedComposer}
             </button>
           </div>
@@ -471,7 +441,7 @@ export default function Home() {
               isSelected={selectedBandishId === bandish.id}
               isFavorited={favorites.includes(bandish.id)}
               language={language}
-              isSearching={query.trim() !== ""}
+              isSearching={deferredQuery.trim() !== ""}
               disableEntranceAnimation={hasSearched}
               onSelect={selectBandish}
               onToggleFavorite={toggleFavorite}
@@ -636,7 +606,14 @@ export default function Home() {
                           <div className="absolute inset-y-0 left-0 flex items-center pl-5 md:pl-6 pointer-events-none z-10 transition-transform duration-500">
                             <span className="material-symbols-rounded transition-colors duration-300 text-gray-500 dark:text-gray-400 group-focus-within:text-m3-primary dark:group-focus-within:text-m3-primary-dark">search</span>
                           </div>
-                          <FastSearchInput ref={searchInputRef} placeholder="Search by text... (Ctrl+K)" initialValue={query} onSearchChange={setQuery} className="w-full bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white text-base md:text-lg pl-[3.75rem] md:pl-[4.25rem] pr-[3.75rem] py-4 md:py-5 rounded-full border border-m3-surface-high dark:border-m3-surface-high-dark focus:border-m3-primary dark:focus:border-m3-primary-dark focus:ring-1 focus:ring-m3-primary dark:focus:ring-m3-primary-dark focus:outline-none transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+                          <input
+                            ref={searchInputRef}
+                            type="text"
+                            placeholder="Search by text... (Ctrl+K)"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            className="w-full bg-white dark:bg-m3-surface-container-dark text-gray-900 dark:text-white text-base md:text-lg pl-[3.75rem] md:pl-[4.25rem] pr-[3.75rem] py-4 md:py-5 rounded-full border border-m3-surface-high dark:border-m3-surface-high-dark focus:border-m3-primary dark:focus:border-m3-primary-dark focus:ring-1 focus:ring-m3-primary dark:focus:ring-m3-primary-dark focus:outline-none transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                          />
                           <div className="absolute inset-y-0 right-2 flex items-center">
                             <button onClick={() => setIsViewOptionsOpen(!isViewOptionsOpen)} className={`p-2 md:p-3 rounded-full transition-all duration-300 flex items-center justify-center ${isViewOptionsOpen ? 'bg-m3-primary/15 dark:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark' : 'text-gray-500 hover:text-m3-primary dark:text-gray-400 dark:hover:text-m3-primary-dark hover:bg-gray-100 dark:hover:bg-m3-surface-high-dark'}`} title="View Options">
                               <span className="material-symbols-rounded text-xl md:text-2xl transition-transform duration-500 group-hover:rotate-180">tune</span>
