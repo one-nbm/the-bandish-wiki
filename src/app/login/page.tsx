@@ -32,7 +32,7 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-transparent flex flex-col items-center justify-center p-4 transition-colors duration-500">
-      <div className="w-full max-w-md bg-m3-surface-high dark:bg-m3-surface-high-dark rounded-[2.5rem] p-6 sm:p-8 md:p-10 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] relative scale-100 hover:scale-[1.02]">
+      <div className="w-full max-w-md bg-m3-surface-high dark:bg-m3-surface-high-dark rounded-[2.5rem] p-6 sm:p-8 md:p-10 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] relative scale-100 hover:scale-[1.02] animate-page-enter">
         
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center justify-center w-12 h-12 bg-m3-surface-container dark:bg-m3-surface-container-dark hover:bg-m3-surface-container-high dark:hover:bg-m3-surface-high-dark text-m3-primary dark:text-m3-primary-dark rounded-full mb-4 transition-all duration-300 hover:-translate-x-1">

@@ -49,7 +49,7 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
 
       <div className="max-w-5xl mx-auto mt-4 md:mt-8 p-6 md:p-12 relative z-10">
         
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex items-center justify-between mb-10 animate-page-enter">
           <Link 
             href="/" 
             className="inline-flex items-center gap-2 text-m3-primary dark:text-m3-primary-dark font-bold hover:opacity-80 transition-opacity"
@@ -61,7 +61,7 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
         </div>
 
         {/* Raag Header */}
-        <div className="mb-12">
+        <div className="mb-12 animate-page-enter animate-page-delay-1">
           <h1 
             className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight leading-tight"
             style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
@@ -90,7 +90,7 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
         </div>
 
         {/* Aaroh / Avaroh */}
-        <div className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 p-6 md:p-8 rounded-3xl mb-12">
+        <div className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 p-6 md:p-8 rounded-3xl mb-12 animate-page-enter animate-page-delay-2">
           <div className="grid md:grid-cols-2 gap-8">
             <div>
               <h3 className="text-sm font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-widest mb-3">Aaroh (Ascent)</h3>
@@ -105,7 +105,7 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
 
         {/* Description Section */}
         {raag.description && (
-          <div className="mb-16">
+          <div className="mb-16 animate-page-enter animate-page-delay-2">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">About this Raag</h2>
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
               {raag.description}
@@ -114,7 +114,7 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
         )}
 
         {/* Associated Bandishes Hub */}
-        <div>
+        <div className="animate-page-enter animate-page-delay-3">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Bandishes in {raag.name}</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

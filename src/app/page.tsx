@@ -13,6 +13,7 @@ import { BandishModal } from "@/components/BandishModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReactLenis } from 'lenis/react';
 import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
+import FormCombobox from "@/components/FormCombobox";
 
 export default function Home() {
   const supabase = createClient();
@@ -355,8 +356,38 @@ export default function Home() {
   const bandishCount = processedData.length;
   const uniqueRaagsCount = new Set(processedData.map((b) => b.raag)).size;
 
-  const allRaags = useMemo(() => Array.from(new Set(baseData.map(b => b.raag))), [baseData]);
-  const allComposers = useMemo(() => Array.from(new Set(baseData.map(b => b.composer))), [baseData]);
+  const allRaags = useMemo(() => Array.from(new Set(baseData.map(b => b.raag).filter(Boolean))).sort(), [baseData]);
+  const allTaals = useMemo(() => {
+    const set = new Set<string>();
+    baseData.forEach((b) => {
+      if (b.taal) set.add(b.taal.trim());
+    });
+    ["Tintal", "Teentaal", "Ektaal", "Jhaptal", "Rupak", "Keherwa", "Dadra", "Tilwada", "Dhamar", "Deepchandi", "Ada Chautal", "Chautal", "Roopak"].forEach((t) => set.add(t));
+    return Array.from(set).filter(Boolean).sort();
+  }, [baseData]);
+
+  const allLays = useMemo(() => {
+    const set = new Set<string>(["Vilambit", "Madhya", "Drut", "Ati Drut", "Vilambit Laya", "Drut Laya"]);
+    baseData.forEach((b) => {
+      if (!b.lay) return;
+      if (Array.isArray(b.lay)) {
+        b.lay.forEach((l: any) => {
+          if (typeof l === "string") {
+            const trimmed = l.trim();
+            if (trimmed) set.add(trimmed);
+          }
+        });
+      } else if (typeof b.lay === "string") {
+        b.lay.split(",").forEach((l: string) => {
+          const trimmed = l.trim();
+          if (trimmed) set.add(trimmed);
+        });
+      }
+    });
+    return Array.from(set).filter(Boolean).sort();
+  }, [baseData]);
+
+  const allComposers = useMemo(() => Array.from(new Set(baseData.map(b => b.composer).filter(Boolean))).sort(), [baseData]);
 
   const fuseRaags = useMemo(() => new Fuse(allRaags, { threshold: 0.4 }), [allRaags]);
   const fuseComposers = useMemo(() => new Fuse(allComposers, { threshold: 0.4 }), [allComposers]);
@@ -461,18 +492,33 @@ export default function Home() {
         <input type="text" autoFocus required placeholder="e.g. Hori Khelan Ko" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Raag</label>
-          <input type="text" required placeholder="e.g. Des" value={formRaag} onChange={(e) => setFormRaag(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Taal</label>
-          <input type="text" required placeholder="e.g. Tintal" value={formTaal} onChange={(e) => setFormTaal(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Lay (Comma Separated)</label>
-          <input type="text" placeholder="e.g. Vilambit, Drut" value={formLay} onChange={(e) => setFormLay(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-        </div>
+        <FormCombobox
+          label="Raag"
+          value={formRaag}
+          onChange={setFormRaag}
+          suggestions={allRaags}
+          placeholder="e.g. Des"
+          required
+          quickPills={["Yaman", "Bhairav", "Bageshri", "Bhoopali", "Darbari", "Kafi"]}
+        />
+        <FormCombobox
+          label="Taal"
+          value={formTaal}
+          onChange={setFormTaal}
+          suggestions={allTaals}
+          placeholder="e.g. Tintal"
+          required
+          quickPills={["Tintal", "Ektaal", "Jhaptal", "Rupak", "Keherwa", "Dadra"]}
+        />
+        <FormCombobox
+          label="Lay (Comma Separated)"
+          value={formLay}
+          onChange={setFormLay}
+          suggestions={allLays}
+          placeholder="e.g. Vilambit, Drut"
+          isMulti
+          quickPills={["Vilambit", "Madhya", "Drut", "Ati Drut"]}
+        />
         <div>
           <label className="block text-xs font-bold text-m3-tertiary dark:text-m3-tertiary-dark uppercase tracking-wider mb-2">Composer</label>
           <input type="text" required placeholder="e.g. Traditional" value={formComposer} onChange={(e) => setFormComposer(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-tertiary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />

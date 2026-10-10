@@ -450,7 +450,7 @@ export default function EditorDashboard({
       )}
 
       {/* Profile Settings Card */}
-      <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem]">
+      <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem] animate-page-enter">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
             <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark text-2xl">person</span>
@@ -521,27 +521,47 @@ export default function EditorDashboard({
       </div>
 
       {/* Interactive Stats & Fast Action Triggers */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-page-enter animate-page-delay-1">
         {/* Stat: Bandishes */}
         <button
           type="button"
           onClick={() => setActiveTab("bandishes")}
-          className={`p-6 rounded-[2rem] border text-left transition-all duration-200 flex flex-col justify-between ${
+          className={`group p-3.5 sm:p-5 rounded-2xl sm:rounded-[2rem] border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer active:scale-[0.98] ${
             activeTab === "bandishes"
-              ? "bg-m3-primary/5 dark:bg-m3-primary-dark/10 border-m3-primary dark:border-m3-primary-dark"
-              : "bg-white dark:bg-m3-surface-container-dark border-m3-surface-high dark:border-m3-surface-high-dark hover:-translate-y-1"
+              ? "bg-m3-primary/10 dark:bg-m3-primary-dark/15 border-2 border-m3-primary dark:border-m3-primary-dark"
+              : "bg-white dark:bg-m3-surface-container-dark border-m3-surface-high dark:border-m3-surface-high-dark hover:border-m3-primary/40 dark:hover:border-m3-primary-dark/40 hover:-translate-y-0.5"
           }`}
         >
-          <div className="mb-4">
-            <span className="material-symbols-rounded text-3xl text-m3-primary dark:text-m3-primary-dark">
+          <div className="flex items-center justify-between w-full mb-2 sm:mb-3">
+            <span className="material-symbols-rounded text-2xl sm:text-3xl text-m3-primary dark:text-m3-primary-dark">
               library_music
+            </span>
+            <span
+              className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full transition-colors ${
+                activeTab === "bandishes"
+                  ? "bg-m3-primary/20 dark:bg-m3-primary-dark/25 text-m3-primary dark:text-m3-primary-dark border border-m3-primary/30 dark:border-m3-primary-dark/30"
+                  : "bg-black/5 dark:bg-white/10 text-gray-500 dark:text-gray-400 group-hover:bg-m3-primary/10 group-hover:text-m3-primary dark:group-hover:text-m3-primary-dark"
+              }`}
+            >
+              <span>{activeTab === "bandishes" ? "Active" : "Filter"}</span>
+              <span className="material-symbols-rounded text-[11px] sm:text-[13px]">
+                {activeTab === "bandishes" ? "check" : "arrow_forward"}
+              </span>
             </span>
           </div>
           <div>
-            <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{bandishCount}</p>
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">
+            <p className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white leading-tight">
+              {bandishCount}
+            </p>
+            <p className="text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5 sm:mt-1">
               Bandishes Authored
             </p>
+          </div>
+          <div className="mt-2.5 pt-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-m3-primary dark:group-hover:text-m3-primary-dark transition-colors">
+            <span>{activeTab === "bandishes" ? "Showing in table" : "Tap to view list"}</span>
+            <span className="material-symbols-rounded text-xs sm:text-sm">
+              {activeTab === "bandishes" ? "expand_more" : "chevron_right"}
+            </span>
           </div>
         </button>
 
@@ -549,58 +569,78 @@ export default function EditorDashboard({
         <button
           type="button"
           onClick={() => setActiveTab("raags")}
-          className={`p-6 rounded-[2rem] border text-left transition-all duration-200 flex flex-col justify-between ${
+          className={`group p-3.5 sm:p-5 rounded-2xl sm:rounded-[2rem] border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer active:scale-[0.98] ${
             activeTab === "raags"
-              ? "bg-m3-primary/5 dark:bg-m3-primary-dark/10 border-m3-primary dark:border-m3-primary-dark"
-              : "bg-white dark:bg-m3-surface-container-dark border-m3-surface-high dark:border-m3-surface-high-dark hover:-translate-y-1"
+              ? "bg-m3-primary/10 dark:bg-m3-primary-dark/15 border-2 border-m3-primary dark:border-m3-primary-dark"
+              : "bg-white dark:bg-m3-surface-container-dark border-m3-surface-high dark:border-m3-surface-high-dark hover:border-m3-primary/40 dark:hover:border-m3-primary-dark/40 hover:-translate-y-0.5"
           }`}
         >
-          <div className="mb-4">
-            <span className="material-symbols-rounded text-3xl text-m3-primary dark:text-m3-primary-dark">
+          <div className="flex items-center justify-between w-full mb-2 sm:mb-3">
+            <span className="material-symbols-rounded text-2xl sm:text-3xl text-m3-primary dark:text-m3-primary-dark">
               queue_music
+            </span>
+            <span
+              className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full transition-colors ${
+                activeTab === "raags"
+                  ? "bg-m3-primary/20 dark:bg-m3-primary-dark/25 text-m3-primary dark:text-m3-primary-dark border border-m3-primary/30 dark:border-m3-primary-dark/30"
+                  : "bg-black/5 dark:bg-white/10 text-gray-500 dark:text-gray-400 group-hover:bg-m3-primary/10 group-hover:text-m3-primary dark:group-hover:text-m3-primary-dark"
+              }`}
+            >
+              <span>{activeTab === "raags" ? "Active" : "Filter"}</span>
+              <span className="material-symbols-rounded text-[11px] sm:text-[13px]">
+                {activeTab === "raags" ? "check" : "arrow_forward"}
+              </span>
             </span>
           </div>
           <div>
-            <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{raagCount}</p>
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">
+            <p className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white leading-tight">
+              {raagCount}
+            </p>
+            <p className="text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5 sm:mt-1">
               Raags Authored
             </p>
+          </div>
+          <div className="mt-2.5 pt-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-m3-primary dark:group-hover:text-m3-primary-dark transition-colors">
+            <span>{activeTab === "raags" ? "Showing in table" : "Tap to view list"}</span>
+            <span className="material-symbols-rounded text-xs sm:text-sm">
+              {activeTab === "raags" ? "expand_more" : "chevron_right"}
+            </span>
           </div>
         </button>
 
         {/* Action: Add Raag Modal */}
-        <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 rounded-[2rem] flex flex-col justify-between">
+        <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-3.5 sm:p-5 rounded-2xl sm:rounded-[2rem] flex flex-col justify-between">
           <div>
-            <span className="material-symbols-rounded text-3xl text-m3-primary dark:text-m3-primary-dark mb-2 block">
+            <span className="material-symbols-rounded text-2xl sm:text-3xl text-m3-primary dark:text-m3-primary-dark mb-1.5 block">
               add_circle
             </span>
-            <h3 className="font-bold text-gray-900 dark:text-white text-base">New Raag</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">New Raag</h3>
+            <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
               Create a new canonical raag entry with scales & mood.
             </p>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <AddRaagModal contributorName={initialName} />
           </div>
         </div>
 
         {/* Action: Bulk Add Bandishes */}
-        <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 rounded-[2rem] flex flex-col justify-between">
+        <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-3.5 sm:p-5 rounded-2xl sm:rounded-[2rem] flex flex-col justify-between">
           <div>
-            <span className="material-symbols-rounded text-3xl text-m3-primary dark:text-m3-primary-dark mb-2 block">
+            <span className="material-symbols-rounded text-2xl sm:text-3xl text-m3-primary dark:text-m3-primary-dark mb-1.5 block">
               upload_file
             </span>
-            <h3 className="font-bold text-gray-900 dark:text-white text-base">Bulk Ingestion</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">Bulk Ingestion</h3>
+            <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
               Validate and batch upload multiple compositions.
             </p>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <Link
               href="/bulk"
-              className="w-full py-3.5 px-4 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-[1.5rem] font-bold text-xs sm:text-sm transition-transform duration-200 active:scale-95 flex items-center justify-center gap-2 border border-m3-primary/20 dark:border-m3-primary-dark/20"
+              className="w-full py-2.5 sm:py-3 px-3 sm:px-4 bg-m3-primary/10 hover:bg-m3-primary/20 dark:bg-m3-primary-dark/10 dark:hover:bg-m3-primary-dark/20 text-m3-primary dark:text-m3-primary-dark rounded-[1.25rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-transform duration-200 active:scale-95 flex items-center justify-center gap-2 border border-m3-primary/20 dark:border-m3-primary-dark/20"
             >
-              <span className="material-symbols-rounded text-lg">cloud_upload</span>
+              <span className="material-symbols-rounded text-base sm:text-lg">cloud_upload</span>
               <span>Open Bulk Tool</span>
             </Link>
           </div>
@@ -608,7 +648,7 @@ export default function EditorDashboard({
       </div>
 
       {/* Google Health Inspired Expressive Contributions Graph */}
-      <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem]">
+      <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem] animate-page-enter animate-page-delay-2">
         {/* Header with Google Health Top Metric Hierarchy & Scope Switcher */}
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 mb-6">
           <div>
@@ -643,10 +683,10 @@ export default function EditorDashboard({
                   setDatasetScope("user");
                   setActiveColumnIndex(0);
                 }}
-                className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 flex items-center gap-1.5 ${
+                className={`relative px-4 py-2 rounded-full text-xs font-bold transition-all z-10 flex items-center justify-center gap-1.5 cursor-pointer ${
                   datasetScope === "user"
                     ? "text-white dark:text-gray-900"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                 }`}
               >
                 {datasetScope === "user" && (
@@ -666,10 +706,10 @@ export default function EditorDashboard({
                   setDatasetScope("all");
                   setActiveColumnIndex(0);
                 }}
-                className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 flex items-center gap-1.5 ${
+                className={`relative px-4 py-2 rounded-full text-xs font-bold transition-all z-10 flex items-center justify-center gap-1.5 cursor-pointer ${
                   datasetScope === "all"
                     ? "text-white dark:text-gray-900"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                 }`}
               >
                 {datasetScope === "all" && (
@@ -693,10 +733,10 @@ export default function EditorDashboard({
                     setBandishCategory("raag");
                     setActiveColumnIndex(0);
                   }}
-                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                  className={`relative px-4 py-2 rounded-full text-xs font-bold transition-all z-10 cursor-pointer ${
                     bandishCategory === "raag"
                       ? "text-white dark:text-gray-900"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                   }`}
                 >
                   {bandishCategory === "raag" && (
@@ -715,10 +755,10 @@ export default function EditorDashboard({
                     setBandishCategory("taal");
                     setActiveColumnIndex(0);
                   }}
-                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                  className={`relative px-4 py-2 rounded-full text-xs font-bold transition-all z-10 cursor-pointer ${
                     bandishCategory === "taal"
                       ? "text-white dark:text-gray-900"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                   }`}
                 >
                   {bandishCategory === "taal" && (
@@ -737,10 +777,10 @@ export default function EditorDashboard({
                     setBandishCategory("tradition");
                     setActiveColumnIndex(0);
                   }}
-                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                  className={`relative px-4 py-2 rounded-full text-xs font-bold transition-all z-10 cursor-pointer ${
                     bandishCategory === "tradition"
                       ? "text-white dark:text-gray-900"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                   }`}
                 >
                   {bandishCategory === "tradition" && (
@@ -761,10 +801,10 @@ export default function EditorDashboard({
                     setRaagCategory("thaat");
                     setActiveColumnIndex(0);
                   }}
-                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                  className={`relative px-4 py-2 rounded-full text-xs font-bold transition-all z-10 cursor-pointer ${
                     raagCategory === "thaat"
                       ? "text-white dark:text-gray-900"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                   }`}
                 >
                   {raagCategory === "thaat" && (
@@ -783,10 +823,10 @@ export default function EditorDashboard({
                     setRaagCategory("samay");
                     setActiveColumnIndex(0);
                   }}
-                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                  className={`relative px-4 py-2 rounded-full text-xs font-bold transition-all z-10 cursor-pointer ${
                     raagCategory === "samay"
                       ? "text-white dark:text-gray-900"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                   }`}
                 >
                   {raagCategory === "samay" && (
@@ -805,10 +845,10 @@ export default function EditorDashboard({
                     setRaagCategory("vadi");
                     setActiveColumnIndex(0);
                   }}
-                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                  className={`relative px-4 py-2 rounded-full text-xs font-bold transition-all z-10 cursor-pointer ${
                     raagCategory === "vadi"
                       ? "text-white dark:text-gray-900"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                   }`}
                 >
                   {raagCategory === "vadi" && (
@@ -1142,7 +1182,7 @@ export default function EditorDashboard({
       {/* Interactive "My Contributions" Management Workspace */}
       <div
         ref={tableContainerRef}
-        className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem]"
+        className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem] animate-page-enter animate-page-delay-3"
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
@@ -1160,10 +1200,10 @@ export default function EditorDashboard({
             <button
               type="button"
               onClick={() => setActiveTab("bandishes")}
-              className={`relative px-5 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors z-10 ${
+              className={`relative px-5 py-2.5 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-all z-10 cursor-pointer ${
                 activeTab === "bandishes"
                   ? "text-white dark:text-gray-900"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
               }`}
             >
               {activeTab === "bandishes" && (
@@ -1180,10 +1220,10 @@ export default function EditorDashboard({
             <button
               type="button"
               onClick={() => setActiveTab("raags")}
-              className={`relative px-5 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors z-10 ${
+              className={`relative px-5 py-2.5 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-all z-10 cursor-pointer ${
                 activeTab === "raags"
                   ? "text-white dark:text-gray-900"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
               }`}
             >
               {activeTab === "raags" && (

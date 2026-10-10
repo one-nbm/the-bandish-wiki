@@ -40,8 +40,26 @@ body {
   100% { opacity: 1; transform: translateY(0); }
 }
 
-.animate-card {
-  animation: slideUpFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+@keyframes pageElementEnter {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-page-enter {
+  animation: pageElementEnter 0.35s cubic-bezier(0.2, 0, 0, 1) backwards;
+  will-change: opacity, transform;
+}
+
+.animate-page-delay-1 {
+  animation-delay: 0.05s;
+}
+
+.animate-page-delay-2 {
+  animation-delay: 0.1s;
+}
+
+.animate-page-delay-3 {
+  animation-delay: 0.15s;
 }
 
 /* --- CARD HOVER LIFT ---

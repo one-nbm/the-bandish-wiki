@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const supabase = await createClient();
   const { data: bandish } = await supabase.from("bandishes").select("*").eq("id", id).single();
-  
+
   if (!bandish) return { title: "Not Found | The Bandish Wiki" };
 
   return {
@@ -44,14 +44,14 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
   const allRenditionTitles = bandish.youtube_renditions
     ? Array.from(new Set(bandish.youtube_renditions.flatMap((r: any) => r.bandishes || [])))
     : [];
-    
+
   let titleToIdMap: Record<string, string> = {};
   if (allRenditionTitles.length > 0) {
     const { data: relatedBandishes } = await supabase
       .from('bandishes')
       .select('id, title')
       .in('title', allRenditionTitles);
-      
+
     if (relatedBandishes) {
       relatedBandishes.forEach((b: any) => {
         titleToIdMap[b.title] = b.id;
@@ -61,23 +61,23 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
 
   return (
     <main className="min-h-screen bg-transparent relative">
-      
+
       {/* Ambient Background Glow (Pulled up to bleed behind the transparent navbar) */}
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-m3-primary/20 dark:bg-m3-primary-dark/10 blur-[100px] rounded-full pointer-events-none opacity-50" />
 
       <div className="max-w-5xl mx-auto p-6 md:p-12 relative z-10 mt-4 md:mt-8">
-        
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-m3-primary dark:text-m3-primary-dark font-bold mb-10 hover:opacity-80 transition-opacity"
+
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-m3-primary dark:text-m3-primary-dark font-bold mb-10 hover:opacity-80 transition-opacity animate-page-enter"
         >
           <span className="material-symbols-rounded text-[1.2rem]">arrow_back</span>
           Back to Wiki
         </Link>
 
         {/* Title & Tags */}
-        <div className="mb-12">
-          <h1 
+        <div className="mb-12 animate-page-enter animate-page-delay-1">
+          <h1
             className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight leading-tight"
             style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
           >
@@ -85,14 +85,14 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
           </h1>
 
           <div className="flex flex-wrap gap-3">
-            <Link 
+            <Link
               href={`/raag/${raagSlug}`}
               className="group flex items-center gap-1.5 bg-m3-secondary/10 hover:bg-m3-secondary/20 dark:bg-m3-secondary-dark/10 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-5 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all duration-300"
             >
               {bandish.raag}
               <span className="material-symbols-rounded text-[1rem] transition-transform group-hover:translate-x-1 group-hover:-translate-y-1">arrow_outward</span>
             </Link>
-            
+
             <span className="flex items-center bg-m3-surface-container dark:bg-m3-surface-dark px-5 py-2.5 rounded-full text-sm font-bold tracking-wide text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
               {bandish.taal}
             </span>
@@ -106,7 +106,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Lyrics Section */}
-        <div className="space-y-12 max-w-4xl mt-12">
+        <div className="space-y-12 max-w-4xl mt-12 animate-page-enter animate-page-delay-2">
           {bandish.lyrics.devanagari && (
             <div>
               <div className="flex items-center justify-between mb-5">
@@ -118,7 +118,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
               </p>
             </div>
           )}
-          
+
           <div>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-widest opacity-80">Transliteration</h3>
@@ -131,7 +131,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* NEW: YouTube Renditions Section */}
-        <div className="mt-16 pt-12 border-t border-gray-200 dark:border-gray-800">
+        <div className="mt-16 pt-12 border-t border-gray-200 dark:border-gray-800 animate-page-enter animate-page-delay-3">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
               <span className="material-symbols-rounded text-rose-400 text-[1.8rem]">play_circle</span>
@@ -139,7 +139,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
             </h3>
             {isAdmin && <AddRenditionModal bandish={bandish} />}
           </div>
-          
+
           {bandish.youtube_renditions && bandish.youtube_renditions.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {bandish.youtube_renditions.map((video: { artist: string; url: string; title?: string; year?: string; isVideo?: boolean; bandishes?: string[] }, index: number) => {
@@ -158,13 +158,13 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                         alt=""
                         aria-hidden="true"
                         fill
-                        className="object-cover brightness-110 opacity-55 dark:brightness-75 dark:opacity-75"
+                        className="object-cover brightness-100 opacity-60 dark:brightness-70 dark:opacity-90"
                         sizes="(max-width: 768px) 100vw, 50vw"
                       />
                     )}
 
-                    {/* Gradient: solid on left, fading to transparent on right */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-white dark:from-m3-surface-container-dark via-white/95 dark:via-m3-surface-container-dark/95 via-[60%] to-transparent pointer-events-none" />
+                    {/* Gradient: 20% opacity on left, 80% opacity on right */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/80 via-white/70 to-white/50 dark:from-m3-surface-container-dark/50 dark:via-m3-surface-container-dark/90 dark:to-m3-surface-container-dark/100 pointer-events-none" />
 
                     {/* Full Card Click Target */}
                     <a
@@ -207,19 +207,19 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                               const relatedId = titleToIdMap[b];
                               if (relatedId) {
                                 return (
-                                  <Link key={idx} href={`/bandish/${relatedId}`} className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center max-w-full transition-colors z-20">
+                                  <Link key={idx} href={`/bandish/${relatedId}`} className="bg-m3-surface-container dark:bg-m3-surface-high-dark border border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center max-w-full transition-colors z-20">
                                     <span className="truncate">{b}</span>
                                   </Link>
                                 );
                               }
                               return (
-                                <span key={idx} className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center max-w-full">
+                                <span key={idx} className="bg-m3-surface-container dark:bg-m3-surface-high-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center max-w-full">
                                   <span className="truncate">{b}</span>
                                 </span>
                               );
                             })
                           ) : video.title && (
-                            <span className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center max-w-full">
+                            <span className="bg-m3-surface-container dark:bg-m3-surface-high-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-m3-secondary dark:text-m3-secondary-dark px-2.5 py-1 rounded-full text-xs font-bold tracking-wide flex items-center max-w-full">
                               <span className="truncate">{video.title}</span>
                             </span>
                           )}

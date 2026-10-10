@@ -43,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* CHANGED: Download the Rounded icon set instead of Outlined */}
         <link
@@ -54,6 +54,7 @@ export default function RootLayout({
 
       {/* ADDED: inline style to force the ROND variable axis to max (100) */}
       <body
+        suppressHydrationWarning
         className={`${googleSans.variable} font-sans min-h-screen flex flex-col antialiased relative overflow-x-hidden bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white transition-colors duration-500`}
         style={{ fontVariationSettings: '"ROND" 25' }}
       >

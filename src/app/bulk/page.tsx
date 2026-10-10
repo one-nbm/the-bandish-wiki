@@ -319,14 +319,14 @@ export default function BulkUpload() {
       <div className="w-full max-w-[85rem] mt-4 md:mt-8">
 
         {/* Mobile/Tablet Segmented Control (< xl) */}
-        <div className="xl:hidden mb-6 flex rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1">
+        <div className="xl:hidden mb-6 flex rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 animate-page-enter">
           <button
             type="button"
             onClick={() => setActiveMobileTab("form")}
-            className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-colors ${
+            className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               activeMobileTab === "form"
                 ? "bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900"
-                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             }`}
           >
             <span className="material-symbols-rounded text-base">edit_note</span>
@@ -342,10 +342,10 @@ export default function BulkUpload() {
                 handleProceedToPreview();
               }
             }}
-            className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-colors ${
+            className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               activeMobileTab === "preview"
                 ? "bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900"
-                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             }`}
           >
             <span className="material-symbols-rounded text-base">table_view</span>
@@ -355,10 +355,10 @@ export default function BulkUpload() {
           <button
             type="button"
             onClick={() => setActiveMobileTab("guide")}
-            className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-colors ${
+            className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               activeMobileTab === "guide"
                 ? "bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900"
-                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             }`}
           >
             <span className="material-symbols-rounded text-base">menu_book</span>
@@ -371,7 +371,7 @@ export default function BulkUpload() {
           <div
             className={`w-full xl:col-span-5 ${
               activeMobileTab === "form" ? "block" : "hidden xl:block"
-            } xl:sticky xl:top-24`}
+            } xl:sticky xl:top-24 animate-page-enter animate-page-delay-1`}
           >
             <div className="bg-white dark:bg-m3-surface-container-dark p-6 sm:p-8 md:p-10 rounded-[2.5rem] border border-m3-surface-high dark:border-m3-surface-high-dark animate-modal-enter">
               {/* Header */}
@@ -711,7 +711,7 @@ export default function BulkUpload() {
           <div
             className={`w-full xl:col-span-7 ${
               activeMobileTab === "form" ? "hidden xl:block" : "block"
-            }`}
+            } animate-page-enter animate-page-delay-2`}
           >
             {activeMobileTab === "guide" ? (
               <BulkGuide />
