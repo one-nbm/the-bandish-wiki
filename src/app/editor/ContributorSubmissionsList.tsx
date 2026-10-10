@@ -26,6 +26,13 @@ export default function ContributorSubmissionsList({ initialSubmissions }: Contr
             Denied
           </span>
         );
+      case "deleted":
+        return (
+          <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-500/20 flex items-center gap-1">
+            <span className="material-symbols-rounded text-xs">delete</span>
+            Deleted by Admin
+          </span>
+        );
       case "pending":
       default:
         return (
@@ -61,10 +68,7 @@ export default function ContributorSubmissionsList({ initialSubmissions }: Contr
           history_edu
         </span>
         <div>
-          <h2
-            className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
-            style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
-          >
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
             My Community Submissions
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">

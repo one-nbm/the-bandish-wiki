@@ -82,8 +82,14 @@ async function authorizeContributorOrAdmin() {
 // ─── Raag Actions (Direct Admin Mutations) ─────────────────────────────────
 
 export async function deleteRaagSecurely(slug: string) {
-  const { authorized, error, supabaseAdmin } = await authorizeAdmin();
+  const { authorized, error, supabaseAdmin, user } = await authorizeAdmin();
   if (!authorized || !supabaseAdmin) return { success: false, error: error ?? "Unauthorized" };
+
+  const { data: raagToDelete } = await supabaseAdmin
+    .from('raags')
+    .select('slug, name')
+    .eq('slug', slug)
+    .single();
 
   const { error: dbError } = await supabaseAdmin
     .from('raags')
@@ -93,6 +99,27 @@ export async function deleteRaagSecurely(slug: string) {
   if (dbError) {
     console.error("Delete error:", dbError);
     return { success: false, error: "Failed to delete from database." };
+  }
+
+  if (raagToDelete) {
+    const escapedName = (raagToDelete.name || '').replace(/"/g, '\\"');
+    const { data: matchedContributions } = await supabaseAdmin
+      .from('contributions')
+      .select('id')
+      .eq('status', 'approved')
+      .or(`target_id.eq.${slug},title.eq."${escapedName}"`);
+
+    if (matchedContributions && matchedContributions.length > 0) {
+      await supabaseAdmin
+        .from('contributions')
+        .update({
+          status: 'deleted',
+          reviewer_email: user?.email || null,
+          reviewer_notes: 'Raag was removed from the wiki by an administrator.',
+          reviewed_at: new Date().toISOString()
+        })
+        .in('id', matchedContributions.map((c: any) => c.id));
+    }
   }
 
   return { success: true };
@@ -191,8 +218,14 @@ export async function updateBandishSecurely(id: string, updatedBandish: any) {
 }
 
 export async function deleteBandishSecurely(id: string) {
-  const { authorized, error, supabaseAdmin } = await authorizeAdmin();
+  const { authorized, error, supabaseAdmin, user } = await authorizeAdmin();
   if (!authorized || !supabaseAdmin) return { success: false, error: error ?? "Unauthorized" };
+
+  const { data: bandishToDelete } = await supabaseAdmin
+    .from('bandishes')
+    .select('id, title, contributor')
+    .eq('id', id)
+    .single();
 
   const { error: dbError } = await supabaseAdmin
     .from('bandishes')
@@ -202,6 +235,28 @@ export async function deleteBandishSecurely(id: string) {
   if (dbError) {
     console.error("Delete error:", dbError);
     return { success: false, error: "Failed to delete from database." };
+  }
+
+  if (bandishToDelete) {
+    const escapedTitle = (bandishToDelete.title || '').replace(/"/g, '\\"');
+    const { data: matchedContributions } = await supabaseAdmin
+      .from('contributions')
+      .select('id, contributor_email, title')
+      .eq('status', 'approved')
+      .or(`target_id.eq.${id},title.eq."${escapedTitle}"`);
+
+    if (matchedContributions && matchedContributions.length > 0) {
+      const idsToMark = matchedContributions.map((c: any) => c.id);
+      await supabaseAdmin
+        .from('contributions')
+        .update({
+          status: 'deleted',
+          reviewer_email: user?.email || null,
+          reviewer_notes: 'Bandish was removed from the wiki by an administrator.',
+          reviewed_at: new Date().toISOString()
+        })
+        .in('id', idsToMark);
+    }
   }
 
   return { success: true };
@@ -505,10 +560,18 @@ export async function approveContribution(contributionId: string) {
     }
   }
 
+  let resolvedTargetId = item.target_id;
+  if (item.type === 'new_bandish') {
+    resolvedTargetId = item.data?.id || resolvedTargetId;
+  } else if (item.type === 'new_raag') {
+    resolvedTargetId = item.data?.slug || resolvedTargetId;
+  }
+
   const { error: updateStatusErr } = await supabaseAdmin
     .from('contributions')
     .update({
       status: 'approved',
+      target_id: resolvedTargetId,
       reviewer_email: user.email,
       reviewed_at: new Date().toISOString()
     })

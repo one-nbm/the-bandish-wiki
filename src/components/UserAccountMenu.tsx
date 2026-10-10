@@ -6,19 +6,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserRole } from "@/app/actions";
 
-export interface ApprovedContributionNotification {
+export interface ContributionNotification {
   id: string;
   title: string;
   type: string;
+  status: "approved" | "deleted" | string;
+  reviewer_notes?: string;
   reviewed_at?: string;
 }
+
+// Backwards compatibility alias
+export type ApprovedContributionNotification = ContributionNotification;
 
 interface UserAccountMenuProps {
   email: string;
   isAdmin?: boolean;
   role?: UserRole;
   pendingRequestsCount?: number;
-  approvedContributions?: ApprovedContributionNotification[];
+  contributionNotifications?: ContributionNotification[];
+  approvedContributions?: ContributionNotification[];
 }
 
 export default function UserAccountMenu({
@@ -26,10 +32,11 @@ export default function UserAccountMenu({
   isAdmin,
   role,
   pendingRequestsCount = 0,
+  contributionNotifications = [],
   approvedContributions = []
 }: UserAccountMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [seenApprovedIds, setSeenApprovedIds] = useState<string[]>([]);
+  const [seenNotificationKeys, setSeenNotificationKeys] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -38,13 +45,17 @@ export default function UserAccountMenu({
   const effectiveRole: UserRole = role || (isAdmin ? "admin" : "viewer");
   const canAccessDashboard = effectiveRole === "admin" || effectiveRole === "contributor";
 
-  // Load seen approved contribution IDs from localStorage
+  const allNotifications: ContributionNotification[] = useMemo(() => {
+    return contributionNotifications.length > 0 ? contributionNotifications : approvedContributions;
+  }, [contributionNotifications, approvedContributions]);
+
+  // Load seen notification keys from localStorage
   useEffect(() => {
     setIsMounted(true);
     try {
-      const stored = localStorage.getItem("wiki_seen_approved_ids");
+      const stored = localStorage.getItem("wiki_seen_notification_keys") || localStorage.getItem("wiki_seen_approved_ids");
       if (stored) {
-        setSeenApprovedIds(JSON.parse(stored));
+        setSeenNotificationKeys(JSON.parse(stored));
       }
     } catch {
       // ignore
@@ -82,26 +93,37 @@ export default function UserAccountMenu({
     };
   }, [isOpen]);
 
-  // Filter approved contributions that have not yet been acknowledged/dismissed
-  const unseenApproved = useMemo(() => {
+  // Filter notifications that have not yet been acknowledged/dismissed for their current status
+  const unseenNotifications = useMemo(() => {
     if (!isMounted) return [];
-    return approvedContributions.filter((item) => !seenApprovedIds.includes(item.id));
-  }, [approvedContributions, seenApprovedIds, isMounted]);
+    return allNotifications.filter((item) => {
+      const key = `${item.id}_${item.status}`;
+      return !seenNotificationKeys.includes(key) && !seenNotificationKeys.includes(item.id);
+    });
+  }, [allNotifications, seenNotificationKeys, isMounted]);
 
-  const unseenApprovedCount = unseenApproved.length;
+  const unseenApproved = useMemo(() => {
+    return unseenNotifications.filter((item) => item.status === "approved");
+  }, [unseenNotifications]);
+
+  const unseenDeleted = useMemo(() => {
+    return unseenNotifications.filter((item) => item.status === "deleted");
+  }, [unseenNotifications]);
+
   const adminPendingCount = effectiveRole === "admin" ? pendingRequestsCount : 0;
 
   // Active numeric notification count:
-  // - For Admin: pending requests count + unseen approved contributions (if any)
-  // - For Contributor/User: unseen approved bandishes/contributions count
-  const totalNotificationCount = adminPendingCount + unseenApprovedCount;
+  // - For Admin: pending requests count + unseen user notifications
+  // - For Contributor/User: unseen approved bandishes + unseen deleted bandishes
+  const totalNotificationCount = adminPendingCount + unseenApproved.length + unseenDeleted.length;
 
-  const handleDismissApproved = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    const newSeenIds = Array.from(new Set([...seenApprovedIds, ...approvedContributions.map((a) => a.id)]));
-    setSeenApprovedIds(newSeenIds);
+  const handleDismiss = (itemsToDismiss: ContributionNotification[]) => {
+    const keysToAdd = itemsToDismiss.map((a) => `${a.id}_${a.status}`);
+    const newSeenKeys = Array.from(new Set([...seenNotificationKeys, ...keysToAdd, ...itemsToDismiss.map(a => a.id)]));
+    setSeenNotificationKeys(newSeenKeys);
     try {
-      localStorage.setItem("wiki_seen_approved_ids", JSON.stringify(newSeenIds));
+      localStorage.setItem("wiki_seen_notification_keys", JSON.stringify(newSeenKeys));
+      localStorage.setItem("wiki_seen_approved_ids", JSON.stringify(newSeenKeys));
     } catch {
       // ignore
     }
@@ -189,16 +211,19 @@ export default function UserAccountMenu({
           )}
 
           {/* User Approved Contributions Notification Card */}
-          {unseenApprovedCount > 0 && (
+          {unseenApproved.length > 0 && (
             <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold flex items-center gap-1.5">
                   <span className="material-symbols-rounded text-base text-emerald-600 dark:text-emerald-400">task_alt</span>
-                  {unseenApprovedCount} {unseenApprovedCount === 1 ? "Contribution" : "Contributions"} Approved!
+                  {unseenApproved.length} {unseenApproved.length === 1 ? "Bandish" : "Contributions"} Approved!
                 </span>
                 <button
                   type="button"
-                  onClick={handleDismissApproved}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDismiss(unseenApproved);
+                  }}
                   className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline px-1 py-0.5 rounded cursor-pointer"
                   title="Dismiss notification"
                 >
@@ -207,6 +232,32 @@ export default function UserAccountMenu({
               </div>
               <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300 truncate">
                 {unseenApproved.map((i) => i.title).join(", ")}
+              </p>
+            </div>
+          )}
+
+          {/* User Deleted Contributions Notification Card */}
+          {unseenDeleted.length > 0 && (
+            <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold flex items-center gap-1.5 text-rose-700 dark:text-rose-300">
+                  <span className="material-symbols-rounded text-base text-rose-600 dark:text-rose-400">delete_forever</span>
+                  {unseenDeleted.length} {unseenDeleted.length === 1 ? "Bandish" : "Bandishes"} Deleted by Admin
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDismiss(unseenDeleted);
+                  }}
+                  className="text-[10px] font-bold text-rose-700 dark:text-rose-400 hover:underline px-1 py-0.5 rounded cursor-pointer"
+                  title="Dismiss notification"
+                >
+                  Dismiss
+                </button>
+              </div>
+              <p className="text-[11px] font-medium text-rose-700 dark:text-rose-300/90 truncate">
+                {unseenDeleted.map((i) => `"${i.title}"`).join(", ")} removed from wiki
               </p>
             </div>
           )}

@@ -94,10 +94,7 @@ export default function AdminApprovalList({ initialPending, onActionComplete }: 
             <span className="material-symbols-rounded text-2xl sm:text-3xl text-m3-primary dark:text-m3-primary-dark">
               verified_user
             </span>
-            <h2
-              className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
-              style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
-            >
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
               Pending Community Contributions
             </h2>
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-m3-primary/10 text-m3-primary dark:bg-m3-primary-dark/20 dark:text-m3-primary-dark border border-m3-primary/20 dark:border-m3-primary-dark/20">
