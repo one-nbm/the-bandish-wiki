@@ -201,7 +201,7 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
                   required 
                   value={formName} 
                   onChange={(e) => setFormName(e.target.value)} 
-                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-bold" 
+                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-bold" 
                 />
               </div>
 
@@ -212,7 +212,7 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
                     type="text" 
                     value={formThaat} 
                     onChange={(e) => setFormThaat(e.target.value)} 
-                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary dark:focus:ring-m3-secondary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
                   />
                 </div>
                 <div>
@@ -221,7 +221,7 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
                     type="text" 
                     value={formSamay} 
                     onChange={(e) => setFormSamay(e.target.value)} 
-                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary dark:focus:ring-m3-secondary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
                   />
                 </div>
               </div>
@@ -233,7 +233,7 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
                     type="text" 
                     value={formVadi} 
                     onChange={(e) => setFormVadi(e.target.value)} 
-                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
                   />
                 </div>
                 <div>
@@ -242,7 +242,7 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
                     type="text" 
                     value={formSamvadi} 
                     onChange={(e) => setFormSamvadi(e.target.value)} 
-                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
                   />
                 </div>
               </div>
@@ -253,7 +253,7 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
                   type="text" 
                   value={formAaroh} 
                   onChange={(e) => setFormAaroh(e.target.value)} 
-                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm" 
                 />
               </div>
 
@@ -263,7 +263,7 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
                   type="text" 
                   value={formAvaroh} 
                   onChange={(e) => setFormAvaroh(e.target.value)} 
-                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm" 
                 />
               </div>
 
@@ -273,7 +273,7 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
                   value={formDescription} 
                   onChange={(e) => setFormDescription(e.target.value)} 
                   rows={4} 
-                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-tertiary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 resize-y m3-scrollbar" 
+                  className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-tertiary dark:focus:ring-m3-tertiary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 resize-y m3-scrollbar" 
                 />
               </div>
 

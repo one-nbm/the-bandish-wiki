@@ -35,6 +35,16 @@ body {
   font-variation-settings: "ROND" 50;
 }
 
+/* Ensure inputs, textareas, and selects default to high-contrast readable text */
+input, textarea, select {
+  color: inherit;
+}
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  color: #FFFFFF;
+}
+
 @keyframes slideUpFade {
   0% { opacity: 0; transform: translateY(24px); }
   100% { opacity: 1; transform: translateY(0); }

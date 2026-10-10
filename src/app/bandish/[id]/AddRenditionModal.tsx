@@ -169,7 +169,7 @@ export default function AddRenditionModal({ bandish, userRole = "admin" }: { ban
                     placeholder="e.g. Pt. Bhimsen Joshi"
                     value={formArtist}
                     onChange={(e) => setFormArtist(e.target.value)}
-                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
                   />
                 </div>
 
@@ -181,7 +181,7 @@ export default function AddRenditionModal({ bandish, userRole = "admin" }: { ban
                     placeholder="https://www.youtube.com/watch?v=..."
                     value={formUrl}
                     onChange={(e) => setFormUrl(e.target.value)}
-                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
                   />
                 </div>
 
@@ -193,7 +193,7 @@ export default function AddRenditionModal({ bandish, userRole = "admin" }: { ban
                       placeholder="e.g. 1978 or 1980s"
                       value={formYear}
                       onChange={(e) => setFormYear(e.target.value)}
-                      className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                      className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
                     />
                   </div>
                   <div className="flex items-center pt-6">

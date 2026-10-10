@@ -501,7 +501,7 @@ export default function BulkUploadClient() {
                         }
                       }}
                       placeholder={`[\n  {\n    "title": "Example Composition",\n    "raag": "Yaman",\n    "taal": "Tintal",\n    "lay": ["Madhyalay"]\n  }\n]`}
-                      className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400 min-h-[260px] font-mono text-sm resize-y m3-scrollbar leading-relaxed"
+                      className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400 min-h-[260px] font-mono text-sm resize-y m3-scrollbar leading-relaxed"
                       data-lenis-prevent="true"
                       onWheel={(e: React.WheelEvent) => e.stopPropagation()}
                       onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}

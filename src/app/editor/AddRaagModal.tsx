@@ -188,7 +188,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                           required
                           value={formName}
                           onChange={(e) => setFormName(e.target.value)}
-                          className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                          className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
                           placeholder="e.g. Yaman"
                         />
                       </div>
@@ -199,7 +199,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                           type="text" 
                           value={formThaat}
                           onChange={(e) => setFormThaat(e.target.value)}
-                          className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                          className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
                           placeholder="e.g. Kalyan"
                         />
                       </div>
@@ -210,7 +210,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                           type="text" 
                           value={formSamay}
                           onChange={(e) => setFormSamay(e.target.value)}
-                          className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                          className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
                           placeholder="e.g. Evening (First quarter of night)"
                         />
                       </div>
@@ -225,7 +225,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                             type="text" 
                             value={formVadi}
                             onChange={(e) => setFormVadi(e.target.value)}
-                            className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                            className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
                             placeholder="e.g. Ga"
                           />
                         </div>
@@ -235,7 +235,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                             type="text" 
                             value={formSamvadi}
                             onChange={(e) => setFormSamvadi(e.target.value)}
-                            className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                            className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
                             placeholder="e.g. Ni"
                           />
                         </div>
@@ -247,7 +247,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                           type="text" 
                           value={formAaroh}
                           onChange={(e) => setFormAaroh(e.target.value)}
-                          className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm"
+                          className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm"
                           placeholder="e.g. S R G M P D N S'"
                         />
                       </div>
@@ -258,7 +258,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                           type="text" 
                           value={formAvaroh}
                           onChange={(e) => setFormAvaroh(e.target.value)}
-                          className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm"
+                          className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm"
                           placeholder="e.g. S' N D P M G R S"
                         />
                       </div>
@@ -271,7 +271,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                       value={formDescription}
                       onChange={(e) => setFormDescription(e.target.value)}
                       rows={4}
-                      className="w-full bg-m3-surface dark:bg-m3-surface-dark px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 resize-y m3-scrollbar"
+                      className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 resize-y m3-scrollbar"
                       placeholder="General description, mood, rules, or historical context..."
                       data-lenis-prevent="true"
                       onWheel={(e: React.WheelEvent) => e.stopPropagation()}
