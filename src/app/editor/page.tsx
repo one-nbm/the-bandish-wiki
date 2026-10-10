@@ -56,7 +56,7 @@ export default async function EditorPage() {
         <div className="mb-12">
           <h1 
             className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight"
-            style={{ fontVariationSettings: '"wght" 700, "wdth" 141, "ROND" 50' }}
+            style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
           >
             Editor Dashboard
           </h1>

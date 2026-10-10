@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -57,15 +57,62 @@ export default function EditorDashboard({
   // Dataset Scope State: User's contributions vs Full database
   const [datasetScope, setDatasetScope] = useState<"user" | "all">("user");
 
-  // Contributions Workspace State
+  // DOM element refs for accessibility and keyboard focus
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  // Contributions Workspace State & Pagination
   const [activeTab, setActiveTab] = useState<"bandishes" | "raags">("bandishes");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const pageSize = 20;
+
+  // Reset pagination to page 1 on search or tab change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeTab]);
 
   // Graph View Category State
   const [bandishCategory, setBandishCategory] = useState<"raag" | "taal" | "tradition">("raag");
   const [raagCategory, setRaagCategory] = useState<"thaat" | "samay" | "vadi">("thaat");
   const [activeColumnIndex, setActiveColumnIndex] = useState<number>(0);
   const [hoveredColumnIndex, setHoveredColumnIndex] = useState<number | null>(null);
+
+  // User-authored records lookup maps (used to compute personal split fills in Database view)
+  const userStatsMaps = useMemo(() => {
+    const userRaagMap: Record<string, number> = {};
+    const userTaalMap: Record<string, number> = {};
+    const userTraditionMap: Record<string, number> = {};
+    userBandishes.forEach((b) => {
+      const r = b.raag?.trim() || "Unknown";
+      userRaagMap[r] = (userRaagMap[r] || 0) + 1;
+      const t = b.taal?.trim() || "Unspecified";
+      userTaalMap[t] = (userTaalMap[t] || 0) + 1;
+      const tr = b.tradition?.trim() || "N/A";
+      userTraditionMap[tr] = (userTraditionMap[tr] || 0) + 1;
+    });
+
+    const userThaatMap: Record<string, number> = {};
+    const userSamayMap: Record<string, number> = {};
+    const userVadiMap: Record<string, number> = {};
+    userRaags.forEach((r) => {
+      const th = r.thaat?.trim() || "Unassigned";
+      userThaatMap[th] = (userThaatMap[th] || 0) + 1;
+      const s = r.samay?.trim() || "Unspecified";
+      userSamayMap[s] = (userSamayMap[s] || 0) + 1;
+      const v = r.vadi?.trim() || "Unspecified";
+      userVadiMap[v] = (userVadiMap[v] || 0) + 1;
+    });
+
+    return {
+      userRaagMap,
+      userTaalMap,
+      userTraditionMap,
+      userThaatMap,
+      userSamayMap,
+      userVadiMap
+    };
+  }, [userBandishes, userRaags]);
 
   const supabase = createClient();
   const router = useRouter();
@@ -115,6 +162,52 @@ export default function EditorDashboard({
     );
   }, [userRaags, searchQuery]);
 
+  // Pagination computations for contributions workspace (20 items per page)
+  const totalBandishPages = Math.max(1, Math.ceil(filteredBandishes.length / pageSize));
+  const paginatedBandishes = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredBandishes.slice(start, start + pageSize);
+  }, [filteredBandishes, currentPage, pageSize]);
+
+  const totalRaagPages = Math.max(1, Math.ceil(filteredRaags.length / pageSize));
+  const paginatedRaags = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredRaags.slice(start, start + pageSize);
+  }, [filteredRaags, currentPage, pageSize]);
+
+  const currentTotalPages = activeTab === "bandishes" ? totalBandishPages : totalRaagPages;
+  const currentTotalItems = activeTab === "bandishes" ? filteredBandishes.length : filteredRaags.length;
+
+  // Active theme colors matching the active metric category
+  const activeCategoryTheme = useMemo(() => {
+    const isBlue =
+      (activeTab === "bandishes" && bandishCategory === "taal") ||
+      (activeTab === "raags" && raagCategory === "samay");
+    const isAmber =
+      (activeTab === "bandishes" && bandishCategory === "tradition") ||
+      (activeTab === "raags" && raagCategory === "vadi");
+
+    if (isBlue) {
+      return {
+        solidBg: "bg-[#3B82F6] dark:bg-[#60A5FA]",
+        translucentBg: "bg-[#3B82F6]/30 dark:bg-[#60A5FA]/30 border-[#3B82F6]/50",
+        text: "text-[#3B82F6] dark:text-[#60A5FA]"
+      };
+    }
+    if (isAmber) {
+      return {
+        solidBg: "bg-[#F59E0B] dark:bg-[#FBBF24]",
+        translucentBg: "bg-[#F59E0B]/30 dark:bg-[#FBBF24]/30 border-[#F59E0B]/50",
+        text: "text-[#F59E0B] dark:text-[#FBBF24]"
+      };
+    }
+    return {
+      solidBg: "bg-[#00A88F] dark:bg-[#00C4A7]",
+      translucentBg: "bg-[#00A88F]/30 dark:bg-[#00C4A7]/30 border-[#00A88F]/50",
+      text: "text-[#00A88F] dark:text-[#00C4A7]"
+    };
+  }, [activeTab, bandishCategory, raagCategory]);
+
   // Active bandishes and raags based on dataset scope toggle
   const activeBandishes = useMemo(() => {
     if (datasetScope === "all" && allBandishes.length > 0) {
@@ -153,18 +246,24 @@ export default function EditorDashboard({
       }
     });
 
-    const sortEntries = (map: Record<string, number>) =>
+    const sortEntries = (map: Record<string, number>, userMap: Record<string, number>) =>
       Object.entries(map)
-        .map(([label, count]) => ({
-          label,
-          count,
-          percentage: totalBandishes > 0 ? Math.round((count / totalBandishes) * 100) : 0
-        }))
+        .map(([label, count]) => {
+          const userCount = datasetScope === "all" ? (userMap[label] || 0) : count;
+          const userPortionPercent = count > 0 ? Math.min(100, Math.round((userCount / count) * 100)) : 100;
+          return {
+            label,
+            count,
+            percentage: totalBandishes > 0 ? Math.round((count / totalBandishes) * 100) : 0,
+            userCount,
+            userPortionPercent
+          };
+        })
         .sort((a, b) => b.count - a.count);
 
-    const raagStats = sortEntries(raagMap);
-    const taalStats = sortEntries(taalMap);
-    const traditionStats = sortEntries(traditionMap);
+    const raagStats = sortEntries(raagMap, userStatsMaps.userRaagMap);
+    const taalStats = sortEntries(taalMap, userStatsMaps.userTaalMap);
+    const traditionStats = sortEntries(traditionMap, userStatsMaps.userTraditionMap);
 
     const distinctRaags = Object.keys(raagMap).length;
     const distinctTaals = Object.keys(taalMap).length;
@@ -183,7 +282,7 @@ export default function EditorDashboard({
       taalStats: taalStats.slice(0, 7),
       traditionStats: traditionStats.slice(0, 7)
     };
-  }, [activeBandishes]);
+  }, [activeBandishes, datasetScope, userStatsMaps]);
 
   // Analytics Computation for Raags
   const raagAnalytics = useMemo(() => {
@@ -204,18 +303,24 @@ export default function EditorDashboard({
       vadiMap[vadiName] = (vadiMap[vadiName] || 0) + 1;
     });
 
-    const sortEntries = (map: Record<string, number>) =>
+    const sortEntries = (map: Record<string, number>, userMap: Record<string, number>) =>
       Object.entries(map)
-        .map(([label, count]) => ({
-          label,
-          count,
-          percentage: totalRaags > 0 ? Math.round((count / totalRaags) * 100) : 0
-        }))
+        .map(([label, count]) => {
+          const userCount = datasetScope === "all" ? (userMap[label] || 0) : count;
+          const userPortionPercent = count > 0 ? Math.min(100, Math.round((userCount / count) * 100)) : 100;
+          return {
+            label,
+            count,
+            percentage: totalRaags > 0 ? Math.round((count / totalRaags) * 100) : 0,
+            userCount,
+            userPortionPercent
+          };
+        })
         .sort((a, b) => b.count - a.count);
 
-    const thaatStats = sortEntries(thaatMap);
-    const samayStats = sortEntries(samayMap);
-    const vadiStats = sortEntries(vadiMap);
+    const thaatStats = sortEntries(thaatMap, userStatsMaps.userThaatMap);
+    const samayStats = sortEntries(samayMap, userStatsMaps.userSamayMap);
+    const vadiStats = sortEntries(vadiMap, userStatsMaps.userVadiMap);
 
     const distinctThaats = Object.keys(thaatMap).filter((t) => t !== "Unassigned").length;
     const distinctSamays = Object.keys(samayMap).filter((s) => s !== "Unspecified").length;
@@ -234,7 +339,7 @@ export default function EditorDashboard({
       samayStats: samayStats.slice(0, 7),
       vadiStats: vadiStats.slice(0, 7)
     };
-  }, [activeRaags]);
+  }, [activeRaags, datasetScope, userStatsMaps]);
 
   // Active statistics for Google Health Style Graph
   const currentChartStats = useMemo(() => {
@@ -270,6 +375,52 @@ export default function EditorDashboard({
     const idx = hoveredColumnIndex !== null ? hoveredColumnIndex : activeColumnIndex;
     return currentChartStats[idx] || currentChartStats[0] || null;
   }, [hoveredColumnIndex, activeColumnIndex, currentChartStats]);
+
+  // Global & Chart Keyboard Accelerators (/ to search, arrows/numbers to scrub graph)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't hijack keys when typing in an input or textarea
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement)?.isContentEditable
+      ) {
+        if (e.key === "Escape" && e.target === searchInputRef.current) {
+          searchInputRef.current?.blur();
+        }
+        return;
+      }
+
+      // '/' to focus search input
+      if (e.key === "/") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+
+      // ArrowLeft / ArrowRight to cycle active graph column
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setActiveColumnIndex((prev) => (prev > 0 ? prev - 1 : Math.max(0, currentChartStats.length - 1)));
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setActiveColumnIndex((prev) => (prev < currentChartStats.length - 1 ? prev + 1 : 0));
+        return;
+      }
+
+      // '1' - '7' to jump directly to column
+      const num = parseInt(e.key, 10);
+      if (!isNaN(num) && num >= 1 && num <= currentChartStats.length) {
+        e.preventDefault();
+        setActiveColumnIndex(num - 1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentChartStats.length]);
 
   return (
     <div className="relative z-10 flex flex-col gap-8">
@@ -320,6 +471,10 @@ export default function EditorDashboard({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveName();
+                  if (e.key === "Escape") setIsEditingName(false);
+                }}
                 className="w-full px-4 py-3 rounded-2xl border border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all text-sm"
                 placeholder="Enter your name as it should appear on wiki bandishes"
               />
@@ -457,25 +612,15 @@ export default function EditorDashboard({
         {/* Header with Google Health Top Metric Hierarchy & Scope Switcher */}
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 mb-6">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-m3-secondary dark:text-m3-secondary-dark">
-                {activeTab === "bandishes" ? "Repertoire Breakdown" : "Canonical Scale Distribution"}
-              </span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-gray-500 dark:text-gray-400">
-                {datasetScope === "user" ? "Your Stats" : "Entire Wiki"}
-              </span>
-            </div>
-            <div className="flex items-baseline gap-3 mt-1.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-m3-secondary dark:text-m3-secondary-dark block">
+              {activeTab === "bandishes" ? "Repertoire Breakdown" : "Canonical Scale Distribution"}
+            </span>
+            <div className="mt-1.5">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
                 {activeTab === "bandishes"
                   ? `${activeBandishes.length} ${activeBandishes.length === 1 ? "Bandish" : "Bandishes"}`
                   : `${activeRaags.length} ${activeRaags.length === 1 ? "Raag" : "Raags"}`}
               </h2>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-gray-600 dark:text-gray-300">
-                {activeTab === "bandishes"
-                  ? `${bandishAnalytics.distinctRaags} raags covered`
-                  : `${raagAnalytics.distinctThaats} parent thaats`}
-              </span>
             </div>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
               {activeTab === "bandishes"
@@ -682,11 +827,39 @@ export default function EditorDashboard({
 
         {/* Google Health Vertical Capsule Chart Canvas */}
         {currentChartStats.length === 0 ? (
-          <div className="text-center py-12 px-4 rounded-3xl border border-dashed border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface/40 dark:bg-m3-surface-dark/40 my-4">
-            <span className="material-symbols-rounded text-3xl text-gray-400 mb-2">bar_chart</span>
-            <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
-              No statistical distribution data available yet.
+          <div className="text-center py-12 px-6 rounded-3xl border border-dashed border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface/30 dark:bg-m3-surface-dark/30 my-6">
+            <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-m3-primary/10 dark:bg-m3-primary-dark/10 flex items-center justify-center text-m3-primary dark:text-m3-primary-dark">
+              <span className="material-symbols-rounded text-3xl">library_add</span>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              Start Building Your Classical Archive
+            </h3>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto mt-1.5 font-medium">
+              You haven&apos;t authored any {activeTab === "bandishes" ? "bandishes" : "raags"} under this contributor attribution yet. Every composition you add is credited directly to your profile.
             </p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+              {activeTab === "bandishes" ? (
+                <Link
+                  href="/bulk"
+                  className="px-5 py-2.5 rounded-full bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 font-bold text-xs sm:text-sm transition-transform duration-200 active:scale-95 flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-rounded text-base">cloud_upload</span>
+                  <span>Bulk Ingestion Tool</span>
+                </Link>
+              ) : (
+                <div className="inline-block">
+                  <AddRaagModal contributorName={initialName} />
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setDatasetScope("all")}
+                className="px-5 py-2.5 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-gray-700 dark:text-gray-300 font-bold text-xs sm:text-sm hover:bg-m3-surface-high/30 transition-colors flex items-center gap-1.5"
+              >
+                <span className="material-symbols-rounded text-base">public</span>
+                <span>View Entire Wiki Database</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="my-6">
@@ -721,15 +894,28 @@ export default function EditorDashboard({
                   const isAboveAverage = item.count >= avgStatCount;
                   const heightPercent = Math.max(22, Math.round((item.count / maxStatCount) * 100));
 
-                  // Google Health signature pill color (mint by default, or category-themed)
-                  const pillColor =
+                  const isBlue =
                     (activeTab === "bandishes" && bandishCategory === "taal") ||
-                    (activeTab === "raags" && raagCategory === "samay")
-                      ? "bg-[#3B82F6] dark:bg-[#60A5FA]"
-                      : (activeTab === "bandishes" && bandishCategory === "tradition") ||
-                        (activeTab === "raags" && raagCategory === "vadi")
-                      ? "bg-[#F59E0B] dark:bg-[#FBBF24]"
-                      : "bg-[#00A88F] dark:bg-[#00C4A7]";
+                    (activeTab === "raags" && raagCategory === "samay");
+                  const isAmber =
+                    (activeTab === "bandishes" && bandishCategory === "tradition") ||
+                    (activeTab === "raags" && raagCategory === "vadi");
+
+                  // Solid color representing your authored work
+                  const pillColor = isBlue
+                    ? "bg-[#3B82F6] dark:bg-[#60A5FA]"
+                    : isAmber
+                    ? "bg-[#F59E0B] dark:bg-[#FBBF24]"
+                    : "bg-[#00A88F] dark:bg-[#00C4A7]";
+
+                  // Softer translucent tone representing total community records in database mode
+                  const pillColorCommunityBg = isBlue
+                    ? "bg-[#3B82F6]/25 dark:bg-[#60A5FA]/20 border border-[#3B82F6]/40 dark:border-[#60A5FA]/40"
+                    : isAmber
+                    ? "bg-[#F59E0B]/25 dark:bg-[#FBBF24]/20 border border-[#F59E0B]/40 dark:border-[#FBBF24]/40"
+                    : "bg-[#00A88F]/25 dark:bg-[#00C4A7]/20 border border-[#00A88F]/40 dark:border-[#00C4A7]/40";
+
+                  const userPortion = item.userPortionPercent ?? 100;
 
                   return (
                     <button
@@ -739,6 +925,7 @@ export default function EditorDashboard({
                       onMouseEnter={() => setHoveredColumnIndex(idx)}
                       onMouseLeave={() => setHoveredColumnIndex(null)}
                       onFocus={() => setActiveColumnIndex(idx)}
+                      aria-label={`${item.label}: ${item.count} total, ${item.percentage}% of repertoire${idx === 0 ? ", ranked #1" : ""}${datasetScope === "all" ? `, ${item.userCount} authored by you` : ""}`}
                       className="group flex flex-col items-center h-full justify-end cursor-pointer outline-none transition-transform duration-200"
                     >
                       {/* Vertical Capsule Bar Track */}
@@ -748,26 +935,40 @@ export default function EditorDashboard({
                           initial={{ height: 0 }}
                           animate={{ height: `${heightPercent}%` }}
                           transition={{ type: "spring", stiffness: 240, damping: 26, delay: idx * 0.03 }}
-                          className={`w-full rounded-full ${pillColor} relative flex flex-col items-center justify-start pt-1.5 transition-all duration-200 ${
-                            isSelected ? "ring-2 ring-m3-primary dark:ring-m3-primary-dark opacity-100" : "opacity-90 group-hover:opacity-100"
-                          }`}
+                          className={`w-full rounded-full relative flex flex-col items-center justify-between overflow-hidden transition-all duration-200 ${
+                            datasetScope === "all"
+                              ? `${pillColorCommunityBg}`
+                              : `${pillColor} opacity-95 group-hover:opacity-100`
+                          } ${isSelected ? "ring-2 ring-m3-primary dark:ring-m3-primary-dark" : ""}`}
                         >
                           {/* Top Badge: Golden Star Medallion for #1 or Crisp Checkmark for Above Average */}
-                          {isAboveAverage && (
-                            <div
-                              className={`w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-full flex items-center justify-center shrink-0 border transition-all ${
-                                idx === 0
-                                  ? "bg-amber-400 dark:bg-amber-300 text-amber-950 border-amber-300 dark:border-amber-200"
-                                  : "bg-white/95 dark:bg-gray-950/95 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 dark:border-emerald-400/25"
-                              }`}
-                            >
-                              <span
-                                className="material-symbols-rounded text-[11px] sm:text-xs leading-none font-bold"
-                                style={idx === 0 ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                          <div className="pt-1.5 z-10 shrink-0">
+                            {isAboveAverage && (
+                              <div
+                                className={`w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-full flex items-center justify-center shrink-0 border transition-all ${
+                                  idx === 0
+                                    ? "bg-amber-400 dark:bg-amber-300 text-amber-950 border-amber-300 dark:border-amber-200"
+                                    : "bg-white/95 dark:bg-gray-950/95 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 dark:border-emerald-400/25"
+                                }`}
                               >
-                                {idx === 0 ? "star" : "check"}
-                              </span>
-                            </div>
+                                <span
+                                  className="material-symbols-rounded text-[11px] sm:text-xs leading-none font-bold"
+                                  style={idx === 0 ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                                >
+                                  {idx === 0 ? "star" : "check"}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Dual-Tone Inner Fill: Authored by you (anchored at bottom) */}
+                          {datasetScope === "all" && userPortion > 0 && (
+                            <div
+                              className={`absolute bottom-0 left-0 right-0 ${pillColor} rounded-b-full transition-all duration-300 ${
+                                userPortion >= 92 ? "rounded-t-full" : "border-t border-white/40 dark:border-white/20"
+                              }`}
+                              style={{ height: `${userPortion}%` }}
+                            />
                           )}
                         </motion.div>
                       </div>
@@ -786,6 +987,17 @@ export default function EditorDashboard({
                         <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 font-semibold mt-0.5">
                           {item.count}
                         </span>
+                        {datasetScope === "all" && (
+                          <span
+                            className={`text-[9px] font-bold ${
+                              item.userPortionPercent && item.userPortionPercent > 0
+                                ? activeCategoryTheme.text
+                                : "text-gray-400 dark:text-gray-600"
+                            }`}
+                          >
+                            {item.userPortionPercent ?? 0}%
+                          </span>
+                        )}
                       </div>
                     </button>
                   );
@@ -793,11 +1005,11 @@ export default function EditorDashboard({
               </div>
             </div>
 
-            {/* Bottom Status Chip (Google Health "301 cal left" style pill) */}
+            {/* Bottom Status Chip & Legend */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-m3-surface-high dark:border-m3-surface-high-dark">
               {selectedItem ? (
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-xs font-bold text-gray-800 dark:text-gray-200">
-                  <span className="material-symbols-rounded text-sm text-[#00A88F] dark:text-[#00C4A7]">
+                  <span className={`material-symbols-rounded text-sm ${activeCategoryTheme.text}`}>
                     insights
                   </span>
                   <span>
@@ -805,17 +1017,44 @@ export default function EditorDashboard({
                     {selectedItem.count}{" "}
                     {activeTab === "bandishes"
                       ? selectedItem.count === 1 ? "bandish" : "bandishes"
-                      : selectedItem.count === 1 ? "raag" : "raags"}{" "}
-                    ({selectedItem.percentage}% of repertory)
+                      : selectedItem.count === 1 ? "raag" : "raags"}
+                    {datasetScope === "all" ? (
+                      <>
+                        {" "}total •{" "}
+                        <span className={`${activeCategoryTheme.text} font-bold`}>
+                          {selectedItem.userCount ?? 0} authored by you ({selectedItem.userPortionPercent ?? 0}%)
+                        </span>
+                        {" "}
+                        <span className="text-gray-500 dark:text-gray-400 font-normal">
+                          ({selectedItem.percentage}% of database)
+                        </span>
+                      </>
+                    ) : (
+                      <> ({selectedItem.percentage}% of your repertoire)</>
+                    )}
                   </span>
                 </div>
               ) : (
                 <div />
               )}
 
-              <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
-                Click or hover columns to inspect breakdown
-              </span>
+              <div className="flex flex-wrap items-center gap-3">
+                {datasetScope === "all" && (
+                  <div className="flex items-center gap-2.5 text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <span className={`w-2.5 h-2.5 rounded-full ${activeCategoryTheme.solidBg} inline-block`} />
+                      <span>Your authored</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className={`w-2.5 h-2.5 rounded-full ${activeCategoryTheme.translucentBg} border inline-block`} />
+                      <span>Community total</span>
+                    </span>
+                  </div>
+                )}
+                <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                  Use ← → or 1–{currentChartStats.length} to scrub
+                </span>
+              </div>
             </div>
           </div>
         )}
@@ -901,7 +1140,10 @@ export default function EditorDashboard({
       </div>
 
       {/* Interactive "My Contributions" Management Workspace */}
-      <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem]">
+      <div
+        ref={tableContainerRef}
+        className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem]"
+      >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
@@ -957,46 +1199,90 @@ export default function EditorDashboard({
           </div>
         </div>
 
-        {/* Search Filter Toolbar */}
+        {/* Search Filter Toolbar with Keyboard Shortcut Hint */}
         <div className="mb-4">
           <div className="relative">
-            <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
+            <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none">
               search
             </span>
             <input
+              ref={searchInputRef}
               type="text"
               placeholder={
                 activeTab === "bandishes"
-                  ? "Filter your bandishes by title, raag, or composer..."
-                  : "Filter your raags by name, thaat, or time..."
+                  ? "Filter your bandishes by title, raag, or composer... (Press '/' to search)"
+                  : "Filter your raags by name, thaat, or time... (Press '/' to search)"
               }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface dark:bg-m3-surface-dark text-xs sm:text-sm text-gray-900 dark:text-white outline-none focus:border-m3-primary dark:focus:border-m3-primary-dark transition-all placeholder:text-gray-400"
+              className="w-full pl-11 pr-24 py-2.5 rounded-2xl border border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface dark:bg-m3-surface-dark text-xs sm:text-sm text-gray-900 dark:text-white outline-none focus:border-m3-primary dark:focus:border-m3-primary-dark transition-all placeholder:text-gray-400"
             />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              >
-                <span className="material-symbols-rounded text-base">close</span>
-              </button>
-            )}
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors flex items-center justify-center"
+                  aria-label="Clear search query"
+                >
+                  <span className="material-symbols-rounded text-base">close</span>
+                </button>
+              ) : (
+                <kbd className="hidden sm:inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-mono font-bold text-gray-400 dark:text-gray-500 bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark rounded-md">
+                  /
+                </kbd>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Content Table with Smooth Hover Lenis Scroll and Cutoff Protection */}
+        {/* Content Table with Smooth Hover Lenis Scroll, Cutoff Protection, and Pagination */}
         {activeTab === "bandishes" ? (
-          filteredBandishes.length === 0 ? (
-            <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface/50 dark:bg-m3-surface-dark/50">
-              <span className="material-symbols-rounded text-3xl text-gray-400 mb-2">library_music</span>
+          userBandishes.length === 0 ? (
+            <div className="text-center py-12 px-6 rounded-2xl border border-dashed border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface/30 dark:bg-m3-surface-dark/30">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-m3-primary/10 dark:bg-m3-primary-dark/10 flex items-center justify-center text-m3-primary dark:text-m3-primary-dark">
+                <span className="material-symbols-rounded text-2xl">library_music</span>
+              </div>
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                No bandishes authored yet
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mt-1 font-medium">
+                Compositions you author or upload using the bulk ingestion tool will be organized here.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+                <Link
+                  href="/bulk"
+                  className="px-4 py-2 rounded-full bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 font-bold text-xs hover:bg-m3-primary/90 transition-transform duration-200 active:scale-95 flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-rounded text-sm">cloud_upload</span>
+                  <span>Bulk Ingestion Tool</span>
+                </Link>
+                <Link
+                  href="/"
+                  className="px-4 py-2 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-gray-700 dark:text-gray-300 font-bold text-xs hover:bg-m3-surface-high/30 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-rounded text-sm">explore</span>
+                  <span>Explore Wiki Archive</span>
+                </Link>
+              </div>
+            </div>
+          ) : filteredBandishes.length === 0 ? (
+            <div className="text-center py-10 px-4 rounded-2xl border border-dashed border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface/30 dark:bg-m3-surface-dark/30">
+              <span className="material-symbols-rounded text-3xl text-gray-400 mb-2">search_off</span>
               <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                {searchQuery ? "No matching bandishes found." : "No bandishes authored under this name yet."}
+                No bandishes matching &quot;{searchQuery}&quot;
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {searchQuery ? "Try clearing your search query." : "Use the Bulk Ingestion tool or Home page to add compositions."}
+                Try searching by different keywords or clear your filter.
               </p>
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="mt-3 px-4 py-1.5 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-xs font-bold text-m3-primary dark:text-m3-primary-dark hover:bg-m3-primary/10 transition-colors inline-flex items-center gap-1"
+              >
+                <span className="material-symbols-rounded text-sm">clear</span>
+                <span>Clear filter</span>
+              </button>
             </div>
           ) : (
             <div className="border border-m3-surface-high dark:border-m3-surface-high-dark rounded-2xl overflow-hidden">
@@ -1017,7 +1303,7 @@ export default function EditorDashboard({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-m3-surface-high dark:divide-m3-surface-high-dark bg-white dark:bg-m3-surface-container-dark">
-                    {filteredBandishes.map((b) => (
+                    {paginatedBandishes.map((b) => (
                       <tr
                         key={b.id}
                         className="hover:bg-m3-surface/60 dark:hover:bg-m3-surface-dark/40 transition-colors"
@@ -1058,15 +1344,47 @@ export default function EditorDashboard({
               </ReactLenis>
             </div>
           )
+        ) : userRaags.length === 0 ? (
+          <div className="text-center py-12 px-6 rounded-2xl border border-dashed border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface/30 dark:bg-m3-surface-dark/30">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-m3-primary/10 dark:bg-m3-primary-dark/10 flex items-center justify-center text-m3-primary dark:text-m3-primary-dark">
+              <span className="material-symbols-rounded text-2xl">queue_music</span>
+            </div>
+            <h3 className="text-base font-bold text-gray-900 dark:text-white">
+              No raags authored yet
+            </h3>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mt-1 font-medium">
+              Contribute canonical raag entries with ascending/descending scales, thaats, and moods.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+              <div className="inline-block">
+                <AddRaagModal contributorName={initialName} />
+              </div>
+              <Link
+                href="/"
+                className="px-4 py-2 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-gray-700 dark:text-gray-300 font-bold text-xs hover:bg-m3-surface-high/30 transition-colors flex items-center gap-1.5"
+              >
+                <span className="material-symbols-rounded text-sm">explore</span>
+                <span>Explore Wiki Archive</span>
+              </Link>
+            </div>
+          </div>
         ) : filteredRaags.length === 0 ? (
-          <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface/50 dark:bg-m3-surface-dark/50">
-            <span className="material-symbols-rounded text-3xl text-gray-400 mb-2">queue_music</span>
+          <div className="text-center py-10 px-4 rounded-2xl border border-dashed border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface/30 dark:bg-m3-surface-dark/30">
+            <span className="material-symbols-rounded text-3xl text-gray-400 mb-2">search_off</span>
             <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
-              {searchQuery ? "No matching raags found." : "No raags authored under this name yet."}
+              No raags matching &quot;{searchQuery}&quot;
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              Click &quot;New Raag&quot; above to contribute a raag scale to the wiki.
+              Try searching by different keywords or clear your filter.
             </p>
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="mt-3 px-4 py-1.5 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-xs font-bold text-m3-primary dark:text-m3-primary-dark hover:bg-m3-primary/10 transition-colors inline-flex items-center gap-1"
+            >
+              <span className="material-symbols-rounded text-sm">clear</span>
+              <span>Clear filter</span>
+            </button>
           </div>
         ) : (
           <div className="border border-m3-surface-high dark:border-m3-surface-high-dark rounded-2xl overflow-hidden">
@@ -1086,7 +1404,7 @@ export default function EditorDashboard({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-m3-surface-high dark:divide-m3-surface-high-dark bg-white dark:bg-m3-surface-container-dark">
-                  {filteredRaags.map((r) => (
+                  {paginatedRaags.map((r) => (
                     <tr
                       key={r.id}
                       className="hover:bg-m3-surface/60 dark:hover:bg-m3-surface-dark/40 transition-colors"
@@ -1117,6 +1435,102 @@ export default function EditorDashboard({
                 </tbody>
               </table>
             </ReactLenis>
+          </div>
+        )}
+
+        {/* Pagination Toolbar with Clean M3 Flat Controls */}
+        {currentTotalItems > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 mt-3 border-t border-m3-surface-high dark:border-m3-surface-high-dark text-xs font-medium text-gray-600 dark:text-gray-400">
+            <div>
+              <span>
+                Showing{" "}
+                <strong className="text-gray-900 dark:text-white">
+                  {(currentPage - 1) * pageSize + 1}
+                </strong>
+                –
+                <strong className="text-gray-900 dark:text-white">
+                  {Math.min(currentPage * pageSize, currentTotalItems)}
+                </strong>{" "}
+                of{" "}
+                <strong className="text-gray-900 dark:text-white">
+                  {currentTotalItems}
+                </strong>{" "}
+                {activeTab === "bandishes"
+                  ? currentTotalItems === 1 ? "bandish" : "bandishes"
+                  : currentTotalItems === 1 ? "raag" : "raags"}
+              </span>
+            </div>
+
+            {currentTotalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={currentPage <= 1}
+                  onClick={() => {
+                    setCurrentPage((p) => Math.max(1, p - 1));
+                    tableContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  }}
+                  className="px-3 py-1.5 rounded-full border border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-m3-surface-high/40 dark:hover:bg-m3-surface-high-dark/60 transition-all flex items-center gap-1"
+                >
+                  <span className="material-symbols-rounded text-base">chevron_left</span>
+                  <span className="hidden sm:inline">Prev</span>
+                </button>
+
+                {/* Page number buttons */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: currentTotalPages }, (_, i) => i + 1).map((pageNum) => {
+                    // Display compact window around current page if many pages
+                    if (
+                      currentTotalPages > 6 &&
+                      pageNum !== 1 &&
+                      pageNum !== currentTotalPages &&
+                      Math.abs(pageNum - currentPage) > 1
+                    ) {
+                      if (pageNum === 2 || pageNum === currentTotalPages - 1) {
+                        return (
+                          <span key={`ellipsis-${pageNum}`} className="px-1 text-gray-400">
+                            …
+                          </span>
+                        );
+                      }
+                      return null;
+                    }
+
+                    const isActive = pageNum === currentPage;
+                    return (
+                      <button
+                        key={pageNum}
+                        type="button"
+                        onClick={() => {
+                          setCurrentPage(pageNum);
+                          tableContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                        }}
+                        className={`w-7 h-7 rounded-full text-xs font-bold transition-all flex items-center justify-center ${
+                          isActive
+                            ? "bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900"
+                            : "border border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 hover:bg-m3-surface-high/40 dark:hover:bg-m3-surface-high-dark/60"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  disabled={currentPage >= currentTotalPages}
+                  onClick={() => {
+                    setCurrentPage((p) => Math.min(currentTotalPages, p + 1));
+                    tableContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  }}
+                  className="px-3 py-1.5 rounded-full border border-m3-surface-high dark:border-m3-surface-high-dark bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-m3-surface-high/40 dark:hover:bg-m3-surface-high-dark/60 transition-all flex items-center gap-1"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <span className="material-symbols-rounded text-base">chevron_right</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
