@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import { addRaagSecurely } from "@/app/actions";
 import { ReactLenis } from 'lenis/react';
 import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
@@ -94,22 +93,7 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
     const slug = generateSlug(formName);
 
     try {
-      // 1. Manually calculate the next sequential ID for the raags table
-      const { data: existingRaags, error: fetchError } = await supabase
-        .from("raags")
-        .select("id");
-        
-      if (fetchError) throw fetchError;
-
-      // Look at all existing IDs, convert them to numbers, and find the highest one
-      const currentIds = (existingRaags || []).map(r => parseInt(r.id, 10)).filter(n => !isNaN(n));
-      const maxId = currentIds.length > 0 ? Math.max(...currentIds) : 0;
-      
-      // Add 1, and pad it with leading zeros to maintain the "0001" format
-      const nextId = String(maxId + 1).padStart(4, '0');
-
       const payload = {
-        id: nextId,
         name: formName,
         slug,
         thaat: formThaat,
@@ -160,7 +144,7 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
           
           {/* Modal Content */}
-          <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
+          <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-m3-surface-high dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-all duration-300 ease-out ${isClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
             <ReactLenis 
               options={LENIS_OPTIONS} 
               className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar"
@@ -298,7 +282,7 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
                     <button 
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full md:w-auto md:min-w-[200px] float-right flex justify-center items-center gap-2 bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 py-4 px-8 rounded-full font-bold transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                      className="w-full md:w-auto md:min-w-[200px] float-right flex justify-center items-center gap-2 bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900 py-4 px-8 rounded-full font-bold transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                     >
                       {isSubmitting ? (
                         <span className="material-symbols-rounded text-[1.4rem] animate-spin">sync</span>

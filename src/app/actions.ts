@@ -71,9 +71,29 @@ export async function addRaagSecurely(newRaag: any) {
   const { authorized, error, supabaseAdmin } = await authorizeEditor();
   if (!authorized || !supabaseAdmin) return { success: false, error: error ?? "Unauthorized" };
 
+  const raagToInsert = { ...newRaag };
+
+  // If no ID is provided, calculate the next sequential 4-digit ID securely on the server
+  if (!raagToInsert.id) {
+    const { data: existingRaags, error: fetchError } = await supabaseAdmin
+      .from("raags")
+      .select("id");
+
+    if (fetchError) {
+      console.error("Fetch raags error:", fetchError);
+      return { success: false, error: "Failed to allocate Raag ID." };
+    }
+
+    const currentIds = (existingRaags || [])
+      .map((r: any) => parseInt(r.id, 10))
+      .filter((n: number) => !isNaN(n));
+    const maxId = currentIds.length > 0 ? Math.max(...currentIds) : 0;
+    raagToInsert.id = String(maxId + 1).padStart(4, "0");
+  }
+
   const { error: dbError } = await supabaseAdmin
     .from('raags')
-    .insert([newRaag]);
+    .insert([raagToInsert]);
 
   if (dbError) {
     console.error("Database error:", dbError);
@@ -83,7 +103,7 @@ export async function addRaagSecurely(newRaag: any) {
     return { success: false, error: "Failed to save to database." };
   }
 
-  return { success: true };
+  return { success: true, id: raagToInsert.id };
 }
 
 // ─── Bandish actions ───────────────────────────────────────────────────────

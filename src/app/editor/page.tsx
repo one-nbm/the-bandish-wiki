@@ -14,16 +14,18 @@ export default async function EditorPage() {
   
   const contributorName = user?.user_metadata?.contributor_name || "Anonymous";
 
-  // Fetch counts
-  const { count: bandishCount } = await supabase
+  // Fetch counts and records
+  const { data: userBandishes, count: bandishCount } = await supabase
     .from("bandishes")
-    .select("*", { count: "exact", head: true })
-    .eq("contributor", contributorName);
+    .select("id, title, raag, taal, composer, lay", { count: "exact" })
+    .eq("contributor", contributorName)
+    .order("title", { ascending: true });
     
-  const { count: raagCount } = await supabase
+  const { data: userRaags, count: raagCount } = await supabase
     .from("raags")
-    .select("*", { count: "exact", head: true })
-    .eq("contributor", contributorName);
+    .select("id, name, slug, thaat, samay", { count: "exact" })
+    .eq("contributor", contributorName)
+    .order("name", { ascending: true });
 
   return (
     <main className="min-h-screen bg-transparent relative transition-colors duration-500">
@@ -42,7 +44,7 @@ export default async function EditorPage() {
             Editor Dashboard
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">
-            Manage your contributions and settings
+            Manage your contributions and community submissions
           </p>
         </div>
 
@@ -50,6 +52,8 @@ export default async function EditorPage() {
         initialName={contributorName} 
         bandishCount={bandishCount || 0} 
         raagCount={raagCount || 0} 
+        userBandishes={userBandishes || []}
+        userRaags={userRaags || []}
       />
       </div>
     </main>
