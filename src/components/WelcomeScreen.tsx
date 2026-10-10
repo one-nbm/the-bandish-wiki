@@ -229,7 +229,14 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
             </Link>
           ) : null}
 
-          <button onClick={onStartBrowsing} className="group flex items-center justify-between p-5 sm:p-6 bg-white/90 dark:bg-m3-surface-container-dark/90 hover:bg-white dark:hover:bg-m3-surface-high-dark backdrop-blur-xl rounded-3xl border border-gray-200/80 dark:border-gray-700/80 transition-all duration-500 hover:-translate-y-1 text-left">
+          <a
+            href="#archive"
+            onClick={(e) => {
+              e.preventDefault();
+              onStartBrowsing();
+            }}
+            className="group flex items-center justify-between p-5 sm:p-6 bg-white/90 dark:bg-m3-surface-container-dark/90 hover:bg-white dark:hover:bg-m3-surface-high-dark backdrop-blur-xl rounded-3xl border border-gray-200/80 dark:border-gray-700/80 transition-all duration-500 hover:-translate-y-1 text-left"
+          >
             <div className="flex-1 mr-3 sm:mr-4">
               <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white block mb-0.5 sm:mb-1">Browse Full Archive</span>
               {totalBandishes > 0 && (
@@ -239,7 +246,46 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
             <div className="w-10 h-10 rounded-full bg-m3-primary/10 dark:bg-m3-primary-dark/10 flex items-center justify-center text-m3-primary dark:text-m3-primary-dark transition-transform group-hover:scale-110 shrink-0">
               <span className="material-symbols-rounded">library_music</span>
             </div>
-          </button>
+          </a>
+        </div>
+
+        {/* Explore Popular Raags Hub for search crawlers & instant discovery */}
+        <div className="w-full mt-10 pt-8 border-t border-gray-200/60 dark:border-gray-800/60 text-left">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Explore Popular Raags
+            </span>
+            <Link
+              href="/raags"
+              className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark hover:underline"
+            >
+              Browse all {totalRaags || 42} raags →
+            </Link>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { name: "Yaman", slug: "yaman" },
+              { name: "Bhairav", slug: "bhairav" },
+              { name: "Bhimpalas", slug: "bhimpalas" },
+              { name: "Bhoopali", slug: "bhoopali" },
+              { name: "Bihag", slug: "bihag" },
+              { name: "Des", slug: "des" },
+              { name: "Malkauns", slug: "malkauns" },
+              { name: "Miyan Ki Todi", slug: "miyan-ki-todi" },
+              { name: "Jaunpuri", slug: "jaunpuri" },
+              { name: "Kedar", slug: "kedar" },
+              { name: "Shuddh Kalyan", slug: "shuddh-kalyan" },
+              { name: "Hamsadhwani", slug: "hamsadhwani" },
+            ].map((raag) => (
+              <Link
+                key={raag.slug}
+                href={`/raag/${raag.slug}`}
+                className="bg-white/80 dark:bg-m3-surface-container-dark/80 hover:bg-white dark:hover:bg-m3-surface-high-dark border border-gray-200/80 dark:border-gray-700/80 text-gray-700 dark:text-gray-200 hover:text-m3-primary dark:hover:text-m3-primary-dark px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all duration-200 hover:-translate-y-0.5"
+              >
+                Raag {raag.name}
+              </Link>
+            ))}
+          </div>
         </div>
 
       </div>

@@ -9,6 +9,16 @@ import CopyButton from "@/components/CopyButton";
 import type { Metadata } from "next";
 import { getUserRole } from "@/app/actions";
 
+export async function generateStaticParams() {
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+  const { data: bandishes } = await supabase.from("bandishes").select("id");
+  return (bandishes || []).map((b) => ({ id: b.id }));
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const supabase = await createClient();
@@ -16,9 +26,25 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   if (!bandish) return { title: "Not Found | The Bandish Wiki" };
 
+  const canonicalUrl = `https://bandish-wiki.vercel.app/bandish/${id}`;
+  const description = `Learn the ${bandish.taal} bandish composed by ${bandish.composer || "Traditional"}. ${bandish.lyrics?.english?.substring(0, 120) || ""}...`;
+
   return {
-    title: `${bandish.title} - ${bandish.raag} | The Bandish Wiki`,
-    description: `Learn the ${bandish.taal} bandish composed by ${bandish.composer}. ${bandish.lyrics?.english?.substring(0, 100) || ""}...`,
+    title: `${bandish.title} - ${bandish.raag} (${bandish.taal}) | The Bandish Wiki`,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: `${bandish.title} - ${bandish.raag} | The Bandish Wiki`,
+      description,
+      url: canonicalUrl,
+      type: "music.song",
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
   };
 }
 
@@ -41,6 +67,49 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
   const role = await getUserRole();
   const isAdmin = role === "admin";
 
+  // Schema.org Structured Data
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "MusicComposition",
+    "name": bandish.title,
+    "composer": bandish.composer ? { "@type": "Person", "name": bandish.composer } : undefined,
+    "inLanguage": "hi",
+    "genre": "Hindustani Classical",
+    "musicalKey": bandish.raag,
+    "timeRequired": bandish.taal,
+    "description": `${bandish.title} is a ${bandish.taal} composition in Raag ${bandish.raag}.`,
+    "lyrics": (bandish.lyrics?.devanagari || bandish.lyrics?.english) ? {
+      "@type": "CreativeWork",
+      "text": [bandish.lyrics?.devanagari, bandish.lyrics?.english].filter(Boolean).join("\n\n"),
+    } : undefined,
+    "url": `https://bandish-wiki.vercel.app/bandish/${bandish.id}`,
+  };
+
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://bandish-wiki.vercel.app",
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": `Raag ${bandish.raag}`,
+        "item": `https://bandish-wiki.vercel.app/raag/${raagSlug}`,
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": bandish.title,
+        "item": `https://bandish-wiki.vercel.app/bandish/${bandish.id}`,
+      },
+    ],
+  };
+
   // Fetch IDs for rendition bandish tags
   const allRenditionTitles = bandish.youtube_renditions
     ? Array.from(new Set(bandish.youtube_renditions.flatMap((r: any) => r.bandishes || [])))
@@ -62,6 +131,15 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
 
   return (
     <main className="min-h-screen bg-transparent relative">
+      {/* Schema.org Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
 
       {/* Ambient Background Glow (Pulled up to bleed behind the transparent navbar) */}
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-m3-primary/20 dark:bg-m3-primary-dark/10 blur-[100px] rounded-full pointer-events-none opacity-50" />

@@ -5,6 +5,16 @@ import EditRaagModal from "./EditRaagModal";
 import type { Metadata } from "next";
 import { getUserRole } from "@/app/actions";
 
+export async function generateStaticParams() {
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+  const { data: raags } = await supabase.from("raags").select("slug");
+  return (raags || []).filter((r) => r.slug).map((r) => ({ slug: r.slug }));
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const supabase = await createClient();
@@ -12,9 +22,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   
   if (!raag) return { title: "Not Found | The Bandish Wiki" };
 
+  const canonicalUrl = `https://bandish-wiki.vercel.app/raag/${slug}`;
+  const description = `Explore Raag ${raag.name}: Thaat (${raag.thaat || "N/A"}), Samay (${raag.samay || "N/A"}), Vadi (${raag.vadi || "N/A"}), Samvadi (${raag.samvadi || "N/A"}), Aaroh and Avaroh notations, and traditional compositions.`;
+
   return {
-    title: `Raag ${raag.name} | The Bandish Wiki`,
-    description: `Explore the details of Raag ${raag.name}, including its Thaat, Vaadi, Samvaadi, and Aaroh-Avaroh.`,
+    title: `Raag ${raag.name} - Thaat, Samay, Aaroh & Bandishes | The Bandish Wiki`,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: `Raag ${raag.name} | The Bandish Wiki`,
+      description,
+      url: canonicalUrl,
+      type: "article",
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
   };
 }
 
@@ -41,8 +67,50 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
 
   const role = await getUserRole();
 
+  // Schema.org Structured Data
+  const raagJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": `Raag ${raag.name} - Hindustani Classical Music Analysis`,
+    "description": `Comprehensive analysis of Raag ${raag.name}, including Thaat ${raag.thaat || ""}, Samay ${raag.samay || ""}, Vadi ${raag.vadi || ""}, Samvadi ${raag.samvadi || ""}, and musical notations.`,
+    "about": {
+      "@type": "Thing",
+      "name": `Raag ${raag.name}`,
+      "description": "A melodic framework in Hindustani classical music tradition.",
+    },
+    "mainEntityOfPage": `https://bandish-wiki.vercel.app/raag/${slug}`,
+  };
+
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://bandish-wiki.vercel.app",
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": `Raag ${raag.name}`,
+        "item": `https://bandish-wiki.vercel.app/raag/${slug}`,
+      },
+    ],
+  };
+
   return (
     <main className="min-h-screen bg-transparent relative transition-colors duration-500">
+      {/* Schema.org Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(raagJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
       
       {/* Ambient Background Glow (Pulled up to bleed behind the transparent navbar) */}
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-m3-primary/20 dark:bg-m3-primary-dark/10 blur-[100px] rounded-full pointer-events-none opacity-50" />

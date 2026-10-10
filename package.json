@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "indexnow": "node scripts/submit-indexnow.mjs"
   },
   "dependencies": {
     "@alerix/m3-loading-indicator": "^1.0.5",

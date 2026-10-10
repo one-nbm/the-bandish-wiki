@@ -1,5 +1,6 @@
 import React, { memo, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export const BandishCard = memo(({
   bandish,
@@ -65,7 +66,20 @@ export const BandishCard = memo(({
         <span className="material-symbols-rounded text-[1.4rem] transition" style={{ fontVariationSettings: isFavorited ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
       </button>
       <div className="flex justify-between items-start mb-3 pr-[7.5rem] md:pr-32">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{bandish.title}</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">
+          <Link
+            href={`/bandish/${bandish.id}`}
+            onClick={(e) => {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
+                e.preventDefault();
+                handleClick();
+              }
+            }}
+            className="hover:text-m3-primary dark:hover:text-m3-primary-dark transition-colors focus:outline-none"
+          >
+            {bandish.title}
+          </Link>
+        </h2>
       </div>
       <div className="flex flex-wrap gap-2 mb-5">
         <button
@@ -99,10 +113,19 @@ export const BandishCard = memo(({
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4 whitespace-pre-wrap text-[1.05rem] transition-colors duration-300 line-clamp-4">
         {language === "english" ? bandish.lyrics.english : (bandish.lyrics.devanagari || "Devanagari lyrics not available")}
       </p>
-      <div className="mt-2 pt-2 flex items-center text-m3-primary dark:text-m3-primary-dark text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <Link
+        href={`/bandish/${bandish.id}`}
+        onClick={(e) => {
+          if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
+            e.preventDefault();
+            handleClick();
+          }
+        }}
+        className="mt-2 pt-2 flex items-center text-m3-primary dark:text-m3-primary-dark text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:underline"
+      >
         <span>Read Full Bandish</span>
         <span className="material-symbols-rounded text-[1.2rem] ml-1">arrow_forward</span>
-      </div>
+      </Link>
     </motion.div>
   );
 }, (prevProps, nextProps) => {

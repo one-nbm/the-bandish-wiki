@@ -33,10 +33,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  // Prevents the page from flashing before we check the memory
-  if (!mounted) {
-    return <div className="min-h-screen bg-[#FDF8FD]" />;
-  }
 
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>

@@ -2,6 +2,27 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/utils/supabase/server';
+import { revalidatePath } from 'next/cache';
+
+async function pingIndexNow(urls: string[]) {
+  try {
+    const host = "bandish-wiki.vercel.app";
+    const key = "8f7b3c21a4e54823b190f898317d65ac";
+    const keyLocation = `https://${host}/${key}.txt`;
+    await fetch("https://api.indexnow.org/indexnow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify({
+        host,
+        key,
+        keyLocation,
+        urlList: urls,
+      }),
+    });
+  } catch (err) {
+    console.error("IndexNow background ping failed:", err);
+  }
+}
 
 export type UserRole = 'viewer' | 'contributor' | 'admin';
 
@@ -122,6 +143,9 @@ export async function deleteRaagSecurely(slug: string) {
     }
   }
 
+  revalidatePath('/');
+  revalidatePath('/raags');
+  revalidatePath(`/raag/${slug}`);
   return { success: true };
 }
 
@@ -139,6 +163,10 @@ export async function updateRaagSecurely(slug: string, updatedRaag: any) {
     return { success: false, error: "Failed to update database." };
   }
 
+  revalidatePath('/');
+  revalidatePath('/raags');
+  revalidatePath(`/raag/${slug}`);
+  pingIndexNow([`https://bandish-wiki.vercel.app/raag/${slug}`, `https://bandish-wiki.vercel.app/raags`]);
   return { success: true };
 }
 
@@ -177,6 +205,13 @@ export async function addRaagSecurely(newRaag: any) {
     return { success: false, error: "Failed to save to database." };
   }
 
+  revalidatePath('/');
+  revalidatePath('/raags');
+  if (raagToInsert.slug) {
+    revalidatePath(`/raag/${raagToInsert.slug}`);
+    pingIndexNow([`https://bandish-wiki.vercel.app/raag/${raagToInsert.slug}`, `https://bandish-wiki.vercel.app/raags`]);
+  }
+
   return { success: true, id: raagToInsert.id };
 }
 
@@ -196,6 +231,17 @@ export async function addBandishSecurely(newBandish: any) {
     return { success: false, error: "Failed to save to database.", data: null };
   }
 
+  revalidatePath('/');
+  revalidatePath('/raags');
+  if (newBandish.id) {
+    revalidatePath(`/bandish/${newBandish.id}`);
+    pingIndexNow([`https://bandish-wiki.vercel.app/bandish/${newBandish.id}`]);
+  }
+  if (newBandish.raag) {
+    const raagSlug = newBandish.raag.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+    revalidatePath(`/raag/${raagSlug}`);
+  }
+
   return { success: true, data };
 }
 
@@ -213,6 +259,14 @@ export async function updateBandishSecurely(id: string, updatedBandish: any) {
     console.error("Database error:", dbError);
     return { success: false, error: "Failed to update database.", data: null };
   }
+
+  revalidatePath('/');
+  revalidatePath(`/bandish/${id}`);
+  if (updatedBandish.raag) {
+    const raagSlug = updatedBandish.raag.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+    revalidatePath(`/raag/${raagSlug}`);
+  }
+  pingIndexNow([`https://bandish-wiki.vercel.app/bandish/${id}`]);
 
   return { success: true, data };
 }
@@ -259,6 +313,8 @@ export async function deleteBandishSecurely(id: string) {
     }
   }
 
+  revalidatePath('/');
+  revalidatePath(`/bandish/${id}`);
   return { success: true };
 }
 
@@ -581,6 +637,32 @@ export async function approveContribution(contributionId: string) {
     console.error("Update contribution status error:", updateStatusErr);
   }
 
+  // Automatic Cache Revalidation & Real-Time Indexing Dispatch
+  revalidatePath('/');
+  revalidatePath('/raags');
+  if (item.type === 'new_bandish' || item.type === 'edit_bandish') {
+    const bandishId = resolvedTargetId;
+    if (bandishId) {
+      revalidatePath(`/bandish/${bandishId}`);
+      pingIndexNow([`https://bandish-wiki.vercel.app/bandish/${bandishId}`]);
+    }
+    const raagName = item.data?.raag;
+    if (raagName) {
+      const raagSlug = raagName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+      revalidatePath(`/raag/${raagSlug}`);
+    }
+  } else if (item.type === 'new_raag' || item.type === 'edit_raag') {
+    const raagSlug = resolvedTargetId || item.data?.slug;
+    if (raagSlug) {
+      revalidatePath(`/raag/${raagSlug}`);
+      pingIndexNow([`https://bandish-wiki.vercel.app/raag/${raagSlug}`, `https://bandish-wiki.vercel.app/raags`]);
+    }
+  } else if (item.type === 'new_rendition') {
+    if (item.target_id) {
+      revalidatePath(`/bandish/${item.target_id}`);
+    }
+  }
+
   return { success: true };
 }
 
@@ -714,6 +796,8 @@ export async function syncRenditionAcrossBandishes(
       .from('bandishes')
       .update({ youtube_renditions: renditions })
       .eq('id', b.id);
+
+    revalidatePath(`/bandish/${b.id}`);
   }
 
   return { success: true };

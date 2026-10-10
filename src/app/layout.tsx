@@ -50,6 +50,11 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("wiki-theme");if(t==="dark"){document.documentElement.classList.add("dark");}}catch(e){}})();`,
+          }}
+        />
       </head>
 
       {/* ADDED: inline style to force the ROND variable axis to max (100) */}
