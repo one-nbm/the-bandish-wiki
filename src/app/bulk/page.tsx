@@ -737,7 +737,7 @@ export default function BulkUpload() {
                   </div>
 
                   <div className="border border-m3-surface-high dark:border-m3-surface-high-dark rounded-2xl overflow-hidden">
-                    <div className="max-h-[500px] overflow-y-auto m3-scrollbar">
+                    <div className="max-h-[500px] overflow-y-auto m3-scrollbar overscroll-contain" data-lenis-prevent="true">
                       <table className="w-full text-left text-xs sm:text-sm">
                         <thead className="sticky top-0 bg-m3-surface dark:bg-m3-surface-dark border-b border-m3-surface-high dark:border-m3-surface-high-dark text-gray-600 dark:text-gray-400 uppercase tracking-wider text-[11px] font-bold z-10">
                           <tr>

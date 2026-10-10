@@ -84,7 +84,8 @@ export default function RenditionsToIndexList() {
       {/* List */}
       <ReactLenis 
         options={LENIS_OPTIONS} 
-        className="flex-1 overflow-y-auto m3-scrollbar pr-2 mb-4 space-y-2 max-h-[300px]"
+        data-lenis-prevent="true"
+        className="flex-1 overflow-y-auto m3-scrollbar pr-2 mb-4 space-y-2 max-h-[300px] overscroll-contain"
         onWheel={(e: React.WheelEvent) => e.stopPropagation()}
         onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
       >

@@ -12,7 +12,7 @@ export default function NotFound() {
         transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
         className="flex flex-col items-center"
       >
-        <div className="w-24 h-24 sm:w-32 sm:h-32 bg-m3-surface-container dark:bg-m3-surface-container-dark rounded-full flex items-center justify-center mb-6 border border-m3-surface-high dark:border-m3-surface-high-dark shadow-sm">
+        <div className="w-24 h-24 sm:w-32 sm:h-32 bg-m3-surface-container dark:bg-m3-surface-container-dark rounded-full flex items-center justify-center mb-6 border border-m3-surface-high dark:border-m3-surface-high-dark">
           <span className="material-symbols-rounded text-5xl sm:text-6xl text-m3-primary dark:text-m3-primary-dark opacity-80" style={{ fontVariationSettings: '"wght" 300' }}>
             music_off
           </span>

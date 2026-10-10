@@ -147,7 +147,8 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
           <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-m3-surface-high dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-all duration-300 ease-out ${isClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
             <ReactLenis 
               options={LENIS_OPTIONS} 
-              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar"
+              data-lenis-prevent="true"
+              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar overscroll-contain"
               onWheel={(e: React.WheelEvent) => e.stopPropagation()}
               onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
             >

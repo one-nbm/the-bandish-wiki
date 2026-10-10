@@ -149,11 +149,6 @@ html.lenis, html.lenis body {
   pointer-events: none;
 }
 
-/* Prevent hover churn, style recalculations, and layout thrashing during active scrolling */
-html.lenis-scrolling *,
-html.is-pointer-scrolling * {
-  pointer-events: none !important;
-}
 
 /* Prevent Material Symbols icons from inheriting text underlines or text decorations */
 .material-symbols-rounded {

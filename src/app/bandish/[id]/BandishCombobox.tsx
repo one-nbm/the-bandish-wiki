@@ -41,7 +41,7 @@ export default function BandishCombobox({ value, onChange, allTitles }: BandishC
       />
       
       {showDropdown && (
-        <ul className="absolute z-50 top-[calc(100%+0.5rem)] left-0 right-0 bg-white dark:bg-m3-surface-high-dark rounded-[1.5rem] shadow-xl overflow-hidden border border-m3-surface-high dark:border-gray-600 origin-top py-2 max-h-60 overflow-y-auto m3-scrollbar animate-card">
+        <ul data-lenis-prevent="true" className="absolute z-50 top-[calc(100%+0.5rem)] left-0 right-0 bg-white dark:bg-m3-surface-high-dark rounded-[1.5rem] overflow-hidden border border-m3-surface-high dark:border-gray-600 origin-top py-2 max-h-60 overflow-y-auto overscroll-contain m3-scrollbar animate-card">
           {filteredTitles.map((title) => (
             <li key={title}>
               <button

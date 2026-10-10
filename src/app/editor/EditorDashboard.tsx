@@ -1288,7 +1288,8 @@ export default function EditorDashboard({
             <div className="border border-m3-surface-high dark:border-m3-surface-high-dark rounded-2xl overflow-hidden">
               <ReactLenis
                 options={LENIS_OPTIONS}
-                className="max-h-[380px] overflow-y-auto m3-scrollbar"
+                data-lenis-prevent="true"
+                className="max-h-[380px] overflow-y-auto m3-scrollbar overscroll-contain"
                 onWheel={(e: React.WheelEvent) => e.stopPropagation()}
                 onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
               >
@@ -1390,7 +1391,8 @@ export default function EditorDashboard({
           <div className="border border-m3-surface-high dark:border-m3-surface-high-dark rounded-2xl overflow-hidden">
             <ReactLenis
               options={LENIS_OPTIONS}
-              className="max-h-[380px] overflow-y-auto m3-scrollbar"
+              data-lenis-prevent="true"
+              className="max-h-[380px] overflow-y-auto m3-scrollbar overscroll-contain"
               onWheel={(e: React.WheelEvent) => e.stopPropagation()}
               onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
             >

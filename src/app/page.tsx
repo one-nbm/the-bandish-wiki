@@ -730,7 +730,8 @@ export default function Home() {
           <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col ${isInfoClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
             <ReactLenis 
               options={LENIS_OPTIONS} 
-              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar"
+              data-lenis-prevent="true"
+              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar overscroll-contain"
               onWheel={(e: React.WheelEvent) => e.stopPropagation()}
               onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
             >
@@ -811,7 +812,8 @@ export default function Home() {
           <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isAddClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
             <ReactLenis 
               options={LENIS_OPTIONS} 
-              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar"
+              data-lenis-prevent="true"
+              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar overscroll-contain"
               onWheel={(e: React.WheelEvent) => e.stopPropagation()}
               onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
             >
@@ -839,7 +841,8 @@ export default function Home() {
           <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isEditClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
             <ReactLenis 
               options={LENIS_OPTIONS} 
-              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar"
+              data-lenis-prevent="true"
+              className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar overscroll-contain"
               onWheel={(e: React.WheelEvent) => e.stopPropagation()}
               onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
             >

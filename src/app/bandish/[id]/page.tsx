@@ -179,7 +179,7 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                     <div
                       className="relative z-10 w-20 sm:w-24 shrink-0 flex items-center justify-center pointer-events-none"
                     >
-                      <span className="material-symbols-rounded text-m3-primary dark:text-white text-[1.6rem] drop-shadow-lg transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-125">play_arrow</span>
+                      <span className="material-symbols-rounded text-m3-primary dark:text-white text-[1.6rem] transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-125">play_arrow</span>
                     </div>
 
                     {/* Text */}

@@ -60,7 +60,8 @@ export function BandishModal({ bandish, isAdmin, onClose, onEdit }: BandishModal
       >
         <ReactLenis 
           options={LENIS_OPTIONS} 
-          className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar"
+          data-lenis-prevent="true"
+          className="w-full max-h-[90vh] overflow-y-auto m3-scrollbar overscroll-contain"
           onWheel={(e: React.WheelEvent) => e.stopPropagation()}
           onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
         >
