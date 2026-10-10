@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { approveContribution, denyContribution } from "@/app/actions";
 
 interface AdminApprovalListProps {
@@ -9,6 +10,7 @@ interface AdminApprovalListProps {
 }
 
 export default function AdminApprovalList({ initialPending, onActionComplete }: AdminApprovalListProps) {
+  const router = useRouter();
   const [pendingList, setPendingList] = useState<any[]>(initialPending);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -25,6 +27,10 @@ export default function AdminApprovalList({ initialPending, onActionComplete }: 
         setPendingList((prev) => prev.filter((item) => item.id !== id));
         setSelectedItem(null);
         setFeedbackMessage({ text: "Contribution approved and published live!", type: "success" });
+        router.refresh();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("wiki-notifications-updated"));
+        }
         if (onActionComplete) onActionComplete();
       } else {
         setFeedbackMessage({ text: res.error || "Failed to approve contribution.", type: "error" });
@@ -47,6 +53,10 @@ export default function AdminApprovalList({ initialPending, onActionComplete }: 
         setShowRejectInput(false);
         setRejectReason("");
         setFeedbackMessage({ text: "Contribution has been rejected.", type: "success" });
+        router.refresh();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("wiki-notifications-updated"));
+        }
         if (onActionComplete) onActionComplete();
       } else {
         setFeedbackMessage({ text: res.error || "Failed to reject contribution.", type: "error" });
@@ -84,7 +94,10 @@ export default function AdminApprovalList({ initialPending, onActionComplete }: 
             <span className="material-symbols-rounded text-2xl sm:text-3xl text-m3-primary dark:text-m3-primary-dark">
               verified_user
             </span>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white" style={{ fontVariationSettings: '"wdth" 120' }}>
+            <h2
+              className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
+              style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
+            >
               Pending Community Contributions
             </h2>
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-m3-primary/10 text-m3-primary dark:bg-m3-primary-dark/20 dark:text-m3-primary-dark border border-m3-primary/20 dark:border-m3-primary-dark/20">

@@ -61,7 +61,10 @@ export default function ContributorSubmissionsList({ initialSubmissions }: Contr
           history_edu
         </span>
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white" style={{ fontVariationSettings: '"wdth" 120' }}>
+          <h2
+            className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
+            style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
+          >
             My Community Submissions
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
