@@ -36,6 +36,8 @@ interface EditorDashboardProps {
   raagCount: number;
   userBandishes?: ContributedBandish[];
   userRaags?: ContributedRaag[];
+  allBandishes?: ContributedBandish[];
+  allRaags?: ContributedRaag[];
 }
 
 export default function EditorDashboard({
@@ -43,12 +45,17 @@ export default function EditorDashboard({
   bandishCount,
   raagCount,
   userBandishes = [],
-  userRaags = []
+  userRaags = [],
+  allBandishes = [],
+  allRaags = []
 }: EditorDashboardProps) {
   const [name, setName] = useState(initialName);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Dataset Scope State: User's contributions vs Full database
+  const [datasetScope, setDatasetScope] = useState<"user" | "all">("user");
 
   // Contributions Workspace State
   const [activeTab, setActiveTab] = useState<"bandishes" | "raags">("bandishes");
@@ -108,15 +115,31 @@ export default function EditorDashboard({
     );
   }, [userRaags, searchQuery]);
 
+  // Active bandishes and raags based on dataset scope toggle
+  const activeBandishes = useMemo(() => {
+    if (datasetScope === "all" && allBandishes.length > 0) {
+      return allBandishes;
+    }
+    return userBandishes;
+  }, [datasetScope, allBandishes, userBandishes]);
+
+  const activeRaags = useMemo(() => {
+    if (datasetScope === "all" && allRaags.length > 0) {
+      return allRaags;
+    }
+    return userRaags;
+  }, [datasetScope, allRaags, userRaags]);
+
   // Analytics Computation for Bandishes
   const bandishAnalytics = useMemo(() => {
-    const totalBandishes = userBandishes.length;
+    const totalBandishes = activeBandishes.length;
 
     const raagMap: Record<string, number> = {};
     const taalMap: Record<string, number> = {};
     const traditionMap: Record<string, number> = {};
+    let traditionBandishCount = 0;
 
-    userBandishes.forEach((b) => {
+    activeBandishes.forEach((b) => {
       const raagName = b.raag?.trim() || "Unknown";
       raagMap[raagName] = (raagMap[raagName] || 0) + 1;
 
@@ -125,6 +148,9 @@ export default function EditorDashboard({
 
       const traditionName = b.tradition?.trim() || "N/A";
       traditionMap[traditionName] = (traditionMap[traditionName] || 0) + 1;
+      if (traditionName !== "N/A") {
+        traditionBandishCount += 1;
+      }
     });
 
     const sortEntries = (map: Record<string, number>) =>
@@ -140,26 +166,34 @@ export default function EditorDashboard({
     const taalStats = sortEntries(taalMap);
     const traditionStats = sortEntries(traditionMap);
 
+    const distinctRaags = Object.keys(raagMap).length;
+    const distinctTaals = Object.keys(taalMap).length;
+    const distinctTraditions = Object.keys(traditionMap).filter((t) => t !== "N/A").length;
+
     return {
       totalBandishes,
-      distinctRaags: Object.keys(raagMap).length,
-      distinctTaals: Object.keys(taalMap).length,
-      distinctTraditions: Object.keys(traditionMap).filter((t) => t !== "N/A").length,
+      distinctRaags,
+      distinctTaals,
+      distinctTraditions,
+      // True whole-dataset averages across all entries, not just top-7 slice:
+      avgPerRaag: distinctRaags > 0 ? Math.round((totalBandishes / distinctRaags) * 10) / 10 : 0,
+      avgPerTaal: distinctTaals > 0 ? Math.round((totalBandishes / distinctTaals) * 10) / 10 : 0,
+      avgPerTradition: distinctTraditions > 0 ? Math.round((traditionBandishCount / distinctTraditions) * 10) / 10 : 0,
       raagStats: raagStats.slice(0, 7),
       taalStats: taalStats.slice(0, 7),
       traditionStats: traditionStats.slice(0, 7)
     };
-  }, [userBandishes]);
+  }, [activeBandishes]);
 
   // Analytics Computation for Raags
   const raagAnalytics = useMemo(() => {
-    const totalRaags = userRaags.length;
+    const totalRaags = activeRaags.length;
 
     const thaatMap: Record<string, number> = {};
     const samayMap: Record<string, number> = {};
     const vadiMap: Record<string, number> = {};
 
-    userRaags.forEach((r) => {
+    activeRaags.forEach((r) => {
       const thaatName = r.thaat?.trim() || "Unassigned";
       thaatMap[thaatName] = (thaatMap[thaatName] || 0) + 1;
 
@@ -183,16 +217,24 @@ export default function EditorDashboard({
     const samayStats = sortEntries(samayMap);
     const vadiStats = sortEntries(vadiMap);
 
+    const distinctThaats = Object.keys(thaatMap).filter((t) => t !== "Unassigned").length;
+    const distinctSamays = Object.keys(samayMap).filter((s) => s !== "Unspecified").length;
+    const distinctVadis = Object.keys(vadiMap).filter((v) => v !== "Unspecified").length;
+
     return {
       totalRaags,
-      distinctThaats: Object.keys(thaatMap).filter((t) => t !== "Unassigned").length,
-      distinctSamays: Object.keys(samayMap).filter((s) => s !== "Unspecified").length,
-      distinctVadis: Object.keys(vadiMap).filter((v) => v !== "Unspecified").length,
+      distinctThaats,
+      distinctSamays,
+      distinctVadis,
+      // True whole-dataset averages across all entries, not just top-7 slice:
+      avgPerThaat: distinctThaats > 0 ? Math.round((totalRaags / distinctThaats) * 10) / 10 : 0,
+      avgPerSamay: distinctSamays > 0 ? Math.round((totalRaags / distinctSamays) * 10) / 10 : 0,
+      avgPerVadi: distinctVadis > 0 ? Math.round((totalRaags / distinctVadis) * 10) / 10 : 0,
       thaatStats: thaatStats.slice(0, 7),
       samayStats: samayStats.slice(0, 7),
       vadiStats: vadiStats.slice(0, 7)
     };
-  }, [userRaags]);
+  }, [activeRaags]);
 
   // Active statistics for Google Health Style Graph
   const currentChartStats = useMemo(() => {
@@ -211,11 +253,18 @@ export default function EditorDashboard({
     return currentChartStats.length > 0 ? Math.max(...currentChartStats.map((s) => s.count)) : 1;
   }, [currentChartStats]);
 
+  // True average across the whole dataset for current active category
   const avgStatCount = useMemo(() => {
-    if (currentChartStats.length === 0) return 0;
-    const sum = currentChartStats.reduce((acc, curr) => acc + curr.count, 0);
-    return Math.round((sum / currentChartStats.length) * 10) / 10;
-  }, [currentChartStats]);
+    if (activeTab === "bandishes") {
+      if (bandishCategory === "raag") return bandishAnalytics.avgPerRaag;
+      if (bandishCategory === "taal") return bandishAnalytics.avgPerTaal;
+      return bandishAnalytics.avgPerTradition;
+    } else {
+      if (raagCategory === "thaat") return raagAnalytics.avgPerThaat;
+      if (raagCategory === "samay") return raagAnalytics.avgPerSamay;
+      return raagAnalytics.avgPerVadi;
+    }
+  }, [activeTab, bandishCategory, raagCategory, bandishAnalytics, raagAnalytics]);
 
   const selectedItem = useMemo(() => {
     const idx = hoveredColumnIndex !== null ? hoveredColumnIndex : activeColumnIndex;
@@ -334,7 +383,7 @@ export default function EditorDashboard({
             </span>
           </div>
           <div>
-            <p className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">{bandishCount}</p>
+            <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{bandishCount}</p>
             <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">
               Bandishes Authored
             </p>
@@ -357,7 +406,7 @@ export default function EditorDashboard({
             </span>
           </div>
           <div>
-            <p className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">{raagCount}</p>
+            <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{raagCount}</p>
             <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-1">
               Raags Authored
             </p>
@@ -405,17 +454,22 @@ export default function EditorDashboard({
 
       {/* Google Health Inspired Expressive Contributions Graph */}
       <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem]">
-        {/* Header with Google Health Top Metric Hierarchy */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+        {/* Header with Google Health Top Metric Hierarchy & Scope Switcher */}
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 mb-6">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-m3-secondary dark:text-m3-secondary-dark">
-              {activeTab === "bandishes" ? "Repertoire Breakdown" : "Canonical Scale Distribution"}
-            </span>
-            <div className="flex items-baseline gap-3 mt-1">
-              <h2 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-m3-secondary dark:text-m3-secondary-dark">
+                {activeTab === "bandishes" ? "Repertoire Breakdown" : "Canonical Scale Distribution"}
+              </span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-gray-500 dark:text-gray-400">
+                {datasetScope === "user" ? "Your Stats" : "Entire Wiki"}
+              </span>
+            </div>
+            <div className="flex items-baseline gap-3 mt-1.5">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
                 {activeTab === "bandishes"
-                  ? `${userBandishes.length} ${userBandishes.length === 1 ? "Bandish" : "Bandishes"}`
-                  : `${userRaags.length} ${userRaags.length === 1 ? "Raag" : "Raags"}`}
+                  ? `${activeBandishes.length} ${activeBandishes.length === 1 ? "Bandish" : "Bandishes"}`
+                  : `${activeRaags.length} ${activeRaags.length === 1 ? "Raag" : "Raags"}`}
               </h2>
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-gray-600 dark:text-gray-300">
                 {activeTab === "bandishes"
@@ -425,149 +479,205 @@ export default function EditorDashboard({
             </div>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
               {activeTab === "bandishes"
-                ? "Distribution across compositions, rhythmic cycles (taals), and gharanas."
-                : "Distribution across parent thaats, performance times (samay), and dominant swaras (vadi)."}
+                ? datasetScope === "user"
+                  ? "Distribution across your authored compositions, rhythmic cycles (taals), and gharanas."
+                  : "Distribution across all cataloged compositions, rhythmic cycles (taals), and gharanas across the entire wiki."
+                : datasetScope === "user"
+                  ? "Distribution across your authored raags, performance times (samay), and dominant swaras (vadi)."
+                  : "Distribution across all canonical raags, performance times (samay), and dominant swaras (vadi)."}
             </p>
           </div>
 
-          {/* Category Toggle Pills with Spring Transition */}
-          {activeTab === "bandishes" ? (
-            <div className="relative flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0 self-start sm:self-auto">
+          {/* Controls: Scope Switcher + Metric Category Pills */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start lg:self-auto">
+            {/* Scope Switcher: My Stats vs Entire Database */}
+            <div className="relative flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0">
               <button
                 type="button"
                 onClick={() => {
-                  setBandishCategory("raag");
+                  setDatasetScope("user");
                   setActiveColumnIndex(0);
                 }}
-                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
-                  bandishCategory === "raag"
+                className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 flex items-center gap-1.5 ${
+                  datasetScope === "user"
                     ? "text-white dark:text-gray-900"
                     : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 }`}
               >
-                {bandishCategory === "raag" && (
+                {datasetScope === "user" && (
                   <motion.div
-                    layoutId="active-bandish-graph-tab"
-                    className="absolute inset-0 bg-[#00A88F] dark:bg-[#00C4A7] rounded-full -z-10"
+                    layoutId="active-dataset-scope-pill"
+                    className="absolute inset-0 bg-m3-primary dark:bg-m3-primary-dark rounded-full -z-10"
                     transition={{ type: "spring", stiffness: 450, damping: 32 }}
                   />
                 )}
-                <span>By Raag</span>
+                <span className="material-symbols-rounded text-sm">person</span>
+                <span>My Stats</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => {
-                  setBandishCategory("taal");
+                  setDatasetScope("all");
                   setActiveColumnIndex(0);
                 }}
-                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
-                  bandishCategory === "taal"
+                className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 flex items-center gap-1.5 ${
+                  datasetScope === "all"
                     ? "text-white dark:text-gray-900"
                     : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 }`}
               >
-                {bandishCategory === "taal" && (
+                {datasetScope === "all" && (
                   <motion.div
-                    layoutId="active-bandish-graph-tab"
-                    className="absolute inset-0 bg-[#3B82F6] dark:bg-[#60A5FA] rounded-full -z-10"
+                    layoutId="active-dataset-scope-pill"
+                    className="absolute inset-0 bg-m3-primary dark:bg-m3-primary-dark rounded-full -z-10"
                     transition={{ type: "spring", stiffness: 450, damping: 32 }}
                   />
                 )}
-                <span>By Taal</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setBandishCategory("tradition");
-                  setActiveColumnIndex(0);
-                }}
-                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
-                  bandishCategory === "tradition"
-                    ? "text-white dark:text-gray-900"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                {bandishCategory === "tradition" && (
-                  <motion.div
-                    layoutId="active-bandish-graph-tab"
-                    className="absolute inset-0 bg-[#F59E0B] dark:bg-[#FBBF24] rounded-full -z-10"
-                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
-                  />
-                )}
-                <span>Gharana</span>
+                <span className="material-symbols-rounded text-sm">public</span>
+                <span>Entire Database</span>
               </button>
             </div>
-          ) : (
-            <div className="relative flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0 self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => {
-                  setRaagCategory("thaat");
-                  setActiveColumnIndex(0);
-                }}
-                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
-                  raagCategory === "thaat"
-                    ? "text-white dark:text-gray-900"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                {raagCategory === "thaat" && (
-                  <motion.div
-                    layoutId="active-raag-graph-tab"
-                    className="absolute inset-0 bg-[#00A88F] dark:bg-[#00C4A7] rounded-full -z-10"
-                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
-                  />
-                )}
-                <span>By Thaat</span>
-              </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setRaagCategory("samay");
-                  setActiveColumnIndex(0);
-                }}
-                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
-                  raagCategory === "samay"
-                    ? "text-white dark:text-gray-900"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                {raagCategory === "samay" && (
-                  <motion.div
-                    layoutId="active-raag-graph-tab"
-                    className="absolute inset-0 bg-[#3B82F6] dark:bg-[#60A5FA] rounded-full -z-10"
-                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
-                  />
-                )}
-                <span>By Samay (Time)</span>
-              </button>
+            {/* Category Toggle Pills with Spring Transition */}
+            {activeTab === "bandishes" ? (
+              <div className="relative flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBandishCategory("raag");
+                    setActiveColumnIndex(0);
+                  }}
+                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                    bandishCategory === "raag"
+                      ? "text-white dark:text-gray-900"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  {bandishCategory === "raag" && (
+                    <motion.div
+                      layoutId="active-bandish-graph-tab"
+                      className="absolute inset-0 bg-[#00A88F] dark:bg-[#00C4A7] rounded-full -z-10"
+                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    />
+                  )}
+                  <span>By Raag</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setRaagCategory("vadi");
-                  setActiveColumnIndex(0);
-                }}
-                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
-                  raagCategory === "vadi"
-                    ? "text-white dark:text-gray-900"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                {raagCategory === "vadi" && (
-                  <motion.div
-                    layoutId="active-raag-graph-tab"
-                    className="absolute inset-0 bg-[#F59E0B] dark:bg-[#FBBF24] rounded-full -z-10"
-                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
-                  />
-                )}
-                <span>Vadi Swara</span>
-              </button>
-            </div>
-          )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBandishCategory("taal");
+                    setActiveColumnIndex(0);
+                  }}
+                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                    bandishCategory === "taal"
+                      ? "text-white dark:text-gray-900"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  {bandishCategory === "taal" && (
+                    <motion.div
+                      layoutId="active-bandish-graph-tab"
+                      className="absolute inset-0 bg-[#3B82F6] dark:bg-[#60A5FA] rounded-full -z-10"
+                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    />
+                  )}
+                  <span>By Taal</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBandishCategory("tradition");
+                    setActiveColumnIndex(0);
+                  }}
+                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                    bandishCategory === "tradition"
+                      ? "text-white dark:text-gray-900"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  {bandishCategory === "tradition" && (
+                    <motion.div
+                      layoutId="active-bandish-graph-tab"
+                      className="absolute inset-0 bg-[#F59E0B] dark:bg-[#FBBF24] rounded-full -z-10"
+                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    />
+                  )}
+                  <span>Gharana</span>
+                </button>
+              </div>
+            ) : (
+              <div className="relative flex rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRaagCategory("thaat");
+                    setActiveColumnIndex(0);
+                  }}
+                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                    raagCategory === "thaat"
+                      ? "text-white dark:text-gray-900"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  {raagCategory === "thaat" && (
+                    <motion.div
+                      layoutId="active-raag-graph-tab"
+                      className="absolute inset-0 bg-[#00A88F] dark:bg-[#00C4A7] rounded-full -z-10"
+                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    />
+                  )}
+                  <span>By Thaat</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRaagCategory("samay");
+                    setActiveColumnIndex(0);
+                  }}
+                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                    raagCategory === "samay"
+                      ? "text-white dark:text-gray-900"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  {raagCategory === "samay" && (
+                    <motion.div
+                      layoutId="active-raag-graph-tab"
+                      className="absolute inset-0 bg-[#3B82F6] dark:bg-[#60A5FA] rounded-full -z-10"
+                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    />
+                  )}
+                  <span>By Samay (Time)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRaagCategory("vadi");
+                    setActiveColumnIndex(0);
+                  }}
+                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors z-10 ${
+                    raagCategory === "vadi"
+                      ? "text-white dark:text-gray-900"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  {raagCategory === "vadi" && (
+                    <motion.div
+                      layoutId="active-raag-graph-tab"
+                      className="absolute inset-0 bg-[#F59E0B] dark:bg-[#FBBF24] rounded-full -z-10"
+                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    />
+                  )}
+                  <span>Vadi Swara</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Google Health Vertical Capsule Chart Canvas */}
@@ -586,19 +696,22 @@ export default function EditorDashboard({
                 <div
                   className="absolute left-0 right-0 z-0 pointer-events-none flex items-center"
                   style={{
-                    bottom: `calc(40px + ${Math.min(80, Math.max(20, (avgStatCount / maxStatCount) * 65))}%)`
+                    bottom: `calc(40px + ${Math.min(80, Math.max(15, (avgStatCount / Math.max(1, maxStatCount)) * 65))}%)`
                   }}
                 >
                   <div className="w-full border-b border-dashed border-[#00A88F]/40 dark:border-[#00C4A7]/40" />
-                  <span className="absolute right-0 -translate-y-1/2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-[#00A88F] dark:text-[#00C4A7]">
-                    Avg: {avgStatCount}
-                  </span>
+                  {/* Positioned at right-0 in the clear gutter zone */}
+                  <div className="absolute right-0 -translate-y-1/2 flex items-center z-20 pointer-events-auto">
+                    <span className="text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-full bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-[#00A88F] dark:text-[#00C4A7] whitespace-nowrap">
+                      Avg: {avgStatCount}
+                    </span>
+                  </div>
                 </div>
               )}
 
-              {/* 7 Vertical Pill Columns Grid */}
+              {/* 7 Vertical Pill Columns Grid - with right gutter reserving space for the benchmark indicator */}
               <div
-                className="grid gap-2 sm:gap-4 h-full items-end relative z-10"
+                className="grid gap-2 sm:gap-4 h-full items-end relative z-10 pr-20 sm:pr-24"
                 style={{
                   gridTemplateColumns: `repeat(${currentChartStats.length}, minmax(0, 1fr))`
                 }}
@@ -639,10 +752,19 @@ export default function EditorDashboard({
                             isSelected ? "ring-2 ring-m3-primary dark:ring-m3-primary-dark opacity-100" : "opacity-90 group-hover:opacity-100"
                           }`}
                         >
-                          {/* Top Badge (Google Health Checkmark / Star Rosette Badge) */}
+                          {/* Top Badge: Golden Star Medallion for #1 or Crisp Checkmark for Above Average */}
                           {isAboveAverage && (
-                            <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white dark:bg-gray-950 text-gray-900 dark:text-white flex items-center justify-center border border-black/10 dark:border-white/10 shrink-0">
-                              <span className="material-symbols-rounded text-[10px] sm:text-xs font-bold leading-none">
+                            <div
+                              className={`w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-full flex items-center justify-center shrink-0 border transition-all ${
+                                idx === 0
+                                  ? "bg-amber-400 dark:bg-amber-300 text-amber-950 border-amber-300 dark:border-amber-200"
+                                  : "bg-white/95 dark:bg-gray-950/95 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 dark:border-emerald-400/25"
+                              }`}
+                            >
+                              <span
+                                className="material-symbols-rounded text-[11px] sm:text-xs leading-none font-bold"
+                                style={idx === 0 ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                              >
                                 {idx === 0 ? "star" : "check"}
                               </span>
                             </div>
@@ -655,7 +777,7 @@ export default function EditorDashboard({
                         <span
                           className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold transition-all ${
                             isSelected
-                              ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900 font-black"
+                              ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900 font-bold"
                               : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                           }`}
                         >
@@ -698,24 +820,24 @@ export default function EditorDashboard({
           </div>
         )}
 
-        {/* Metric Badges Row (Preserved for high-level numbers) */}
+        {/* Metric Badges Row */}
         {activeTab === "bandishes" ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
             <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
                 Total Repertory
               </span>
-              <span className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">
+              <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 {bandishAnalytics.totalBandishes}
               </span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
-                Raags Authored
+                {datasetScope === "user" ? "Raags Authored" : "Raags Covered"}
               </span>
-              <span className="text-xl sm:text-2xl font-black text-m3-primary dark:text-m3-primary-dark">
-                {userRaags.length}
+              <span className="text-xl sm:text-2xl font-bold text-m3-primary dark:text-m3-primary-dark">
+                {bandishAnalytics.distinctRaags}
               </span>
             </div>
 
@@ -723,7 +845,7 @@ export default function EditorDashboard({
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
                 Taals Represented
               </span>
-              <span className="text-xl sm:text-2xl font-black text-m3-secondary dark:text-m3-secondary-dark">
+              <span className="text-xl sm:text-2xl font-bold text-m3-secondary dark:text-m3-secondary-dark">
                 {bandishAnalytics.distinctTaals}
               </span>
             </div>
@@ -732,7 +854,7 @@ export default function EditorDashboard({
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
                 Gharana Traditions
               </span>
-              <span className="text-xl sm:text-2xl font-black text-m3-tertiary dark:text-m3-tertiary-dark">
+              <span className="text-xl sm:text-2xl font-bold text-m3-tertiary dark:text-m3-tertiary-dark">
                 {bandishAnalytics.distinctTraditions}
               </span>
             </div>
@@ -741,9 +863,9 @@ export default function EditorDashboard({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
             <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
-                Raags Authored
+                {datasetScope === "user" ? "Raags Authored" : "Total Catalog"}
               </span>
-              <span className="text-xl sm:text-2xl font-black text-m3-primary dark:text-m3-primary-dark">
+              <span className="text-xl sm:text-2xl font-bold text-m3-primary dark:text-m3-primary-dark">
                 {raagAnalytics.totalRaags}
               </span>
             </div>
@@ -752,7 +874,7 @@ export default function EditorDashboard({
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
                 Parent Thaats
               </span>
-              <span className="text-xl sm:text-2xl font-black text-m3-secondary dark:text-m3-secondary-dark">
+              <span className="text-xl sm:text-2xl font-bold text-m3-secondary dark:text-m3-secondary-dark">
                 {raagAnalytics.distinctThaats}
               </span>
             </div>
@@ -761,7 +883,7 @@ export default function EditorDashboard({
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
                 Performance Samays
               </span>
-              <span className="text-xl sm:text-2xl font-black text-m3-tertiary dark:text-m3-tertiary-dark">
+              <span className="text-xl sm:text-2xl font-bold text-m3-tertiary dark:text-m3-tertiary-dark">
                 {raagAnalytics.distinctSamays}
               </span>
             </div>
@@ -770,7 +892,7 @@ export default function EditorDashboard({
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
                 Vadi Swaras
               </span>
-              <span className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">
+              <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 {raagAnalytics.distinctVadis}
               </span>
             </div>

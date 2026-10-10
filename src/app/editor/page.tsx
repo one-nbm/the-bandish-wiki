@@ -14,18 +14,35 @@ export default async function EditorPage() {
   
   const contributorName = user?.user_metadata?.contributor_name || "Anonymous";
 
-  // Fetch counts and records
-  const { data: userBandishes, count: bandishCount } = await supabase
-    .from("bandishes")
-    .select("id, title, raag, taal, composer, lay, tradition", { count: "exact" })
-    .eq("contributor", contributorName)
-    .order("title", { ascending: true });
-    
-  const { data: userRaags, count: raagCount } = await supabase
-    .from("raags")
-    .select("id, name, slug, thaat, samay, vadi, samvadi", { count: "exact" })
-    .eq("contributor", contributorName)
-    .order("name", { ascending: true });
+  // Fetch user records and full database records in parallel
+  const [userBandishesRes, userRaagsRes, allBandishesRes, allRaagsRes] = await Promise.all([
+    supabase
+      .from("bandishes")
+      .select("id, title, raag, taal, composer, lay, tradition", { count: "exact" })
+      .eq("contributor", contributorName)
+      .order("title", { ascending: true }),
+    supabase
+      .from("raags")
+      .select("id, name, slug, thaat, samay, vadi, samvadi", { count: "exact" })
+      .eq("contributor", contributorName)
+      .order("name", { ascending: true }),
+    supabase
+      .from("bandishes")
+      .select("id, title, raag, taal, composer, lay, tradition", { count: "exact" })
+      .order("title", { ascending: true }),
+    supabase
+      .from("raags")
+      .select("id, name, slug, thaat, samay, vadi, samvadi", { count: "exact" })
+      .order("name", { ascending: true }),
+  ]);
+
+  const userBandishes = userBandishesRes.data || [];
+  const bandishCount = userBandishesRes.count || 0;
+  const userRaags = userRaagsRes.data || [];
+  const raagCount = userRaagsRes.count || 0;
+
+  const allBandishes = allBandishesRes.data || [];
+  const allRaags = allRaagsRes.data || [];
 
   return (
     <main className="min-h-screen bg-transparent relative transition-colors duration-500">
@@ -39,7 +56,7 @@ export default async function EditorPage() {
         <div className="mb-12">
           <h1 
             className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight"
-            style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}
+            style={{ fontVariationSettings: '"wght" 700, "wdth" 141, "ROND" 50' }}
           >
             Editor Dashboard
           </h1>
@@ -50,10 +67,12 @@ export default async function EditorPage() {
 
       <EditorDashboard 
         initialName={contributorName} 
-        bandishCount={bandishCount || 0} 
-        raagCount={raagCount || 0} 
-        userBandishes={userBandishes || []}
-        userRaags={userRaags || []}
+        bandishCount={bandishCount} 
+        raagCount={raagCount} 
+        userBandishes={userBandishes}
+        userRaags={userRaags}
+        allBandishes={allBandishes}
+        allRaags={allRaags}
       />
       </div>
     </main>

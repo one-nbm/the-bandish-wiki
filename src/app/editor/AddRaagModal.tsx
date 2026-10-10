@@ -159,7 +159,7 @@ export default function AddRaagModal({ contributorName }: { contributorName: str
                 </div>
                 
                 <div className="mb-8">
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Add New Raag</h2>
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 700, "wdth" 141, "ROND" 50' }}>Add New Raag</h2>
                   <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Contribute to the Raag database.</p>
                 </div>
 
