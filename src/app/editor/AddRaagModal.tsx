@@ -281,7 +281,11 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
 
                   {/* Toast Message */}
                   {toast && (
-                    <div className={`mt-6 px-6 py-4 rounded-xl font-bold flex items-center gap-3 border ${toast.type === 'error' ? 'bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark border-m3-error-dark/30' : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800/50'} animate-modal-enter`}>
+                    <div className={`mt-6 px-6 py-4 rounded-xl font-bold flex items-center gap-3 border ${
+                      toast.type === 'error'
+                        ? 'bg-red-100 dark:bg-red-950 text-red-900 dark:text-red-300 border-red-300 dark:border-red-800'
+                        : 'bg-green-100 dark:bg-green-950 text-green-900 dark:text-green-300 border-green-300 dark:border-green-800'
+                    } animate-modal-enter`}>
                       <span className="material-symbols-rounded">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
                       <span className="flex-1">{toast.message}</span>
                       <button type="button" onClick={() => setToast(null)} className="p-0.5 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors flex">

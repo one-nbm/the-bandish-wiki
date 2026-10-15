@@ -278,7 +278,11 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
               </div>
 
               {toast && (
-                <div className={`p-4 rounded-2xl border text-sm font-semibold flex items-center gap-2 ${toast.type === 'error' ? 'bg-m3-error/10 border-m3-error/20 text-m3-error dark:text-m3-error-dark' : 'bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300'}`}>
+                <div className={`p-4 rounded-2xl border text-sm font-semibold flex items-center gap-2 ${
+                  toast.type === 'error'
+                    ? 'bg-red-100 dark:bg-red-950 border-red-300 dark:border-red-800 text-red-900 dark:text-red-300'
+                    : 'bg-green-100 dark:bg-green-950 border-green-300 dark:border-green-800 text-green-900 dark:text-green-300'
+                }`}>
                   <span className="material-symbols-rounded">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
                   <span>{toast.message}</span>
                 </div>

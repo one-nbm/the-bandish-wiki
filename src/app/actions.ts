@@ -9,7 +9,7 @@ async function pingIndexNow(urls: string[]) {
     const host = "bandish-wiki.vercel.app";
     const key = "8f7b3c21a4e54823b190f898317d65ac";
     const keyLocation = `https://${host}/${key}.txt`;
-    await fetch("https://api.indexnow.org/indexnow", {
+    await fetch("https://www.bing.com/indexnow", {
       method: "POST",
       headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({

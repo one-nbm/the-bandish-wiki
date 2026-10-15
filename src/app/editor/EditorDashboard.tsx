@@ -438,8 +438,8 @@ export default function EditorDashboard({
         <div
           className={`px-6 py-4 rounded-2xl font-medium text-sm flex items-center justify-between border transition-all animate-modal-enter ${
             toast.type === "error"
-              ? "bg-m3-error/10 dark:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark border-m3-error/30"
-              : "bg-green-100/70 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-300 dark:border-green-800/50"
+              ? "bg-red-100 dark:bg-red-950 text-red-900 dark:text-red-300 border-red-300 dark:border-red-800"
+              : "bg-green-100 dark:bg-green-950 text-green-900 dark:text-green-300 border-green-300 dark:border-green-800"
           }`}
         >
           <div className="flex items-center gap-2.5">

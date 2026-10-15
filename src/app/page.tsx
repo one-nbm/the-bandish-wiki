@@ -163,6 +163,16 @@ export default function Home() {
     fetchBandishes();
   }, []);
 
+  // Auto-dismiss toast notification
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   // Lock Background Scrolling
   useEffect(() => {
     if (selectedBandish || isInfoOpen || isAddOpen || editingBandish) {
@@ -769,10 +779,14 @@ export default function Home() {
       {/* --- CUSTOM TOAST NOTIFICATION --- */}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] animate-modal-enter">
-          <div className={`flex items-center gap-3 px-6 py-4 rounded-full border font-bold ${toast.type === 'error' ? 'bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark border-m3-error-dark/30' : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800/50'}`}>
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-full border font-bold ${
+            toast.type === 'error'
+              ? 'bg-red-100 dark:bg-red-950 text-red-900 dark:text-red-300 border-red-300 dark:border-red-800'
+              : 'bg-green-100 dark:bg-green-950 text-green-900 dark:text-green-300 border-green-300 dark:border-green-800'
+          }`}>
             <span className="material-symbols-rounded">{toast.type === 'error' ? 'error' : 'check_circle'}</span>
             <span>{toast.message}</span>
-            <button onClick={() => setToast(null)} className="ml-2 hover:opacity-70 flex items-center justify-center"><span className="material-symbols-rounded text-lg">close</span></button>
+            <button onClick={() => setToast(null)} className="ml-2 hover:opacity-70 flex items-center justify-center" aria-label="Close notification"><span className="material-symbols-rounded text-lg">close</span></button>
           </div>
         </div>
       )}

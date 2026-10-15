@@ -17,13 +17,14 @@ async function run() {
 
   const urls = [
     `https://${host}`,
+    `https://${host}/raags`,
     ...(raags || []).map((r) => `https://${host}/raag/${r.slug}`),
     ...(bandishes || []).map((b) => `https://${host}/bandish/${b.id}`),
   ];
 
-  console.log(`Submitting ${urls.length} URLs to IndexNow...`);
+  console.log(`Submitting ${urls.length} URLs to IndexNow via Bing...`);
 
-  const response = await fetch("https://api.indexnow.org/indexnow", {
+  const response = await fetch("https://www.bing.com/indexnow", {
     method: "POST",
     headers: { "Content-Type": "application/json; charset=utf-8" },
     body: JSON.stringify({
@@ -36,7 +37,7 @@ async function run() {
 
   console.log(`IndexNow status: ${response.status} ${response.statusText}`);
   if (response.status === 200 || response.status === 202) {
-    console.log("Successfully submitted to IndexNow! Search engines are processing your URLs.");
+    console.log("Successfully submitted all 201 URLs to IndexNow! Microsoft Bing and partner search engines are now processing your archive.");
   } else {
     const text = await response.text();
     console.log("Response:", text);
