@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { syncRenditionAcrossBandishes, deleteRenditionSecurely, getAllBandishTitles } from "@/app/actions";
+import { syncRenditionAcrossBandishes, deleteRenditionSecurely, getAllBandishTitles, getAllRenditionArtists } from "@/app/actions";
 import BandishCombobox from "./BandishCombobox";
+import FormCombobox from "@/components/FormCombobox";
 import { useTheme } from "@/app/ThemeProvider";
 
 export default function EditRenditionModal({ bandish, index }: { bandish: any; index: number }) {
@@ -23,6 +24,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [allTitles, setAllTitles] = useState<string[]>([]);
+  const [allArtists, setAllArtists] = useState<string[]>([]);
   
   const [toast, setToast] = useState<{ message: string, type: 'error' | 'success' } | null>(null);
 
@@ -30,6 +32,9 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
     if (isOpen) {
       getAllBandishTitles().then(res => {
         if (res.success && res.data) setAllTitles(res.data);
+      });
+      getAllRenditionArtists().then(res => {
+        if (res.success && res.data) setAllArtists(res.data);
       });
     }
   }, [isOpen]);
@@ -144,7 +149,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
             <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`} />
               <div
                 data-lenis-prevent="true"
-                className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`}
+                className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`}
                 onClick={(e) => e.stopPropagation()}
               >
               <div className="absolute top-6 right-6 md:top-8 md:right-8">
@@ -153,21 +158,35 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
                 </button>
               </div>
 
-              <div className="mb-8">
+              <div className="mb-8 pr-14 md:pr-16">
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Edit Rendition</h2>
-                <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Update or remove this performance.</p>
+                <p className="text-gray-500 dark:text-gray-400">Update or remove this performance.</p>
               </div>
 
               <form onSubmit={(e) => handleFormSubmit(e, 'save')} className="space-y-6 md:space-y-8">
-                <div>
-                  <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Artist (Required)</label>
-                  <input type="text" required placeholder="e.g. Pandit Jasraj" value={formArtist} onChange={(e) => setFormArtist(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
-                </div>
+                <FormCombobox
+                  label="Artist / Performer"
+                  value={formArtist}
+                  onChange={setFormArtist}
+                  suggestions={allArtists}
+                  placeholder="e.g. Pandit Jasraj"
+                  required
+                  labelColor="text-m3-primary dark:text-m3-primary-dark"
+                  focusRingColor="focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
+                  quickPills={[
+                    "Pt. Bhimsen Joshi",
+                    "Pt. Jasraj",
+                    "Ustad Amir Khan",
+                    "Kishori Amonkar",
+                    "Pt. Kumar Gandharva",
+                    "Pt. Ulhas Kashalkar"
+                  ]}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Year (Optional)</label>
-                    <input type="text" placeholder="e.g. 2005" value={formYear} onChange={(e) => setFormYear(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+                    <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Year / Era (Optional)</label>
+                    <input type="text" placeholder="e.g. 2005" value={formYear} onChange={(e) => setFormYear(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
                   </div>
                   <div className="flex items-center pt-6">
                     <label className="flex items-center gap-4 cursor-pointer group">
@@ -182,7 +201,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider">Bandishes Included</label>
+                    <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider">Compositions Included</label>
                     <button type="button" onClick={() => setFormBandishes([...formBandishes, ""])} className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark hover:underline flex items-center gap-1">
                       <span className="material-symbols-rounded text-[1rem]">add</span> Add Bandish
                     </button>
@@ -203,7 +222,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
                           <button 
                             type="button" 
                             onClick={() => setFormBandishes(formBandishes.filter((_, i) => i !== index))} 
-                            className="p-3 text-gray-400 hover:text-m3-error dark:hover:text-m3-error-dark hover:bg-m3-error/10 dark:hover:bg-m3-error-dark/10 rounded-full transition-colors"
+                            className="p-3 text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/10 rounded-full transition-colors"
                           >
                             <span className="material-symbols-rounded">delete</span>
                           </button>
@@ -215,7 +234,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
 
                 <div>
                   <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">YouTube URL (Required)</label>
-                  <input type="url" required placeholder="e.g. https://youtube.com/watch?v=..." value={formUrl} onChange={(e) => setFormUrl(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
+                  <input type="url" required placeholder="e.g. https://youtube.com/watch?v=..." value={formUrl} onChange={(e) => setFormUrl(e.target.value)} className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" />
                 </div>
 
                 <div className="flex gap-3 justify-end pt-2">
@@ -223,7 +242,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
                     type="button"
                     onClick={() => setConfirmDialog({ isOpen: true, action: 'delete' })}
                     disabled={isSubmitting}
-                    className="flex items-center justify-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                    className="flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 dark:bg-red-500/15 dark:hover:bg-red-500/25 text-red-600 dark:text-red-400 px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                   >
                     <span className="material-symbols-rounded text-[1.4rem]">delete</span>
                     Delete
@@ -241,13 +260,13 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
             {confirmDialog.isOpen && (
               <div className="absolute inset-0 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
                 <div className="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm animate-backdrop-enter" onClick={() => setConfirmDialog({ isOpen: false, action: null })} />
-                <div className="relative w-full max-w-sm bg-white dark:bg-m3-surface-container-dark rounded-[2rem] p-6 animate-modal-enter border border-m3-surface-high dark:border-m3-surface-high-dark">
+                <div className="relative w-full max-w-sm bg-m3-surface dark:bg-m3-surface-dark rounded-[2rem] p-6 animate-modal-enter border border-m3-surface-high dark:border-m3-surface-high-dark">
                   <div className="flex flex-col items-center text-center mb-6">
-                    <div className="w-16 h-16 bg-m3-error/10 dark:bg-m3-error-dark/10 rounded-full flex items-center justify-center mb-4">
-                      <span className="material-symbols-rounded text-[2rem] text-m3-error dark:text-m3-error-dark">delete_forever</span>
+                    <div className="w-16 h-16 bg-red-500/10 dark:bg-red-500/15 rounded-full flex items-center justify-center mb-4">
+                      <span className="material-symbols-rounded text-[2rem] text-red-600 dark:text-red-400">delete_forever</span>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Rendition?</h3>
-                    <p className="text-m3-secondary dark:text-m3-secondary-dark text-sm">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
                       This action cannot be undone. Are you sure you want to remove this video?
                     </p>
                   </div>
@@ -262,7 +281,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
                     <button
                       onClick={handleConfirmDelete}
                       disabled={isSubmitting}
-                      className="flex-1 px-4 py-3 rounded-full font-bold text-white dark:text-gray-900 bg-m3-error dark:bg-m3-error-dark hover:bg-m3-error/90 dark:hover:bg-m3-error-dark/90 transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-3 rounded-full font-bold text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
                     >
                       {isSubmitting ? "Deleting..." : "Delete"}
                     </button>

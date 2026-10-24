@@ -37,11 +37,11 @@ export default function BandishCombobox({ value, onChange, allTitles }: BandishC
         value={value} 
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setIsFocused(true)}
-        className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
+        className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
       />
       
       {showDropdown && (
-        <ul data-lenis-prevent="true" className="absolute z-50 top-[calc(100%+0.5rem)] left-0 right-0 bg-white dark:bg-m3-surface-high-dark rounded-[1.5rem] overflow-hidden border border-m3-surface-high dark:border-gray-600 origin-top py-2 max-h-60 overflow-y-auto overscroll-contain m3-scrollbar animate-card">
+        <ul data-lenis-prevent="true" className="absolute z-50 top-[calc(100%+0.5rem)] left-0 right-0 bg-white dark:bg-m3-surface-container-dark rounded-[1.5rem] overflow-hidden border border-m3-surface-high dark:border-m3-surface-high-dark origin-top py-2 max-h-60 overflow-y-auto overscroll-contain m3-scrollbar animate-card">
           {filteredTitles.map((title) => (
             <li key={title}>
               <button
@@ -51,7 +51,7 @@ export default function BandishCombobox({ value, onChange, allTitles }: BandishC
                   onChange(title);
                   setIsFocused(false);
                 }}
-                className="w-full text-left px-6 py-3 text-gray-800 dark:text-gray-100 hover:bg-m3-surface-container dark:hover:bg-gray-700 transition-colors font-medium text-sm"
+                className="w-full text-left px-6 py-3 text-gray-800 dark:text-gray-100 hover:bg-m3-surface-container dark:hover:bg-white/10 transition-colors font-medium text-sm"
               >
                 {title}
               </button>

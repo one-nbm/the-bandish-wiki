@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { syncRenditionAcrossBandishes, getAllBandishTitles, submitRenditionContribution, UserRole } from "@/app/actions";
+import { syncRenditionAcrossBandishes, getAllBandishTitles, getAllRenditionArtists, submitRenditionContribution, UserRole } from "@/app/actions";
 import BandishCombobox from "./BandishCombobox";
+import FormCombobox from "@/components/FormCombobox";
 import { useTheme } from "@/app/ThemeProvider";
 
 export default function AddRenditionModal({ bandish, userRole = "admin" }: { bandish: any; userRole?: UserRole }) {
@@ -21,6 +22,7 @@ export default function AddRenditionModal({ bandish, userRole = "admin" }: { ban
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [allTitles, setAllTitles] = useState<string[]>([]);
+  const [allArtists, setAllArtists] = useState<string[]>([]);
   const [toast, setToast] = useState<{ message: string, type: 'error' | 'success' } | null>(null);
 
   useEffect(() => {
@@ -31,6 +33,9 @@ export default function AddRenditionModal({ bandish, userRole = "admin" }: { ban
     if (isOpen) {
       getAllBandishTitles().then(res => {
         if (res.success && res.data) setAllTitles(res.data);
+      });
+      getAllRenditionArtists().then(res => {
+        if (res.success && res.data) setAllArtists(res.data);
       });
     }
   }, [isOpen]);
@@ -149,7 +154,7 @@ export default function AddRenditionModal({ bandish, userRole = "admin" }: { ban
                 </button>
               </div>
 
-              <div className="mb-8">
+              <div className="mb-8 pr-14 md:pr-16">
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>
                   {userRole === "contributor" ? "Suggest Rendition" : "Add Notable Rendition"}
                 </h2>
@@ -161,17 +166,24 @@ export default function AddRenditionModal({ bandish, userRole = "admin" }: { ban
               </div>
 
               <form onSubmit={handleFormSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Artist / Performer</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Pt. Bhimsen Joshi"
-                    value={formArtist}
-                    onChange={(e) => setFormArtist(e.target.value)}
-                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
-                  />
-                </div>
+                <FormCombobox
+                  label="Artist / Performer"
+                  value={formArtist}
+                  onChange={setFormArtist}
+                  suggestions={allArtists}
+                  placeholder="e.g. Pt. Bhimsen Joshi"
+                  required
+                  labelColor="text-m3-primary dark:text-m3-primary-dark"
+                  focusRingColor="focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
+                  quickPills={[
+                    "Pt. Bhimsen Joshi",
+                    "Pt. Jasraj",
+                    "Ustad Amir Khan",
+                    "Kishori Amonkar",
+                    "Pt. Kumar Gandharva",
+                    "Pt. Ulhas Kashalkar"
+                  ]}
+                />
 
                 <div>
                   <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">YouTube URL</label>

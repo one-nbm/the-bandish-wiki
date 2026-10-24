@@ -749,6 +749,63 @@ export async function getAllBandishTitles() {
   return { success: true, data: data.map(b => b.title) };
 }
 
+export async function getAllRenditionArtists() {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.from('bandishes').select('youtube_renditions');
+
+  const canonicalArtists = [
+    "Pt. Bhimsen Joshi",
+    "Pt. Jasraj",
+    "Ustad Amir Khan",
+    "Kishori Amonkar",
+    "Pt. Kumar Gandharva",
+    "Pt. Ulhas Kashalkar",
+    "Ustad Bade Ghulam Ali Khan",
+    "Vidushi Ashwini Bhide Deshpande",
+    "Pt. C. R. Vyas",
+    "Ustad Rashid Khan",
+    "Pt. D. V. Paluskar",
+    "Pt. Jitendra Abhisheki",
+    "Veena Sahasrabuddhe",
+    "Kaushiki Chakraborty",
+    "Pt. Venkatesh Kumar",
+    "Pt. Ajoy Chakrabarty",
+    "Dr. Prabha Atre",
+    "Girija Devi",
+    "Shobha Gurtu",
+    "Pt. Mallikarjun Mansur",
+    "Gangubai Hangal",
+    "Pt. Sanjeev Abhyankar",
+    "Ustad Salamat Ali Khan",
+    "Ustad Nazakat Ali Khan",
+    "Arati Ankalikar-Tikekar",
+    "Ram Marathe"
+  ];
+
+  if (error || !data) return { success: true, data: canonicalArtists.sort((a, b) => a.localeCompare(b)) };
+
+  const artistMap = new Map<string, string>();
+  canonicalArtists.forEach(a => artistMap.set(a.toLowerCase(), a));
+
+  data.forEach((row: any) => {
+    if (Array.isArray(row.youtube_renditions)) {
+      row.youtube_renditions.forEach((r: any) => {
+        if (r && typeof r.artist === 'string' && r.artist.trim()) {
+          const trimmed = r.artist.trim();
+          const lower = trimmed.toLowerCase();
+          if (!artistMap.has(lower)) {
+            artistMap.set(lower, trimmed);
+          }
+        }
+      });
+    }
+  });
+
+  const merged = Array.from(artistMap.values()).sort((a, b) => a.localeCompare(b));
+  return { success: true, data: merged };
+}
+
+
 export async function syncRenditionAcrossBandishes(
   oldRendition: any | null,
   newRendition: any | null
