@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
-import { updateRaagSecurely, deleteRaagSecurely, submitRaagEdit, UserRole } from "@/app/actions";
+import { updateRaagSecurely, deleteRaagSecurely, submitRaagEdit, getAllRaagMetadata, UserRole } from "@/app/actions";
 import { useTheme } from "@/app/ThemeProvider";
+import FormCombobox from "@/components/FormCombobox";
 
 export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any; userRole?: UserRole }) {
   const router = useRouter();
@@ -32,6 +33,26 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
   const [confirmDialog, setConfirmDialog] = useState(false);
+
+  const [metadata, setMetadata] = useState<{
+    thaats: string[];
+    samays: string[];
+    vadis: string[];
+    samvadis: string[];
+  }>({
+    thaats: ["Asawari", "Bhairav", "Bhairavi", "Bilawal", "Kafi", "Kalyan", "Khamaj", "Marwa", "Purvi", "Todi"],
+    samays: ["Morning (6 AM – 9 AM)", "Late Morning (9 AM – 12 PM)", "Afternoon (12 PM – 3 PM)", "Late Afternoon (3 PM – 6 PM)", "Evening (6 PM – 9 PM)", "Night (9 PM – 12 AM)", "Late Night (12 AM – 3 AM)", "Pre-Dawn (3 AM – 6 AM)", "Any Time"],
+    vadis: ["Sa", "Shadja (S)", "Re", "Rishabh (R)", "Komal Rishabh (r)", "Ga", "Gandhar (G)", "Gandhar (Ga)", "Komal Gandhar (g)", "Ma", "Madhyam (M)", "Teevra Madhyam (m)", "Pa", "Pancham (P)", "Dha", "Dhaivat (D)", "Komal Dhaivat (d)", "Ni", "Nishad (N)", "Komal Nishad (n)"],
+    samvadis: ["Sa", "Shadja (S)", "Re", "Rishabh (R)", "Komal Rishabh (r)", "Ga", "Gandhar (G)", "Gandhar (Ga)", "Komal Gandhar (g)", "Ma", "Madhyam (M)", "Teevra Madhyam (m)", "Pa", "Pancham (P)", "Dha", "Dhaivat (D)", "Komal Dhaivat (d)", "Ni", "Nishad (N)", "Komal Nishad (n)"],
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      getAllRaagMetadata().then(res => {
+        if (res.success && res.data) setMetadata(res.data);
+      });
+    }
+  }, [isOpen]);
 
   const closeModal = useCallback(() => {
     setIsClosing(true);
@@ -180,7 +201,7 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
         <div className={isDarkMode ? "dark" : ""}>
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 text-left" onClick={closeModal}>
             <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
-            <div data-lenis-prevent="true" className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto overscroll-contain bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
+            <div data-lenis-prevent="true" className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto overscroll-contain bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`} onClick={(e) => e.stopPropagation()}>
               
               <div className="absolute top-6 right-6 md:top-8 md:right-8">
                 <button onClick={closeModal} className="flex items-center justify-center p-2 bg-m3-surface-container dark:bg-m3-surface-high-dark hover:bg-m3-surface-high dark:hover:bg-m3-surface-container-dark text-gray-900 dark:text-white rounded-full transition-colors duration-200">
@@ -188,7 +209,7 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
                 </button>
               </div>
               
-              <div className="mb-8">
+              <div className="mb-8 pr-14 md:pr-16">
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>
                   {userRole === "contributor" ? "Suggest Edit to Raag" : "Edit Raag"}
                 </h2>
@@ -219,74 +240,88 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Thaat</label>
-                    <input 
-                      type="text" 
-                      value={formThaat} 
-                      onChange={(e) => setFormThaat(e.target.value)} 
-                      className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary dark:focus:ring-m3-secondary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-m3-secondary dark:text-m3-secondary-dark uppercase tracking-wider mb-2">Prahar / Samay</label>
-                    <input 
-                      type="text" 
-                      value={formSamay} 
-                      onChange={(e) => setFormSamay(e.target.value)} 
-                      className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-secondary dark:focus:ring-m3-secondary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
-                    />
-                  </div>
+                  <FormCombobox
+                    label="Thaat"
+                    value={formThaat}
+                    onChange={setFormThaat}
+                    suggestions={metadata.thaats}
+                    placeholder="e.g. Kalyan"
+                    labelColor="text-m3-primary dark:text-m3-primary-dark"
+                    focusRingColor="focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
+                    inputClassName="bg-m3-surface-container dark:bg-m3-surface-container-dark"
+                    quickPills={["Bilawal", "Kalyan", "Khamaj", "Kafi", "Asawari", "Bhairav", "Bhairavi", "Todi", "Purvi", "Marwa"]}
+                  />
+                  <FormCombobox
+                    label="Samay (Time)"
+                    value={formSamay}
+                    onChange={setFormSamay}
+                    suggestions={metadata.samays}
+                    placeholder="e.g. Evening (6 PM – 9 PM)"
+                    labelColor="text-m3-primary dark:text-m3-primary-dark"
+                    focusRingColor="focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
+                    inputClassName="bg-m3-surface-container dark:bg-m3-surface-container-dark"
+                    quickPills={[
+                      { label: "Morning", value: "Morning (6 AM – 9 AM)" },
+                      { label: "Afternoon", value: "Afternoon (12 PM – 3 PM)" },
+                      { label: "Evening", value: "Evening (6 PM – 9 PM)" },
+                      { label: "Night", value: "Night (9 PM – 12 AM)" },
+                      { label: "Late Night", value: "Late Night (12 AM – 3 AM)" },
+                    ]}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Vadi Swar</label>
-                    <input 
-                      type="text" 
-                      value={formVadi} 
-                      onChange={(e) => setFormVadi(e.target.value)} 
-                      className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Samvadi Swar</label>
-                    <input 
-                      type="text" 
-                      value={formSamvadi} 
-                      onChange={(e) => setFormSamvadi(e.target.value)} 
-                      className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400" 
-                    />
-                  </div>
+                  <FormCombobox
+                    label="Vadi"
+                    value={formVadi}
+                    onChange={setFormVadi}
+                    suggestions={metadata.vadis}
+                    placeholder="e.g. Ga"
+                    labelColor="text-m3-primary dark:text-m3-primary-dark"
+                    focusRingColor="focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
+                    inputClassName="bg-m3-surface-container dark:bg-m3-surface-container-dark"
+                    quickPills={["Sa", "Re", "Ga", "Ma", "Pa", "Dha", "Ni"]}
+                  />
+                  <FormCombobox
+                    label="Samvadi"
+                    value={formSamvadi}
+                    onChange={setFormSamvadi}
+                    suggestions={metadata.samvadis}
+                    placeholder="e.g. Ni"
+                    labelColor="text-m3-primary dark:text-m3-primary-dark"
+                    focusRingColor="focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
+                    inputClassName="bg-m3-surface-container dark:bg-m3-surface-container-dark"
+                    quickPills={["Sa", "Re", "Ga", "Ma", "Pa", "Dha", "Ni"]}
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Aaroh</label>
+                  <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Aaroh</label>
                   <input 
                     type="text" 
                     value={formAaroh} 
                     onChange={(e) => setFormAaroh(e.target.value)} 
-                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm" 
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm" 
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Avaroh</label>
+                  <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Avaroh</label>
                   <input 
                     type="text" 
                     value={formAvaroh} 
                     onChange={(e) => setFormAvaroh(e.target.value)} 
-                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400 transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm" 
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm" 
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-m3-tertiary dark:text-m3-tertiary-dark uppercase tracking-wider mb-2">Theoretical Notes / Description</label>
+                  <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Description</label>
                   <textarea 
                     value={formDescription} 
                     onChange={(e) => setFormDescription(e.target.value)} 
                     rows={4} 
-                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-tertiary dark:focus:ring-m3-tertiary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 resize-y m3-scrollbar" 
+                    className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 resize-y m3-scrollbar" 
                   />
                 </div>
 
@@ -309,7 +344,7 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
                       type="button" 
                       onClick={() => setConfirmDialog(true)} 
                       disabled={isSubmitting} 
-                      className="flex items-center gap-2 bg-m3-error/10 hover:bg-m3-error/20 dark:bg-m3-error-dark/10 dark:hover:bg-m3-error-dark/20 text-m3-error dark:text-m3-error-dark px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                      className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 dark:bg-red-500/15 dark:hover:bg-red-500/25 text-red-600 dark:text-red-400 px-6 py-4 rounded-[1.5rem] font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                     >
                       <span className="material-symbols-rounded text-[1.4rem]">delete</span>
                       Delete
@@ -337,13 +372,13 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
             {confirmDialog && (
               <div className="absolute inset-0 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
                 <div className="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm animate-backdrop-enter" onClick={() => setConfirmDialog(false)} />
-                <div className="relative w-full max-w-sm bg-white dark:bg-m3-surface-container-dark rounded-[2rem] p-6 animate-modal-enter border border-m3-surface-high dark:border-m3-surface-high-dark">
+                <div className="relative w-full max-w-sm bg-m3-surface dark:bg-m3-surface-dark rounded-[2rem] p-6 animate-modal-enter border border-m3-surface-high dark:border-m3-surface-high-dark">
                   <div className="flex flex-col items-center text-center mb-6">
-                    <div className="w-16 h-16 bg-m3-error/10 dark:bg-m3-error-dark/10 rounded-full flex items-center justify-center mb-4">
-                      <span className="material-symbols-rounded text-[2rem] text-m3-error dark:text-m3-error-dark">delete_forever</span>
+                    <div className="w-16 h-16 bg-red-500/10 dark:bg-red-500/15 rounded-full flex items-center justify-center mb-4">
+                      <span className="material-symbols-rounded text-[2rem] text-red-600 dark:text-red-400">delete_forever</span>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete "{raag.name}"?</h3>
-                    <p className="text-m3-secondary dark:text-m3-secondary-dark text-sm">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
                       This will permanently delete the raag and all its associated data. This action cannot be undone.
                     </p>
                   </div>
@@ -358,7 +393,7 @@ export default function EditRaagModal({ raag, userRole = "admin" }: { raag: any;
                     <button
                       onClick={handleConfirmDelete}
                       disabled={isSubmitting}
-                      className="flex-1 px-4 py-3 rounded-full font-bold text-white dark:text-gray-900 bg-m3-error dark:bg-m3-error-dark hover:bg-m3-error/90 dark:hover:bg-m3-error-dark/90 transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-3 rounded-full font-bold text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
                     >
                       {isSubmitting ? "Deleting..." : "Delete"}
                     </button>

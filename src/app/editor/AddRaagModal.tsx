@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
-import { addRaagSecurely, submitRaagContribution, UserRole } from "@/app/actions";
+import { addRaagSecurely, submitRaagContribution, getAllRaagMetadata, UserRole } from "@/app/actions";
 import { useTheme } from "@/app/ThemeProvider";
 import { ReactLenis } from 'lenis/react';
 import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
+import FormCombobox from "@/components/FormCombobox";
 
 function generateSlug(name: string) {
   return name
@@ -40,6 +41,26 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
+
+  const [metadata, setMetadata] = useState<{
+    thaats: string[];
+    samays: string[];
+    vadis: string[];
+    samvadis: string[];
+  }>({
+    thaats: ["Asawari", "Bhairav", "Bhairavi", "Bilawal", "Kafi", "Kalyan", "Khamaj", "Marwa", "Purvi", "Todi"],
+    samays: ["Morning (6 AM – 9 AM)", "Late Morning (9 AM – 12 PM)", "Afternoon (12 PM – 3 PM)", "Late Afternoon (3 PM – 6 PM)", "Evening (6 PM – 9 PM)", "Night (9 PM – 12 AM)", "Late Night (12 AM – 3 AM)", "Pre-Dawn (3 AM – 6 AM)", "Any Time"],
+    vadis: ["Sa", "Shadja (S)", "Re", "Rishabh (R)", "Komal Rishabh (r)", "Ga", "Gandhar (G)", "Gandhar (Ga)", "Komal Gandhar (g)", "Ma", "Madhyam (M)", "Teevra Madhyam (m)", "Pa", "Pancham (P)", "Dha", "Dhaivat (D)", "Komal Dhaivat (d)", "Ni", "Nishad (N)", "Komal Nishad (n)"],
+    samvadis: ["Sa", "Shadja (S)", "Re", "Rishabh (R)", "Komal Rishabh (r)", "Ga", "Gandhar (G)", "Gandhar (Ga)", "Komal Gandhar (g)", "Ma", "Madhyam (M)", "Teevra Madhyam (m)", "Pa", "Pancham (P)", "Dha", "Dhaivat (D)", "Komal Dhaivat (d)", "Ni", "Nishad (N)", "Komal Nishad (n)"],
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      getAllRaagMetadata().then(res => {
+        if (res.success && res.data) setMetadata(res.data);
+      });
+    }
+  }, [isOpen]);
 
   const closeModal = useCallback(() => {
     setIsClosing(true);
@@ -165,7 +186,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
           
           {/* Modal Content */}
-          <div className={`relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-m3-surface-high dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-all duration-300 ease-out ${isClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
+          <div className={`relative w-full max-w-3xl max-h-[90vh] bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] border border-m3-surface-high dark:border-m3-surface-high-dark overflow-hidden flex flex-col transition-all duration-300 ease-out ${isClosing ? 'animate-modal-exit scale-95' : 'animate-modal-enter scale-100'}`} onClick={(e) => e.stopPropagation()}>
             <ReactLenis 
               options={LENIS_OPTIONS} 
               data-lenis-prevent="true"
@@ -180,9 +201,9 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                   </button>
                 </div>
                 
-                <div className="mb-8">
+                <div className="mb-8 pr-14 md:pr-16">
                   <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontVariationSettings: '"wght" 900, "wdth" 141, "ROND" 50' }}>Add New Raag</h2>
-                  <p className="text-m3-secondary dark:text-m3-secondary-dark font-medium">Contribute to the Raag database.</p>
+                  <p className="text-gray-500 dark:text-gray-400 font-medium">Contribute to the Raag database.</p>
                 </div>
 
                 <form id="add-raag-form" onSubmit={handleFormSubmit} className="space-y-6">
@@ -197,57 +218,67 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                           required
                           value={formName}
                           onChange={(e) => setFormName(e.target.value)}
-                          className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
+                          className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-bold"
                           placeholder="e.g. Yaman"
                         />
                       </div>
                       
-                      <div>
-                        <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Thaat</label>
-                        <input 
-                          type="text" 
-                          value={formThaat}
-                          onChange={(e) => setFormThaat(e.target.value)}
-                          className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
-                          placeholder="e.g. Kalyan"
-                        />
-                      </div>
+                      <FormCombobox
+                        label="Thaat"
+                        value={formThaat}
+                        onChange={setFormThaat}
+                        suggestions={metadata.thaats}
+                        placeholder="e.g. Kalyan"
+                        labelColor="text-m3-primary dark:text-m3-primary-dark"
+                        focusRingColor="focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
+                        inputClassName="bg-m3-surface-container dark:bg-m3-surface-container-dark"
+                        quickPills={["Bilawal", "Kalyan", "Khamaj", "Kafi", "Asawari", "Bhairav", "Bhairavi", "Todi", "Purvi", "Marwa"]}
+                      />
 
-                      <div>
-                        <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Samay (Time)</label>
-                        <input 
-                          type="text" 
-                          value={formSamay}
-                          onChange={(e) => setFormSamay(e.target.value)}
-                          className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
-                          placeholder="e.g. Evening (First quarter of night)"
-                        />
-                      </div>
+                      <FormCombobox
+                        label="Samay (Time)"
+                        value={formSamay}
+                        onChange={setFormSamay}
+                        suggestions={metadata.samays}
+                        placeholder="e.g. Evening (6 PM – 9 PM)"
+                        labelColor="text-m3-primary dark:text-m3-primary-dark"
+                        focusRingColor="focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
+                        inputClassName="bg-m3-surface-container dark:bg-m3-surface-container-dark"
+                        quickPills={[
+                          { label: "Morning", value: "Morning (6 AM – 9 AM)" },
+                          { label: "Afternoon", value: "Afternoon (12 PM – 3 PM)" },
+                          { label: "Evening", value: "Evening (6 PM – 9 PM)" },
+                          { label: "Night", value: "Night (9 PM – 12 AM)" },
+                          { label: "Late Night", value: "Late Night (12 AM – 3 AM)" },
+                        ]}
+                      />
                     </div>
 
                     {/* Right Column */}
                     <div className="space-y-6">
                       <div className="flex gap-4">
-                        <div className="flex-1">
-                          <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Vadi</label>
-                          <input 
-                            type="text" 
-                            value={formVadi}
-                            onChange={(e) => setFormVadi(e.target.value)}
-                            className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
-                            placeholder="e.g. Ga"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider mb-2">Samvadi</label>
-                          <input 
-                            type="text" 
-                            value={formSamvadi}
-                            onChange={(e) => setFormSamvadi(e.target.value)}
-                            className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400"
-                            placeholder="e.g. Ni"
-                          />
-                        </div>
+                        <FormCombobox
+                          label="Vadi"
+                          value={formVadi}
+                          onChange={setFormVadi}
+                          suggestions={metadata.vadis}
+                          placeholder="e.g. Ga"
+                          labelColor="text-m3-primary dark:text-m3-primary-dark"
+                          focusRingColor="focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
+                          inputClassName="bg-m3-surface-container dark:bg-m3-surface-container-dark"
+                          quickPills={["Sa", "Re", "Ga", "Ma", "Pa", "Dha", "Ni"]}
+                        />
+                        <FormCombobox
+                          label="Samvadi"
+                          value={formSamvadi}
+                          onChange={setFormSamvadi}
+                          suggestions={metadata.samvadis}
+                          placeholder="e.g. Ni"
+                          labelColor="text-m3-primary dark:text-m3-primary-dark"
+                          focusRingColor="focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
+                          inputClassName="bg-m3-surface-container dark:bg-m3-surface-container-dark"
+                          quickPills={["Sa", "Re", "Ga", "Ma", "Pa", "Dha", "Ni"]}
+                        />
                       </div>
 
                       <div>
@@ -256,7 +287,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                           type="text" 
                           value={formAaroh}
                           onChange={(e) => setFormAaroh(e.target.value)}
-                          className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm"
+                          className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm"
                           placeholder="e.g. S R G M P D N S'"
                         />
                       </div>
@@ -267,7 +298,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                           type="text" 
                           value={formAvaroh}
                           onChange={(e) => setFormAvaroh(e.target.value)}
-                          className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm"
+                          className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm"
                           placeholder="e.g. S' N D P M G R S"
                         />
                       </div>
@@ -280,7 +311,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                       value={formDescription}
                       onChange={(e) => setFormDescription(e.target.value)}
                       rows={4}
-                      className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 resize-y m3-scrollbar"
+                      className="w-full bg-m3-surface-container dark:bg-m3-surface-container-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400 resize-y m3-scrollbar"
                       placeholder="General description, mood, rules, or historical context..."
                       data-lenis-prevent="true"
                       onWheel={(e: React.WheelEvent) => e.stopPropagation()}

@@ -13,6 +13,7 @@ interface FormComboboxProps {
   required?: boolean;
   labelColor?: string;
   focusRingColor?: string;
+  inputClassName?: string;
   isMulti?: boolean;
   quickPills?: QuickPill[];
 }
@@ -26,6 +27,7 @@ export default function FormCombobox({
   required = false,
   labelColor = "text-m3-secondary dark:text-m3-secondary-dark",
   focusRingColor = "focus:ring-m3-secondary",
+  inputClassName = "bg-m3-surface-container dark:bg-m3-surface-high-dark",
   isMulti = false,
   quickPills,
 }: FormComboboxProps) {
@@ -123,7 +125,7 @@ export default function FormCombobox({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setIsFocused(true)}
-          className={`w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 ${focusRingColor} transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400`}
+          className={`w-full ${inputClassName} text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 ${focusRingColor} transition-all duration-300 placeholder-gray-500 dark:placeholder-gray-400`}
         />
 
         {showDropdown && (

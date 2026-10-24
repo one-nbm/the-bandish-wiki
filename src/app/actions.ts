@@ -805,6 +805,80 @@ export async function getAllRenditionArtists() {
   return { success: true, data: merged };
 }
 
+export async function getAllRaagMetadata() {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.from('raags').select('thaat, samay, vadi, samvadi');
+
+  const canonicalThaats = [
+    "Asawari",
+    "Bhairav",
+    "Bhairavi",
+    "Bilawal",
+    "Kafi",
+    "Kalyan",
+    "Khamaj",
+    "Marwa",
+    "Purvi",
+    "Todi"
+  ];
+
+  const canonicalSamays = [
+    "Morning (6 AM – 9 AM)",
+    "Late Morning (9 AM – 12 PM)",
+    "Afternoon (12 PM – 3 PM)",
+    "Late Afternoon (3 PM – 6 PM)",
+    "Evening (6 PM – 9 PM)",
+    "Night (9 PM – 12 AM)",
+    "Late Night (12 AM – 3 AM)",
+    "Pre-Dawn (3 AM – 6 AM)",
+    "Any Time"
+  ];
+
+  const canonicalSwaras = [
+    "Sa", "Shadja (S)",
+    "Re", "Rishabh (R)", "Komal Rishabh (r)",
+    "Ga", "Gandhar (G)", "Gandhar (Ga)", "Komal Gandhar (g)",
+    "Ma", "Madhyam (M)", "Madhyam (m)", "Teevra Madhyam (m)",
+    "Pa", "Pancham (P)", "Pancham (Pa)",
+    "Dha", "Dhaivat (D)", "Dhaivat (Dha)", "Komal Dhaivat (d)",
+    "Ni", "Nishad (N)", "Nishad (Ni)", "Komal Nishad (n)"
+  ];
+
+  if (error || !data) {
+    return {
+      success: true,
+      data: {
+        thaats: canonicalThaats,
+        samays: canonicalSamays,
+        vadis: canonicalSwaras,
+        samvadis: canonicalSwaras,
+      }
+    };
+  }
+
+  const thaatSet = new Set<string>(canonicalThaats);
+  const samaySet = new Set<string>(canonicalSamays);
+  const vadiSet = new Set<string>(canonicalSwaras);
+  const samvadiSet = new Set<string>(canonicalSwaras);
+
+  data.forEach((r: any) => {
+    if (r.thaat?.trim()) thaatSet.add(r.thaat.trim());
+    if (r.samay?.trim()) samaySet.add(r.samay.trim());
+    if (r.vadi?.trim()) vadiSet.add(r.vadi.trim());
+    if (r.samvadi?.trim()) samvadiSet.add(r.samvadi.trim());
+  });
+
+  return {
+    success: true,
+    data: {
+      thaats: Array.from(thaatSet).sort((a, b) => a.localeCompare(b)),
+      samays: Array.from(samaySet),
+      vadis: Array.from(vadiSet),
+      samvadis: Array.from(samvadiSet),
+    }
+  };
+}
+
 
 export async function syncRenditionAcrossBandishes(
   oldRendition: any | null,
