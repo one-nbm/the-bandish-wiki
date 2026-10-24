@@ -8,6 +8,7 @@ import CopyButton from "@/components/CopyButton";
 
 import type { Metadata } from "next";
 import { getUserRole } from "@/app/actions";
+import { getRecommendedBandishes } from "@/lib/recommendations";
 
 export async function generateStaticParams() {
   const { createClient } = await import("@supabase/supabase-js");
@@ -128,6 +129,32 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
       });
     }
   }
+
+  // Fetch candidate pool and raags for recommendations
+  const [candidatesRes, raagsRes] = await Promise.all([
+    supabase
+      .from("bandishes")
+      .select("id, title, raag, taal, lay, composer, tradition, youtube_renditions"),
+    supabase
+      .from("raags")
+      .select("name, thaat"),
+  ]);
+
+  const raagToThaatMap: Record<string, string> = {};
+  if (raagsRes.data) {
+    for (const r of raagsRes.data) {
+      if (r.name && r.thaat) {
+        raagToThaatMap[r.name.trim().toLowerCase()] = r.thaat.trim();
+      }
+    }
+  }
+
+  const recommendations = getRecommendedBandishes(
+    bandish,
+    candidatesRes.data || [],
+    raagToThaatMap,
+    3
+  );
 
   return (
     <main className="min-h-screen bg-transparent relative">
@@ -326,6 +353,110 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
             <p className="text-gray-500 italic">No renditions added yet. Be the first to add one!</p>
           )}
         </div>
+
+        {/* Bandishes You Might Like Section */}
+        {recommendations.length > 0 && (
+          <section className="mt-16 pt-12 border-t border-gray-200 dark:border-gray-800 animate-page-enter animate-page-delay-2">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark text-[1.8rem]">
+                  auto_awesome
+                </span>
+                Bandishes You Might Like
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {recommendations.map(({ bandish: rec, reasonBadge }) => {
+                const recRaagSlug = rec.raag
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, "-")
+                  .replace(/(^-|-$)+/g, "");
+                const renditionCount = rec.youtube_renditions?.length ?? 0;
+                const recLayText = Array.isArray(rec.lay) ? rec.lay.join(", ") : rec.lay;
+
+                return (
+                  <div
+                    key={rec.id}
+                    className="group relative bg-white dark:bg-m3-surface-container-dark p-6 rounded-[2rem] border border-m3-surface-high dark:border-m3-surface-high-dark flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:border-m3-primary/40 dark:hover:border-m3-primary-dark/40 overflow-hidden"
+                  >
+                    {/* Bandish Title & Details */}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2 leading-snug group-hover:text-m3-primary dark:group-hover:text-m3-primary-dark transition-colors">
+                        <Link href={`/bandish/${rec.id}`} className="focus:outline-none">
+                          <span className="absolute inset-0 z-10" aria-label={`View ${rec.title}`} />
+                          {rec.title}
+                        </Link>
+                      </h4>
+
+                      {/* Raag link and Composer/Tradition */}
+                      <div className="flex flex-wrap items-center gap-2 mb-4 text-xs font-semibold">
+                        <Link
+                          href={`/raag/${recRaagSlug}`}
+                          className="relative z-20 inline-flex items-center gap-1 text-m3-secondary dark:text-m3-secondary-dark hover:underline font-bold"
+                        >
+                          {rec.raag}
+                          <span className="material-symbols-rounded text-[0.8rem]">arrow_outward</span>
+                        </Link>
+                        {rec.composer && rec.composer.toLowerCase() !== "unknown" && (
+                          <>
+                            <span className="text-gray-300 dark:text-gray-600">•</span>
+                            <span className="text-gray-600 dark:text-gray-400 truncate max-w-[170px]">
+                              {rec.composer}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bottom Metadata Bar with Smooth Hover Reason Reveal */}
+                    <div className="relative pt-4 mt-2 border-t border-gray-100 dark:border-gray-800/80 flex items-center justify-between min-h-[2.25rem] text-xs">
+                      {/* Normal state: Taal & Lay chips */}
+                      <div className="flex flex-wrap items-center gap-1.5 transition-opacity duration-300 opacity-100 group-hover:opacity-0 pointer-events-auto group-hover:pointer-events-none">
+                        <span className="bg-m3-surface-container dark:bg-m3-surface-dark px-2.5 py-1 rounded-full font-bold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                          {rec.taal}
+                        </span>
+                        {recLayText && (
+                          <span className="bg-m3-surface-high dark:bg-m3-surface-high-dark px-2.5 py-1 rounded-full font-bold text-gray-600 dark:text-gray-400">
+                            {recLayText}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Hover state: Connection Metric Badge */}
+                      <div className="absolute inset-y-0 left-0 pt-4 flex items-center transition-all duration-300 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 pointer-events-none group-hover:pointer-events-auto max-w-[calc(100%-3rem)]">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-bold tracking-wide bg-m3-primary/10 dark:bg-m3-primary-dark/15 text-m3-primary dark:text-m3-primary-dark border border-m3-primary/25 dark:border-m3-primary-dark/25 truncate">
+                          <span className="material-symbols-rounded text-[0.95rem] shrink-0">
+                            {reasonBadge.icon}
+                          </span>
+                          <span className="truncate">{reasonBadge.label}</span>
+                        </span>
+                      </div>
+
+                      {/* Rendition count on the right */}
+                      {renditionCount > 0 ? (
+                        <div
+                          className="flex items-center gap-1 text-gray-400 dark:text-gray-500 font-semibold shrink-0 ml-2"
+                          title={`${renditionCount} rendition${renditionCount !== 1 ? "s" : ""}`}
+                        >
+                          <span
+                            className="material-symbols-rounded text-[1rem]"
+                            style={{ fontVariationSettings: '"FILL" 1' }}
+                          >
+                            play_circle
+                          </span>
+                          <span>{renditionCount}</span>
+                        </div>
+                      ) : (
+                        <div className="w-4" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Contributor Footer */}
         <div className="mt-16 pt-8 text-center border-t border-gray-100 dark:border-gray-800">
