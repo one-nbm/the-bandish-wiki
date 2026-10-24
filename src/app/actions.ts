@@ -812,37 +812,41 @@ export async function syncRenditionAcrossBandishes(
 // plus the bandish it was opened from. Does not depend on the titles stored
 // inside the rendition, which go stale when a bandish is renamed.
 export async function deleteRenditionSecurely(url: string, currentBandishId: string) {
-  const { authorized, error, supabaseAdmin } = await authorizeAdmin();
+  const { authorized, error, supabaseAdmin } = await authorizeContributorOrAdmin();
   if (!authorized || !supabaseAdmin) return { success: false, error: error ?? "Unauthorized" };
 
   if (!url) return { success: false, error: "Missing rendition URL." };
 
-  const { data: containing, error: containingError } = await supabaseAdmin
-    .from('bandishes')
-    .select('id, title, youtube_renditions')
-    .contains('youtube_renditions', [{ url }]);
+  const cleanUrl = url.trim();
 
-  if (containingError) {
-    console.error("Rendition lookup error:", containingError);
-    return { success: false, error: "Failed to look up rendition." };
+  // Fetch bandishes with their renditions.
+  // Note: We avoid Postgres .contains() because the youtube_renditions column
+  // is of type JSON (not JSONB), which throws code 22P02 on .contains queries.
+  const { data: allBandishes, error: fetchError } = await supabaseAdmin
+    .from('bandishes')
+    .select('id, title, youtube_renditions');
+
+  if (fetchError || !allBandishes) {
+    console.error("Rendition lookup error:", fetchError);
+    return { success: false, error: "Failed to look up bandishes." };
   }
 
   const targets = new Map<string, any>();
-  (containing || []).forEach((b: any) => targets.set(String(b.id), b));
+  for (const b of allBandishes) {
+    if (Array.isArray(b.youtube_renditions) && b.youtube_renditions.some((r: any) => r?.url?.trim() === cleanUrl)) {
+      targets.set(String(b.id), b);
+    }
+  }
 
   if (currentBandishId && !targets.has(String(currentBandishId))) {
-    const { data: current } = await supabaseAdmin
-      .from('bandishes')
-      .select('id, title, youtube_renditions')
-      .eq('id', currentBandishId)
-      .single();
+    const current = allBandishes.find((b: any) => String(b.id) === String(currentBandishId));
     if (current) targets.set(String(current.id), current);
   }
 
   let removedCount = 0;
   for (const b of targets.values()) {
     const existing = Array.isArray(b.youtube_renditions) ? b.youtube_renditions : [];
-    const remaining = existing.filter((r: any) => r?.url !== url);
+    const remaining = existing.filter((r: any) => r?.url?.trim() !== cleanUrl);
     if (remaining.length === existing.length) continue;
 
     const { error: updateError } = await supabaseAdmin

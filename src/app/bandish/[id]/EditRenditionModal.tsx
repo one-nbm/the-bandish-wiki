@@ -144,7 +144,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
             <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`} />
               <div
                 data-lenis-prevent="true"
-                className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain bg-m3-surface dark:bg-m3-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`}
+                className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] p-8 md:p-12 border border-m3-surface-high dark:border-m3-surface-high-dark m3-scrollbar ${isClosing ? 'animate-modal-exit' : 'animate-modal-enter'}`}
                 onClick={(e) => e.stopPropagation()}
               >
               <div className="absolute top-6 right-6 md:top-8 md:right-8">
@@ -241,7 +241,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
             {confirmDialog.isOpen && (
               <div className="absolute inset-0 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
                 <div className="absolute inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm animate-backdrop-enter" onClick={() => setConfirmDialog({ isOpen: false, action: null })} />
-                <div className="relative w-full max-w-sm bg-m3-surface dark:bg-m3-surface-dark rounded-[2rem] p-6 animate-modal-enter border border-m3-surface-high dark:border-m3-surface-high-dark">
+                <div className="relative w-full max-w-sm bg-white dark:bg-m3-surface-container-dark rounded-[2rem] p-6 animate-modal-enter border border-m3-surface-high dark:border-m3-surface-high-dark">
                   <div className="flex flex-col items-center text-center mb-6">
                     <div className="w-16 h-16 bg-m3-error/10 dark:bg-m3-error-dark/10 rounded-full flex items-center justify-center mb-4">
                       <span className="material-symbols-rounded text-[2rem] text-m3-error dark:text-m3-error-dark">delete_forever</span>
