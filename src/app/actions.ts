@@ -792,12 +792,75 @@ export async function syncRenditionAcrossBandishes(
       }
     }
 
-    await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from('bandishes')
       .update({ youtube_renditions: renditions })
       .eq('id', b.id);
 
+    if (updateError) {
+      console.error("Rendition sync update error:", updateError);
+      return { success: false, error: `Failed to update bandish "${b.title}".` };
+    }
+
     revalidatePath(`/bandish/${b.id}`);
+  }
+
+  return { success: true };
+}
+
+// Removes a rendition (identified by URL) from every bandish that contains it,
+// plus the bandish it was opened from. Does not depend on the titles stored
+// inside the rendition, which go stale when a bandish is renamed.
+export async function deleteRenditionSecurely(url: string, currentBandishId: string) {
+  const { authorized, error, supabaseAdmin } = await authorizeAdmin();
+  if (!authorized || !supabaseAdmin) return { success: false, error: error ?? "Unauthorized" };
+
+  if (!url) return { success: false, error: "Missing rendition URL." };
+
+  const { data: containing, error: containingError } = await supabaseAdmin
+    .from('bandishes')
+    .select('id, title, youtube_renditions')
+    .contains('youtube_renditions', [{ url }]);
+
+  if (containingError) {
+    console.error("Rendition lookup error:", containingError);
+    return { success: false, error: "Failed to look up rendition." };
+  }
+
+  const targets = new Map<string, any>();
+  (containing || []).forEach((b: any) => targets.set(String(b.id), b));
+
+  if (currentBandishId && !targets.has(String(currentBandishId))) {
+    const { data: current } = await supabaseAdmin
+      .from('bandishes')
+      .select('id, title, youtube_renditions')
+      .eq('id', currentBandishId)
+      .single();
+    if (current) targets.set(String(current.id), current);
+  }
+
+  let removedCount = 0;
+  for (const b of targets.values()) {
+    const existing = Array.isArray(b.youtube_renditions) ? b.youtube_renditions : [];
+    const remaining = existing.filter((r: any) => r?.url !== url);
+    if (remaining.length === existing.length) continue;
+
+    const { error: updateError } = await supabaseAdmin
+      .from('bandishes')
+      .update({ youtube_renditions: remaining })
+      .eq('id', b.id);
+
+    if (updateError) {
+      console.error("Rendition delete update error:", updateError);
+      return { success: false, error: `Failed to update bandish "${b.title}".` };
+    }
+
+    removedCount++;
+    revalidatePath(`/bandish/${b.id}`);
+  }
+
+  if (removedCount === 0) {
+    return { success: false, error: "Rendition was not found on any bandish." };
   }
 
   return { success: true };

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { syncRenditionAcrossBandishes, getAllBandishTitles } from "@/app/actions";
+import { syncRenditionAcrossBandishes, deleteRenditionSecurely, getAllBandishTitles } from "@/app/actions";
 import BandishCombobox from "./BandishCombobox";
 import { useTheme } from "@/app/ThemeProvider";
 
@@ -103,7 +103,9 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
     }
 
     try {
-      const result = await syncRenditionAcrossBandishes(oldRendition, newRendition);
+      const result = action === 'delete'
+        ? await deleteRenditionSecurely(oldRendition.url, bandish.id)
+        : await syncRenditionAcrossBandishes(oldRendition, newRendition);
       if (!result.success) throw new Error(result.error ?? "Unknown error");
 
       setConfirmDialog({ isOpen: false, action: null });
