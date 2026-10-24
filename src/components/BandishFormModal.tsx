@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useTheme } from "@/app/ThemeProvider";
 import FormCombobox from "@/components/FormCombobox";
@@ -22,6 +22,8 @@ interface BandishFormModalProps {
   allRaags: string[];
   allTaals: string[];
   allLays: string[];
+  allComposers?: string[];
+  allTraditions?: string[];
   maxExistingId?: number;
   onClose: () => void;
   onSuccess: (action: "add" | "edit" | "delete", data?: any, id?: string) => void;
@@ -36,6 +38,8 @@ export default function BandishFormModal({
   allRaags,
   allTaals,
   allLays,
+  allComposers,
+  allTraditions,
   maxExistingId = 0,
   onClose,
   onSuccess,
@@ -56,6 +60,50 @@ export default function BandishFormModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+  const defaultComposers = useMemo(() => [
+    "Traditional",
+    "Ustad Niyamat Khan 'Sadarang'",
+    "Pandit C. R. Vyas 'Guni Jaan'",
+    "Pandit Jagannathbua Purohit 'Gunidas'",
+    "Ustad Firoz Khan 'Adarang'",
+    "Ustad Bhupat Khan 'Manrang'",
+    "Ustad Vilayat Hussain Khan 'Pran Piya'",
+    "Ustad Faiyaz Khan 'Prem Piya'",
+    "Pandit Ramashreya Jha 'Ramrang'",
+    "Acharya Vishwanath Rao Ringe 'Tanarang'",
+    "Miyan Tansen",
+    "Ustad Bade Ghulam Ali Khan 'Sabarang'",
+    "Ustad Amir Khan",
+    "unknown"
+  ], []);
+
+  const defaultTraditions = useMemo(() => [
+    "Agra",
+    "Gwalior",
+    "Gwalior / Agra",
+    "Jaipur-Atrauli",
+    "Kirana",
+    "Patiala",
+    "Bhendibazaar",
+    "Mewati",
+    "Rampur-Sahaswan",
+    "Banaras",
+    "Delhi",
+    "Indore",
+    "Lucknow",
+    "Maihar",
+    "Traditional",
+    "N/A"
+  ], []);
+
+  const composerSuggestions = useMemo(() => {
+    return Array.from(new Set([...(allComposers || []), ...defaultComposers])).filter(Boolean).sort();
+  }, [allComposers, defaultComposers]);
+
+  const traditionSuggestions = useMemo(() => {
+    return Array.from(new Set([...(allTraditions || []), ...defaultTraditions])).filter(Boolean).sort();
+  }, [allTraditions, defaultTraditions]);
 
   useEffect(() => {
     setMounted(true);
@@ -318,31 +366,35 @@ export default function BandishFormModal({
                   isMulti
                   quickPills={["Vilambit", "Madhya", "Drut", "Ati Drut"]}
                 />
-                <div>
-                  <label className="block text-xs font-bold text-m3-tertiary dark:text-m3-tertiary-dark uppercase tracking-wider mb-2">
-                    Composer
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Traditional"
-                    value={formComposer}
-                    onChange={(e) => setFormComposer(e.target.value)}
-                    className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-tertiary transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">
-                    Gharana / Tradition
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Agra, Gwalior"
-                    value={formTradition}
-                    onChange={(e) => setFormTradition(e.target.value)}
-                    className="w-full bg-m3-surface-container dark:bg-m3-surface-high-dark text-gray-900 dark:text-white px-6 py-4 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400"
-                  />
-                </div>
+                <FormCombobox
+                  label="Composer"
+                  value={formComposer}
+                  onChange={setFormComposer}
+                  suggestions={composerSuggestions}
+                  placeholder="e.g. Traditional, Sadarang"
+                  required
+                  labelColor="text-m3-tertiary dark:text-m3-tertiary-dark"
+                  focusRingColor="focus:ring-m3-tertiary dark:focus:ring-m3-tertiary-dark"
+                  quickPills={[
+                    { label: "Traditional", value: "Traditional" },
+                    { label: "Sadarang", value: "Ustad Niyamat Khan 'Sadarang'" },
+                    { label: "Adarang", value: "Ustad Firoz Khan 'Adarang'" },
+                    { label: "Gunidas", value: "Pandit Jagannathbua Purohit 'Gunidas'" },
+                    { label: "Guni Jaan", value: "Pandit C. R. Vyas 'Guni Jaan'" },
+                    { label: "Manrang", value: "Ustad Bhupat Khan 'Manrang'" },
+                    { label: "unknown", value: "unknown" },
+                  ]}
+                />
+                <FormCombobox
+                  label="Gharana / Tradition"
+                  value={formTradition}
+                  onChange={setFormTradition}
+                  suggestions={traditionSuggestions}
+                  placeholder="e.g. Agra, Gwalior"
+                  labelColor="text-gray-700 dark:text-gray-300"
+                  focusRingColor="focus:ring-gray-500 dark:focus:ring-gray-400"
+                  quickPills={["Agra", "Gwalior", "Jaipur-Atrauli", "Kirana", "Patiala", "Bhendibazaar", "N/A"]}
+                />
               </div>
 
               {/* Transliteration */}

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 
+export type QuickPill = string | { label: string; value: string };
+
 interface FormComboboxProps {
   label: string;
   value: string;
@@ -12,7 +14,7 @@ interface FormComboboxProps {
   labelColor?: string;
   focusRingColor?: string;
   isMulti?: boolean;
-  quickPills?: string[];
+  quickPills?: QuickPill[];
 }
 
 export default function FormCombobox({
@@ -86,21 +88,22 @@ export default function FormCombobox({
     setIsFocused(false);
   };
 
-  const handleTogglePill = (pill: string) => {
+  const handleTogglePill = (pill: QuickPill) => {
+    const pillValue = typeof pill === "string" ? pill : pill.value;
     if (isMulti) {
       const parts = value
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
-      const index = parts.findIndex((p) => p.toLowerCase() === pill.toLowerCase());
+      const index = parts.findIndex((p) => p.toLowerCase() === pillValue.toLowerCase());
       if (index >= 0) {
         parts.splice(index, 1);
       } else {
-        parts.push(pill);
+        parts.push(pillValue);
       }
       onChange(parts.join(", "));
     } else {
-      onChange(pill);
+      onChange(pillValue);
     }
   };
 
@@ -151,17 +154,21 @@ export default function FormCombobox({
       {quickPills && quickPills.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-2">
           {quickPills.map((pill) => {
+            const pillLabel = typeof pill === "string" ? pill : pill.label;
+            const pillValue = typeof pill === "string" ? pill : pill.value;
+
             const isSelected = isMulti
               ? value
                   .toLowerCase()
                   .split(",")
                   .map((s) => s.trim())
-                  .includes(pill.toLowerCase())
-              : value.trim().toLowerCase() === pill.toLowerCase();
+                  .some((part) => part === pillValue.toLowerCase() || part === pillLabel.toLowerCase())
+              : value.trim().toLowerCase() === pillValue.toLowerCase() ||
+                (pillLabel !== pillValue && value.toLowerCase().includes(pillLabel.toLowerCase()));
 
             return (
               <button
-                key={pill}
+                key={pillLabel}
                 type="button"
                 onClick={() => handleTogglePill(pill)}
                 className={`text-[11px] font-bold px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
@@ -170,7 +177,7 @@ export default function FormCombobox({
                     : "bg-m3-surface dark:bg-m3-surface-dark border-m3-surface-high dark:border-m3-surface-high-dark text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
                 }`}
               >
-                {pill}
+                {pillLabel}
               </button>
             );
           })}

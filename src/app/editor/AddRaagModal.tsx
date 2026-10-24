@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { addRaagSecurely, submitRaagContribution, UserRole } from "@/app/actions";
+import { useTheme } from "@/app/ThemeProvider";
 import { ReactLenis } from 'lenis/react';
 import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
 
@@ -15,6 +17,12 @@ function generateSlug(name: string) {
 
 export default function AddRaagModal({ contributorName, userRole = "admin" }: { contributorName: string; userRole?: UserRole }) {
   const router = useRouter();
+  const { isDarkMode } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Modal State
   const [isOpen, setIsOpen] = useState(false);
@@ -150,8 +158,9 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
       </button>
 
       {/* Modal Overlay */}
-      {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" onClick={closeModal}>
+      {isOpen && mounted && createPortal(
+        <div className={isDarkMode ? "dark" : ""}>
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" onClick={closeModal}>
           {/* Backdrop */}
           <div className={`absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm ${isClosing ? 'animate-backdrop-exit' : 'animate-backdrop-enter'}`}></div>
           
@@ -316,7 +325,9 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
             </ReactLenis>
           </div>
         </div>
-      )}
+      </div>,
+      document.body
+    )}
     </>
   );
 }

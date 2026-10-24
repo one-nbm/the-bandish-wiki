@@ -354,6 +354,16 @@ export default function Home() {
   }, [baseData]);
 
   const allComposers = useMemo(() => Array.from(new Set(baseData.map(b => b.composer).filter(Boolean))).sort(), [baseData]);
+  const allTraditions = useMemo(() => {
+    const set = new Set<string>();
+    baseData.forEach((b) => {
+      if (b.tradition && b.tradition !== "N/A" && b.tradition !== "None") {
+        set.add(b.tradition.trim());
+      }
+    });
+    ["Agra", "Gwalior", "Jaipur-Atrauli", "Kirana", "Patiala", "Bhendibazaar", "Mewati", "Rampur-Sahaswan", "Banaras", "Delhi", "N/A"].forEach((t) => set.add(t));
+    return Array.from(set).filter(Boolean).sort();
+  }, [baseData]);
 
   const fuseRaags = useMemo(() => new Fuse(allRaags, { threshold: 0.4 }), [allRaags]);
   const fuseComposers = useMemo(() => new Fuse(allComposers, { threshold: 0.4 }), [allComposers]);
@@ -722,6 +732,8 @@ export default function Home() {
         allRaags={allRaags}
         allTaals={allTaals}
         allLays={allLays}
+        allComposers={allComposers}
+        allTraditions={allTraditions}
         maxExistingId={maxExistingId}
         onClose={() => setIsAddOpen(false)}
         onSuccess={handleBandishModalSuccess}
@@ -737,6 +749,8 @@ export default function Home() {
         allRaags={allRaags}
         allTaals={allTaals}
         allLays={allLays}
+        allComposers={allComposers}
+        allTraditions={allTraditions}
         onClose={() => {
           const prev = editingBandish;
           setEditingBandish(null);
