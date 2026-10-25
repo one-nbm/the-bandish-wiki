@@ -170,17 +170,17 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
                   value={formArtist}
                   onChange={setFormArtist}
                   suggestions={allArtists}
-                  placeholder="e.g. Pandit Jasraj"
+                  placeholder="e.g. Jasraj"
                   required
                   labelColor="text-m3-primary dark:text-m3-primary-dark"
                   focusRingColor="focus:ring-m3-primary dark:focus:ring-m3-primary-dark"
                   quickPills={[
-                    "Pt. Bhimsen Joshi",
-                    "Pt. Jasraj",
-                    "Ustad Amir Khan",
+                    "Bhimsen Joshi",
+                    "Jasraj",
+                    "Amir Khan",
                     "Kishori Amonkar",
-                    "Pt. Kumar Gandharva",
-                    "Pt. Ulhas Kashalkar"
+                    "Kumar Gandharva",
+                    "Ulhas Kashalkar"
                   ]}
                 />
 

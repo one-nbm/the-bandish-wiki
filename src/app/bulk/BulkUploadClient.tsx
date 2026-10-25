@@ -49,7 +49,7 @@ const SAMPLE_PAYLOAD: NormalizedBandish[] = [
     youtube_renditions: [
       {
         url: "https://www.youtube.com/watch?v=gc3XUmP44vk",
-        artist: "Pandit Bhimsen Joshi",
+        artist: "Bhimsen Joshi",
         year: "1970s",
         isVideo: true,
         bandishes: ["Jhananan Jhan Jhananan Jhan Baaje"]
@@ -72,7 +72,7 @@ const SAMPLE_PAYLOAD: NormalizedBandish[] = [
     youtube_renditions: [
       {
         url: "https://www.youtube.com/watch?v=example123",
-        artist: "Ustad Amir Khan",
+        artist: "Amir Khan",
         year: "1962",
         isVideo: false,
         bandishes: ["Eri Aali Piya Bina"]

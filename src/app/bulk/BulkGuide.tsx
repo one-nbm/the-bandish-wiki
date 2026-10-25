@@ -75,7 +75,7 @@ const FULL_EXAMPLE_SNIPPET = `[
     "youtube_renditions": [
       {
         "url": "https://www.youtube.com/watch?v=gc3XUmP44vk",
-        "artist": "Pandit Bhimsen Joshi",
+        "artist": "Bhimsen Joshi",
         "year": "1970s",
         "isVideo": true,
         "bandishes": ["Jhananana Jhananana Jhana Jhana"]

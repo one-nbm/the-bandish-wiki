@@ -155,7 +155,7 @@ export default function RenditionsToIndexList() {
           <div className="flex-1 flex flex-col sm:flex-row gap-2">
             <input
               type="text"
-              placeholder="Recording Title (e.g. Ustad Amir Khan - Yaman Drut)"
+              placeholder="Recording Title (e.g. Amir Khan - Yaman Drut)"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="flex-1 bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-4 py-2.5 text-xs sm:text-sm rounded-xl border border-m3-surface-high dark:border-m3-surface-high-dark focus:border-m3-primary dark:focus:border-m3-primary-dark outline-none transition-all placeholder:text-gray-400"
