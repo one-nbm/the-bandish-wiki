@@ -47,6 +47,7 @@ export const BandishCard = memo(({
       className={`bandish-card group relative bg-white dark:bg-m3-surface-container-dark p-6 rounded-[1.5rem] border border-gray-100 dark:border-m3-surface-high-dark flex flex-col cursor-pointer break-inside-avoid mb-4 ${disableEntranceAnimation ? '' : 'animate-card'}`}
       style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
     >
+
       {/* Renditions Badge */}
       {renditionCount > 0 && (
         <div className="group/rendition absolute top-5 right-[4.25rem] z-10 h-11 flex items-center" onClick={(e) => e.stopPropagation()}>
