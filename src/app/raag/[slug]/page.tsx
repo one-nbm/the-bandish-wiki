@@ -181,6 +181,45 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
           </div>
         )}
 
+        {/* Further Reading & Archival Notes Section */}
+        {raag.further_reading && Array.isArray(raag.further_reading) && raag.further_reading.length > 0 && (
+          <div className="mb-16 animate-page-enter animate-page-delay-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+              <span className="material-symbols-rounded text-m3-primary dark:text-m3-primary-dark text-2xl">auto_stories</span>
+              Further Reading & Archival Notes
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {raag.further_reading.map((link: any, idx: number) => (
+                <a
+                  key={`further-reading-${idx}`}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group bg-white dark:bg-m3-surface-dark p-5 rounded-2xl border border-gray-200 dark:border-gray-800 hover:border-m3-primary dark:hover:border-m3-primary-dark transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 text-m3-secondary dark:text-m3-secondary-dark">
+                        {link.source || "Archive"}
+                      </span>
+                      <span className="material-symbols-rounded text-gray-400 group-hover:text-m3-primary dark:group-hover:text-m3-primary-dark transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 text-lg">
+                        arrow_outward
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-gray-900 dark:text-white text-base md:text-lg group-hover:text-m3-primary dark:group-hover:text-m3-primary-dark transition-colors line-clamp-2">
+                      {link.title}
+                    </h3>
+                  </div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-3 truncate font-mono">
+                    {link.url.replace(/^https?:\/\/(www\.)?/, '')}
+                  </p>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Associated Bandishes Hub */}
         <div className="animate-page-enter animate-page-delay-3">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Bandishes in {raag.name}</h2>

@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ReactLenis, useLenis } from 'lenis/react';
 import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
 import { stepCardIndex, pickFirstVisibleIndex, pickHorizontalNeighbor, computeScrollDelta } from "@/lib/cardNavigation";
+import { normalizeLayItem } from "@/utils/traditionFormatters";
 
 // Keyboard navigation: breathing room kept between a highlighted card and the sticky header / viewport bottom
 const KB_SCROLL_TOP_GAP = 36;
@@ -238,8 +239,17 @@ export default function Home() {
       data = data.filter((bandish) => activeFilters.every((filter) => {
         if (filter.key === "raag") return bandish.raag === filter.value;
         if (filter.key === "taal") return bandish.taal === filter.value;
-        if (filter.key === "lay") return bandish.lay?.includes(filter.value);
+        if (filter.key === "lay") {
+          if (!bandish.lay) return false;
+          const lays = Array.isArray(bandish.lay) ? bandish.lay : [bandish.lay];
+          return lays.some((l: string) => l && l.trim().toLowerCase() === filter.value.trim().toLowerCase());
+        }
         if (filter.key === "composer") return bandish.composer === filter.value;
+        if (filter.key === "tradition") {
+          if (!bandish.tradition) return false;
+          const traditions = bandish.tradition.split(",").map((t: string) => t.trim().toLowerCase());
+          return traditions.includes(filter.value.trim().toLowerCase());
+        }
         return true;
       }));
     }
@@ -567,20 +577,20 @@ export default function Home() {
   }, [baseData]);
 
   const allLays = useMemo(() => {
-    const set = new Set<string>(["Vilambit", "Madhya", "Drut", "Ati Drut", "Vilambit Laya", "Drut Laya"]);
+    const set = new Set<string>(["Vilambit", "Madhya", "Madhyalay", "Drut", "Dhrut", "Ati Drut"]);
     baseData.forEach((b) => {
       if (!b.lay) return;
       if (Array.isArray(b.lay)) {
         b.lay.forEach((l: any) => {
           if (typeof l === "string") {
-            const trimmed = l.trim();
-            if (trimmed) set.add(trimmed);
+            const clean = normalizeLayItem(l);
+            if (clean) set.add(clean);
           }
         });
       } else if (typeof b.lay === "string") {
         b.lay.split(",").forEach((l: string) => {
-          const trimmed = l.trim();
-          if (trimmed) set.add(trimmed);
+          const clean = normalizeLayItem(l);
+          if (clean) set.add(clean);
         });
       }
     });
@@ -592,10 +602,15 @@ export default function Home() {
     const set = new Set<string>();
     baseData.forEach((b) => {
       if (b.tradition && b.tradition !== "N/A" && b.tradition !== "None") {
-        set.add(b.tradition.trim());
+        b.tradition.split(",").forEach((t: string) => {
+          const clean = t.trim();
+          if (clean && clean !== "N/A" && clean !== "None") {
+            set.add(clean);
+          }
+        });
       }
     });
-    ["Agra", "Gwalior", "Jaipur-Atrauli", "Kirana", "Patiala", "Bhendibazaar", "Mewati", "Rampur-Sahaswan", "Banaras", "Delhi", "N/A"].forEach((t) => set.add(t));
+    ["Agra", "Gwalior", "Jaipur-Atrauli", "Kirana", "Patiala", "Bhendibazaar", "Mewati", "Rampur-Sahaswan", "Banaras", "Delhi"].forEach((t) => set.add(t));
     return Array.from(set).filter(Boolean).sort();
   }, [baseData]);
 

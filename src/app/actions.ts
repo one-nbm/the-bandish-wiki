@@ -3,6 +3,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { normalizeTradition, normalizeLayArray, stripArtistTitles } from '@/utils/traditionFormatters';
 
 async function pingIndexNow(urls: string[]) {
   try {
@@ -221,9 +222,13 @@ export async function addBandishSecurely(newBandish: any) {
   const { authorized, error, supabaseAdmin } = await authorizeAdmin();
   if (!authorized || !supabaseAdmin) return { success: false, error: error ?? "Unauthorized", data: null };
 
+  const sanitized = { ...newBandish };
+  if ('tradition' in sanitized) sanitized.tradition = normalizeTradition(sanitized.tradition);
+  if ('lay' in sanitized) sanitized.lay = normalizeLayArray(sanitized.lay);
+
   const { data, error: dbError } = await supabaseAdmin
     .from('bandishes')
-    .insert([newBandish])
+    .insert([sanitized])
     .select();
 
   if (dbError) {
@@ -233,12 +238,12 @@ export async function addBandishSecurely(newBandish: any) {
 
   revalidatePath('/');
   revalidatePath('/raags');
-  if (newBandish.id) {
-    revalidatePath(`/bandish/${newBandish.id}`);
-    pingIndexNow([`https://bandish-wiki.vercel.app/bandish/${newBandish.id}`]);
+  if (sanitized.id) {
+    revalidatePath(`/bandish/${sanitized.id}`);
+    pingIndexNow([`https://bandish-wiki.vercel.app/bandish/${sanitized.id}`]);
   }
-  if (newBandish.raag) {
-    const raagSlug = newBandish.raag.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+  if (sanitized.raag) {
+    const raagSlug = sanitized.raag.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
     revalidatePath(`/raag/${raagSlug}`);
   }
 
@@ -249,9 +254,13 @@ export async function updateBandishSecurely(id: string, updatedBandish: any) {
   const { authorized, error, supabaseAdmin } = await authorizeAdmin();
   if (!authorized || !supabaseAdmin) return { success: false, error: error ?? "Unauthorized", data: null };
 
+  const sanitized = { ...updatedBandish };
+  if ('tradition' in sanitized) sanitized.tradition = normalizeTradition(sanitized.tradition);
+  if ('lay' in sanitized) sanitized.lay = normalizeLayArray(sanitized.lay);
+
   const { data, error: dbError } = await supabaseAdmin
     .from('bandishes')
-    .update(updatedBandish)
+    .update(sanitized)
     .eq('id', id)
     .select();
 
@@ -754,30 +763,30 @@ export async function getAllRenditionArtists() {
   const { data, error } = await supabase.from('bandishes').select('youtube_renditions');
 
   const canonicalArtists = [
-    "Pt. Bhimsen Joshi",
-    "Pt. Jasraj",
-    "Ustad Amir Khan",
+    "Bhimsen Joshi",
+    "Jasraj",
+    "Amir Khan",
     "Kishori Amonkar",
-    "Pt. Kumar Gandharva",
-    "Pt. Ulhas Kashalkar",
-    "Ustad Bade Ghulam Ali Khan",
-    "Vidushi Ashwini Bhide Deshpande",
-    "Pt. C. R. Vyas",
-    "Ustad Rashid Khan",
-    "Pt. D. V. Paluskar",
-    "Pt. Jitendra Abhisheki",
+    "Kumar Gandharva",
+    "Ulhas Kashalkar",
+    "Bade Ghulam Ali Khan",
+    "Ashwini Bhide Deshpande",
+    "C. R. Vyas",
+    "Rashid Khan",
+    "D. V. Paluskar",
+    "Jitendra Abhisheki",
     "Veena Sahasrabuddhe",
     "Kaushiki Chakraborty",
-    "Pt. Venkatesh Kumar",
-    "Pt. Ajoy Chakrabarty",
-    "Dr. Prabha Atre",
+    "Venkatesh Kumar",
+    "Ajoy Chakrabarty",
+    "Prabha Atre",
     "Girija Devi",
     "Shobha Gurtu",
-    "Pt. Mallikarjun Mansur",
+    "Mallikarjun Mansur",
     "Gangubai Hangal",
-    "Pt. Sanjeev Abhyankar",
-    "Ustad Salamat Ali Khan",
-    "Ustad Nazakat Ali Khan",
+    "Sanjeev Abhyankar",
+    "Salamat Ali Khan",
+    "Nazakat Ali Khan",
     "Arati Ankalikar-Tikekar",
     "Ram Marathe"
   ];
@@ -791,10 +800,10 @@ export async function getAllRenditionArtists() {
     if (Array.isArray(row.youtube_renditions)) {
       row.youtube_renditions.forEach((r: any) => {
         if (r && typeof r.artist === 'string' && r.artist.trim()) {
-          const trimmed = r.artist.trim();
-          const lower = trimmed.toLowerCase();
-          if (!artistMap.has(lower)) {
-            artistMap.set(lower, trimmed);
+          const cleanArtist = stripArtistTitles(r.artist);
+          const lower = cleanArtist.toLowerCase();
+          if (cleanArtist && !artistMap.has(lower)) {
+            artistMap.set(lower, cleanArtist);
           }
         }
       });
@@ -905,17 +914,24 @@ export async function syncRenditionAcrossBandishes(
 
   const targetUrl = oldRendition ? oldRendition.url : newRendition?.url;
 
+  const sanitizedRendition = newRendition
+    ? {
+        ...newRendition,
+        artist: typeof newRendition.artist === "string" ? stripArtistTitles(newRendition.artist) : newRendition.artist
+      }
+    : null;
+
   for (const b of bandishes) {
     let renditions = Array.isArray(b.youtube_renditions) ? [...b.youtube_renditions] : [];
     const existingIndex = renditions.findIndex((r: any) => r.url === targetUrl);
 
-    const shouldHaveRendition = newTitles.includes(b.title) && newRendition !== null;
+    const shouldHaveRendition = newTitles.includes(b.title) && sanitizedRendition !== null;
 
     if (shouldHaveRendition) {
       if (existingIndex >= 0) {
-        renditions[existingIndex] = newRendition;
+        renditions[existingIndex] = sanitizedRendition;
       } else {
-        renditions.push(newRendition);
+        renditions.push(sanitizedRendition);
       }
     } else {
       if (existingIndex >= 0) {

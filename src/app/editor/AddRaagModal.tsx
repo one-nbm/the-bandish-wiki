@@ -38,6 +38,23 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
   const [formAaroh, setFormAaroh] = useState("");
   const [formAvaroh, setFormAvaroh] = useState("");
   const [formDescription, setFormDescription] = useState("");
+  const [formFurtherReading, setFormFurtherReading] = useState<{ title: string; url: string; source: string }[]>([]);
+
+  const handleAddLink = () => {
+    setFormFurtherReading((prev) => [...prev, { title: "", url: "", source: "Tanarang" }]);
+  };
+
+  const handleUpdateLink = (index: number, field: "title" | "url" | "source", value: string) => {
+    setFormFurtherReading((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [field]: value };
+      return copy;
+    });
+  };
+
+  const handleRemoveLink = (index: number) => {
+    setFormFurtherReading((prev) => prev.filter((_, i) => i !== index));
+  };
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
@@ -77,6 +94,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
       setFormAaroh("");
       setFormAvaroh("");
       setFormDescription("");
+      setFormFurtherReading([]);
     }, 300);
   }, []);
 
@@ -132,6 +150,7 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
         aaroh: formAaroh,
         avaroh: formAvaroh,
         description: formDescription,
+        further_reading: formFurtherReading.filter((l) => l.url.trim() && l.title.trim()),
         contributor: contributorName,
       };
 
@@ -317,6 +336,97 @@ export default function AddRaagModal({ contributorName, userRole = "admin" }: { 
                       onWheel={(e: React.WheelEvent) => e.stopPropagation()}
                       onTouchMove={(e: React.TouchEvent) => e.stopPropagation()}
                     />
+                  </div>
+
+                  {/* Further Reading Links Section */}
+                  <div className="space-y-4 pt-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider">
+                          Further Reading Links
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          Authoritative links to Tanarang, Parrikar.org, AUTRIM, SwarGanga, or classical treatises.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddLink}
+                        className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-m3-primary/10 hover:bg-m3-primary/20 text-m3-primary dark:text-m3-primary-dark transition-colors"
+                      >
+                        <span className="material-symbols-rounded text-sm">add</span>
+                        Add Link
+                      </button>
+                    </div>
+
+                    {formFurtherReading.length === 0 ? (
+                      <div className="p-4 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 text-center text-xs text-gray-400">
+                        No further reading links added. Click &quot;Add Link&quot; above to add scholarly references.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {formFurtherReading.map((link, idx) => (
+                          <div
+                            key={`add-link-input-${idx}`}
+                            className="p-4 rounded-2xl bg-m3-surface-container dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark space-y-3"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                                Link #{idx + 1}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveLink(idx)}
+                                className="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400 font-bold flex items-center gap-1 transition-colors"
+                              >
+                                <span className="material-symbols-rounded text-sm">delete</span>
+                                Remove
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                              <div>
+                                <label className="block text-[0.7rem] font-bold text-gray-600 dark:text-gray-300 uppercase mb-1">
+                                  Source / Publisher
+                                </label>
+                                <input
+                                  type="text"
+                                  value={link.source}
+                                  onChange={(e) => handleUpdateLink(idx, "source", e.target.value)}
+                                  placeholder="e.g. Tanarang, Parrikar.org"
+                                  className="w-full bg-white dark:bg-m3-surface-dark text-gray-900 dark:text-white px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-m3-primary"
+                                />
+                              </div>
+                              <div className="md:col-span-2">
+                                <label className="block text-[0.7rem] font-bold text-gray-600 dark:text-gray-300 uppercase mb-1">
+                                  Link Title
+                                </label>
+                                <input
+                                  type="text"
+                                  value={link.title}
+                                  onChange={(e) => handleUpdateLink(idx, "title", e.target.value)}
+                                  placeholder="e.g. Raag Yaman - Tanarang Music"
+                                  className="w-full bg-white dark:bg-m3-surface-dark text-gray-900 dark:text-white px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-m3-primary"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-[0.7rem] font-bold text-gray-600 dark:text-gray-300 uppercase mb-1">
+                                URL (https://...)
+                              </label>
+                              <input
+                                type="url"
+                                value={link.url}
+                                onChange={(e) => handleUpdateLink(idx, "url", e.target.value)}
+                                placeholder="https://tanarang.com/..."
+                                className="w-full bg-white dark:bg-m3-surface-dark text-gray-900 dark:text-white px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-m3-primary"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Toast Message */}

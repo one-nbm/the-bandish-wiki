@@ -12,6 +12,7 @@ import {
   submitBandishContribution,
   submitBandishEdit
 } from "@/app/actions";
+import { normalizeTradition, normalizeLayArray } from "@/utils/traditionFormatters";
 
 interface BandishFormModalProps {
   isOpen: boolean;
@@ -189,9 +190,9 @@ export default function BandishFormModal({
       title: formTitle.trim(),
       raag: formRaag.trim(),
       taal: formTaal.trim(),
-      lay: formLay.split(",").map((s) => s.trim()).filter(Boolean),
+      lay: normalizeLayArray(formLay),
       composer: formComposer.trim(),
-      tradition: formTradition.trim() || null,
+      tradition: normalizeTradition(formTradition),
       lyrics: {
         english: formEnglish.trim(),
         devanagari: formDevanagari.trim() || "",

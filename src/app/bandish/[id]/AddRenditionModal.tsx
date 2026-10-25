@@ -7,6 +7,7 @@ import { syncRenditionAcrossBandishes, getAllBandishTitles, getAllRenditionArtis
 import BandishCombobox from "./BandishCombobox";
 import FormCombobox from "@/components/FormCombobox";
 import { useTheme } from "@/app/ThemeProvider";
+import { stripArtistTitles } from "@/utils/traditionFormatters";
 
 export default function AddRenditionModal({ bandish, userRole = "admin" }: { bandish: any; userRole?: UserRole }) {
   const router = useRouter();
@@ -88,7 +89,7 @@ export default function AddRenditionModal({ bandish, userRole = "admin" }: { ban
     setToast(null);
 
     const newRendition = { 
-      artist: formArtist, 
+      artist: stripArtistTitles(formArtist), 
       url: formUrl,
       year: formYear,
       isVideo: formIsVideo,

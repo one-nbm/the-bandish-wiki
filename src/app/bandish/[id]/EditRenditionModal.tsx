@@ -7,6 +7,7 @@ import { syncRenditionAcrossBandishes, deleteRenditionSecurely, getAllBandishTit
 import BandishCombobox from "./BandishCombobox";
 import FormCombobox from "@/components/FormCombobox";
 import { useTheme } from "@/app/ThemeProvider";
+import { stripArtistTitles } from "@/utils/traditionFormatters";
 
 export default function EditRenditionModal({ bandish, index }: { bandish: any; index: number }) {
   const router = useRouter();
@@ -99,7 +100,7 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
 
     if (action === 'save') {
       newRendition = { 
-        artist: formArtist, 
+        artist: stripArtistTitles(formArtist), 
         url: formUrl,
         year: formYear,
         isVideo: formIsVideo,
