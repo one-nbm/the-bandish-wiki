@@ -62,6 +62,18 @@ export async function checkIsAdmin(): Promise<boolean> {
   return role === 'admin';
 }
 
+export async function signOutAction(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createServerClient();
+    await supabase.auth.signOut();
+    revalidatePath('/', 'layout');
+    return { success: true };
+  } catch (error) {
+    console.error("signOutAction error:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
 async function getAuthenticatedUserWithRole() {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();

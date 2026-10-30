@@ -360,6 +360,36 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
           )}
         </div>
 
+        {/* Book Section */}
+        <section className="mt-16 pt-12 border-t border-gray-200 dark:border-gray-800 animate-page-enter animate-page-delay-3">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+              <span className="material-symbols-rounded text-amber-500 dark:text-amber-400 text-[1.8rem]">
+                menu_book
+              </span>
+              Book
+            </h3>
+          </div>
+
+          {bandish.book && bandish.book.trim() ? (
+            <div className="inline-flex items-center gap-3.5 px-5 py-3.5 rounded-2xl bg-m3-surface-container dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
+              <span className="material-symbols-rounded text-amber-500 dark:text-amber-400 text-[1.5rem] shrink-0">
+                auto_stories
+              </span>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
+                  Found In
+                </span>
+                <span className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+                  {bandish.book}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-500 italic">N/A</p>
+          )}
+        </section>
+
         {/* Bandishes You Might Like Section */}
         {recommendations.length > 0 && (
           <section className="mt-16 pt-12 border-t border-gray-200 dark:border-gray-800 animate-page-enter animate-page-delay-2">

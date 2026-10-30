@@ -185,6 +185,12 @@ export const RAAG_FURTHER_READING = {
     { title: "Raag Marwa (Marva) - AUTRIM (NCPA)", url: "https://autrimncpa.wordpress.com/marva/", source: "AUTRIM" },
     { title: "Raag Marwa Profile - Wikipedia", url: "https://en.wikipedia.org/wiki/Marwa_(raga)", source: "Wikipedia" }
   ],
+  "megh": [
+    { title: "Raag Megh Malhar - Tanarang Music", url: "https://tanarang.com/raag-megh-malhar-or-raag-megh/", source: "Tanarang" },
+    { title: "A Tale of Two Malhars - Rajan Parrikar Archive", url: "https://www.parrikar.org/hindustani/tale-two-malhars/", source: "Parrikar.org" },
+    { title: "Raag Megh / Megh Malhar - AUTRIM (NCPA)", url: "https://autrimncpa.wordpress.com/megh-megh-malhar/", source: "AUTRIM" },
+    { title: "Raag Megh Overview - Wikipedia", url: "https://en.wikipedia.org/wiki/Megh_(raga)", source: "Wikipedia" }
+  ],
   "miyan-ki-malhar": [
     { title: "Raag Miyan Malhar - Tanarang Music", url: "https://tanarang.com/raag-malhar-raag-miya-malhar/", source: "Tanarang" },
     { title: "On Gaud Malhar and Miyan Malhar - Rajan Parrikar Archive", url: "https://www.parrikar.org/hindustani/malhars/", source: "Parrikar.org" },
