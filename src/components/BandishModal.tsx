@@ -139,6 +139,18 @@ export function BandishModal({ bandish, isAdmin, userRole, onClose, onEdit }: Ba
                   {g}
                 </span>
               ))}
+              {bandish.book && bandish.book.trim() && bandish.book !== "N/A" && (
+                <span className="bg-amber-500/10 dark:bg-amber-400/10 text-amber-700 dark:text-amber-400 px-4 py-2 rounded-full text-sm font-bold tracking-wide flex items-center gap-1.5 border border-amber-500/20 dark:border-amber-400/20">
+                  <span className="material-symbols-rounded text-sm">menu_book</span>
+                  {bandish.book}
+                </span>
+              )}
+              {bandish.is_published === false && (
+                <span className="bg-amber-500/10 dark:bg-amber-400/10 text-amber-700 dark:text-amber-400 px-4 py-2 rounded-full text-sm font-bold tracking-wide flex items-center gap-1.5 border border-amber-500/20 dark:border-amber-400/20 uppercase">
+                  <span className="material-symbols-rounded text-sm">lock</span>
+                  Admin Only
+                </span>
+              )}
             </div>
           </div>
 

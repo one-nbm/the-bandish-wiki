@@ -69,6 +69,10 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
   const role = await getUserRole();
   const isAdmin = role === "admin";
 
+  if (bandish.is_published === false && !isAdmin) {
+    notFound();
+  }
+
   // Schema.org Structured Data
   const jsonLd = {
     "@context": "https://schema.org",
@@ -132,10 +136,15 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
   }
 
   // Fetch candidate pool and raags for recommendations
+  let candidatesQuery = supabase
+    .from("bandishes")
+    .select("id, title, raag, taal, lay, composer, tradition, youtube_renditions, is_published");
+  if (!isAdmin) {
+    candidatesQuery = candidatesQuery.neq("is_published", false);
+  }
+
   const [candidatesRes, raagsRes] = await Promise.all([
-    supabase
-      .from("bandishes")
-      .select("id, title, raag, taal, lay, composer, tradition, youtube_renditions"),
+    candidatesQuery,
     supabase
       .from("raags")
       .select("name, thaat"),
@@ -192,6 +201,12 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
           </h1>
 
           <div className="flex flex-wrap gap-3">
+            {bandish.is_published === false && (
+              <span className="flex items-center gap-1.5 bg-amber-500/10 dark:bg-amber-400/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 dark:border-amber-400/20 px-5 py-2.5 rounded-full text-sm font-bold tracking-wider uppercase">
+                <span className="material-symbols-rounded text-sm">lock</span>
+                Admin Only Preview
+              </span>
+            )}
             <Link
               href={`/raag/${raagSlug}`}
               className="group flex items-center gap-1.5 bg-m3-secondary/10 hover:bg-m3-secondary/20 dark:bg-m3-secondary-dark/10 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-5 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all duration-300"

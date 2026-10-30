@@ -59,13 +59,20 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
     notFound();
   }
 
-  // 2. Fetch all Bandishes associated with this Raag
-  const { data: associatedBandishes } = await supabase
+  const role = await getUserRole();
+  const isAdmin = role === "admin";
+
+  // 2. Fetch all Bandishes associated with this Raag (excluding unpublished for non-admins)
+  let bandishesQuery = supabase
     .from("bandishes")
-    .select("id, title, taal, composer")
+    .select("id, title, taal, composer, is_published")
     .eq("raag", raag.name);
 
-  const role = await getUserRole();
+  if (!isAdmin) {
+    bandishesQuery = bandishesQuery.neq("is_published", false);
+  }
+
+  const { data: associatedBandishes } = await bandishesQuery;
 
   // Schema.org Structured Data
   const raagJsonLd = {
@@ -233,7 +240,14 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
                   className="group bg-white dark:bg-m3-surface-dark p-5 rounded-2xl border border-gray-200 dark:border-gray-800 hover:border-m3-primary dark:hover:border-m3-primary-dark transition-colors flex justify-between items-center"
                 >
                   <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white text-lg">{b.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-gray-900 dark:text-white text-lg">{b.title}</h3>
+                      {b.is_published === false && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-500/20 dark:border-amber-400/20 uppercase tracking-wider">
+                          <span className="material-symbols-rounded text-[11px]">lock</span> Admin
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{b.taal} • {b.composer}</p>
                   </div>
                   <span className="material-symbols-rounded text-gray-400 group-hover:text-m3-primary transition-colors">chevron_right</span>

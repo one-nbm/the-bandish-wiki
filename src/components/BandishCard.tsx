@@ -83,6 +83,12 @@ export const BandishCard = memo(({
         </h2>
       </div>
       <div className="flex flex-wrap gap-2 mb-5">
+        {bandish.is_published === false && (
+          <span className="inline-flex items-center gap-1 bg-amber-500/10 dark:bg-amber-400/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 dark:border-amber-400/20 px-3 py-1.5 rounded-2xl text-xs font-bold tracking-wider uppercase">
+            <span className="material-symbols-rounded text-xs">lock</span>
+            Admin Only
+          </span>
+        )}
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFilter("raag", bandish.raag); }}
           className="bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 hover:bg-m3-secondary/20 dark:hover:bg-m3-secondary-dark/20 text-m3-secondary dark:text-m3-secondary-dark px-3 py-1.5 rounded-2xl text-sm font-bold tracking-wide transition duration-200 text-left hover:scale-105 active:scale-95"

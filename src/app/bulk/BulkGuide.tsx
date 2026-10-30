@@ -38,6 +38,7 @@ const TOP_LEVEL_SNIPPET = `[
     "lay": ["Drut"],
     "composer": "unknown",
     "tradition": "Gwalior",
+    "book": "Sangita Raga-Kalpadruma",
     "lyrics": { ... },
     "youtube_renditions": [ ... ],
     "contributor": "Anonymous"
@@ -68,6 +69,7 @@ const FULL_EXAMPLE_SNIPPET = `[
     "lay": ["Madhyalay"],
     "composer": "unknown",
     "tradition": "Gwalior",
+    "book": "Raag Sarita",
     "lyrics": {
       "english": "jhananan jhan jhananan jhan baaje paayaliya\\npiyaa se milan chali aaj kaminiya\\n\\namiy halaahal madbhare shwet shyam ratanaar\\njiyat marat jhuki jhuki parat jehi chitawat ek baar",
       "devanagari": "झनणन झन झनणन झन बाजे पायलिया\\nपिया से मिलन चली आज कामिनिया\\n\\nअमिय हलाहल मदभरे श्वेत श्याम रतनार\\nजियत मरत झुकी झुकी परत जेही चितवत एक बार"
@@ -134,6 +136,8 @@ export default function BulkGuide() {
               { field: "lay", type: "Array of Strings", desc: "Tempo designations (e.g. [\"Vilambit\"], [\"Madhyalay\"], [\"Drut\"])." },
               { field: "composer", type: "String (Optional)", desc: "If unknown, defaults to \"unknown\". Otherwise, composer name with optional mudra." },
               { field: "tradition", type: "String (Optional)", desc: "Gharana musical lineage. Key traditions: \"Gwalior\", \"Agra\", \"Jaipur-Atrauli\", \"Kirana\", \"Indore\", \"Patiala\", \"Delhi\", \"Rampur-Sahaswan\", \"Mewati\", \"Bhendibazaar\", or \"N/A\" for non-khyal/dhrupad compositions. Enables gharana filtering in the catalog." },
+              { field: "book", type: "String (Optional)", desc: "Source anthology or publication where the bandish is documented (e.g. \"Sangita Raga-Kalpadruma\", \"Raag Sarita\"). Defaults to null/omitted." },
+              { field: "is_published", type: "Boolean (Optional)", desc: "Visibility status. Set to false to restrict visibility exclusively to administrators (Admin Only / Draft mode). Defaults to true." },
               { field: "contributor", type: "String (Optional)", desc: "Contributor name or identifier. Defaults to \"Anonymous\"." }
             ].map((item, idx) => (
               <div key={idx} className="bg-m3-surface dark:bg-m3-surface-dark p-4 rounded-2xl border border-m3-surface-high dark:border-m3-surface-high-dark flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">

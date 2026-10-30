@@ -25,6 +25,7 @@ interface BandishFormModalProps {
   allLays: string[];
   allComposers?: string[];
   allTraditions?: string[];
+  allBooks?: string[];
   maxExistingId?: number;
   onClose: () => void;
   onSuccess: (action: "add" | "edit" | "delete", data?: any, id?: string) => void;
@@ -41,6 +42,7 @@ export default function BandishFormModal({
   allLays,
   allComposers,
   allTraditions,
+  allBooks,
   maxExistingId = 0,
   onClose,
   onSuccess,
@@ -56,8 +58,10 @@ export default function BandishFormModal({
   const [formLay, setFormLay] = useState("");
   const [formComposer, setFormComposer] = useState("");
   const [formTradition, setFormTradition] = useState("");
+  const [formBook, setFormBook] = useState("");
   const [formEnglish, setFormEnglish] = useState("");
   const [formDevanagari, setFormDevanagari] = useState("");
+  const [formIsPublished, setFormIsPublished] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -98,6 +102,16 @@ export default function BandishFormModal({
     "N/A"
   ], []);
 
+  const defaultBooks = useMemo(() => [
+    "Sangita Raga-Kalpadruma",
+    "Raag Sarita",
+    "Kramik Pustak Malika",
+    "Raga Parichay",
+    "Abhinav Geetanjali",
+    "Sangeetanjali",
+    "N/A"
+  ], []);
+
   const composerSuggestions = useMemo(() => {
     return Array.from(new Set([...(allComposers || []), ...defaultComposers])).filter(Boolean).sort();
   }, [allComposers, defaultComposers]);
@@ -105,6 +119,10 @@ export default function BandishFormModal({
   const traditionSuggestions = useMemo(() => {
     return Array.from(new Set([...(allTraditions || []), ...defaultTraditions])).filter(Boolean).sort();
   }, [allTraditions, defaultTraditions]);
+
+  const bookSuggestions = useMemo(() => {
+    return Array.from(new Set([...(allBooks || []), ...defaultBooks])).filter(Boolean).sort();
+  }, [allBooks, defaultBooks]);
 
   useEffect(() => {
     setMounted(true);
@@ -124,8 +142,10 @@ export default function BandishFormModal({
         setFormLay(Array.isArray(bandish.lay) ? bandish.lay.join(", ") : bandish.lay || "");
         setFormComposer(bandish.composer || "");
         setFormTradition(bandish.tradition || "");
+        setFormBook(bandish.book || "");
         setFormEnglish(bandish.lyrics?.english || "");
         setFormDevanagari(bandish.lyrics?.devanagari || "");
+        setFormIsPublished(bandish.is_published !== false);
       } else {
         setFormTitle("");
         setFormRaag("");
@@ -133,8 +153,10 @@ export default function BandishFormModal({
         setFormLay("");
         setFormComposer("");
         setFormTradition("");
+        setFormBook("");
         setFormEnglish("");
         setFormDevanagari("");
+        setFormIsPublished(true);
       }
     }
   }, [isOpen, isEdit, bandish]);
@@ -193,6 +215,8 @@ export default function BandishFormModal({
       lay: normalizeLayArray(formLay),
       composer: formComposer.trim(),
       tradition: normalizeTradition(formTradition),
+      book: formBook.trim() && formBook.trim() !== "N/A" ? formBook.trim() : null,
+      is_published: formIsPublished,
       lyrics: {
         english: formEnglish.trim(),
         devanagari: formDevanagari.trim() || "",
@@ -396,6 +420,16 @@ export default function BandishFormModal({
                   focusRingColor="focus:ring-gray-500 dark:focus:ring-gray-400"
                   quickPills={["Agra", "Gwalior", "Jaipur-Atrauli", "Kirana", "Patiala", "Bhendibazaar", "N/A"]}
                 />
+                <FormCombobox
+                  label="Book / Source Anthology"
+                  value={formBook}
+                  onChange={setFormBook}
+                  suggestions={bookSuggestions}
+                  placeholder="e.g. Sangita Raga-Kalpadruma, Raag Sarita"
+                  labelColor="text-amber-600 dark:text-amber-400"
+                  focusRingColor="focus:ring-amber-500 dark:focus:ring-amber-400"
+                  quickPills={["Sangita Raga-Kalpadruma", "Raag Sarita", "Kramik Pustak Malika", "N/A"]}
+                />
               </div>
 
               {/* Transliteration */}
@@ -432,6 +466,37 @@ export default function BandishFormModal({
               </div>
 
               <hr className="border-gray-200 dark:border-m3-surface-high-dark my-2" />
+
+              {/* Admin Visibility Toggle */}
+              {userRole === "admin" && (
+                <div className="w-full p-4 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-rounded text-xl text-m3-primary dark:text-m3-primary-dark shrink-0">
+                      {formIsPublished ? "visibility" : "visibility_off"}
+                    </span>
+                    <div>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white block">Visibility Status</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {formIsPublished ? "Live on Wiki (Visible to all users)" : "Admin Only Draft (Hidden from general public)"}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormIsPublished(!formIsPublished)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-transform duration-200 active:scale-95 flex items-center gap-1.5 border ${
+                      formIsPublished
+                        ? "bg-green-500/10 dark:bg-green-400/10 text-green-700 dark:text-green-300 border-green-500/30"
+                        : "bg-amber-500/10 dark:bg-amber-400/10 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                    }`}
+                  >
+                    <span className="material-symbols-rounded text-sm">
+                      {formIsPublished ? "public" : "lock"}
+                    </span>
+                    {formIsPublished ? "Published" : "Admin Only"}
+                  </button>
+                </div>
+              )}
 
               {/* Role Status Notice */}
               <div className="flex flex-col md:flex-row gap-6 items-end">

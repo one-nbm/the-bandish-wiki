@@ -252,7 +252,9 @@ export async function addBandishSecurely(newBandish: any) {
   revalidatePath('/raags');
   if (sanitized.id) {
     revalidatePath(`/bandish/${sanitized.id}`);
-    pingIndexNow([`https://bandish-wiki.vercel.app/bandish/${sanitized.id}`]);
+    if (sanitized.is_published !== false) {
+      pingIndexNow([`https://bandish-wiki.vercel.app/bandish/${sanitized.id}`]);
+    }
   }
   if (sanitized.raag) {
     const raagSlug = sanitized.raag.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");

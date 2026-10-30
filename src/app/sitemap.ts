@@ -9,8 +9,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Fetch all bandishes
-  const { data: bandishes } = await supabase.from("bandishes").select("id");
+  // Fetch all published bandishes
+  const { data: bandishes } = await supabase
+    .from("bandishes")
+    .select("id")
+    .neq("is_published", false);
   
   // Fetch all raags
   const { data: raags } = await supabase.from("raags").select("slug");

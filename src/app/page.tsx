@@ -137,16 +137,18 @@ export default function Home() {
 
   // --- 5. EFFECTS ---
   useEffect(() => {
-    const fetchUserRole = async () => {
+    const initData = async () => {
       const role = await getUserRole();
       setUserRole(role);
-      setIsAdmin(role === "admin");
-    };
+      const isAdministrator = role === "admin";
+      setIsAdmin(isAdministrator);
 
-    fetchUserRole();
+      let query = supabase.from('bandishes').select('*');
+      if (!isAdministrator) {
+        query = query.neq('is_published', false);
+      }
 
-    const fetchBandishes = async () => {
-      const { data, error } = await supabase.from('bandishes').select('*');
+      const { data, error } = await query;
       if (error) { console.error("Error fetching data:", error); return; }
       if (data) {
         const shuffled = [...data];
@@ -158,6 +160,8 @@ export default function Home() {
       }
       setIsMounted(true);
     };
+
+    initData();
 
     const fetchUserAndFavorites = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -185,7 +189,6 @@ export default function Home() {
     if (savedGlur !== null) setEnableGlur(savedGlur === "true");
 
     fetchUserAndFavorites();
-    fetchBandishes();
   }, []);
 
   // Auto-dismiss toast notification
@@ -611,6 +614,17 @@ export default function Home() {
       }
     });
     ["Agra", "Gwalior", "Jaipur-Atrauli", "Kirana", "Patiala", "Bhendibazaar", "Mewati", "Rampur-Sahaswan", "Banaras", "Delhi"].forEach((t) => set.add(t));
+    return Array.from(set).filter(Boolean).sort();
+  }, [baseData]);
+
+  const allBooks = useMemo(() => {
+    const set = new Set<string>();
+    baseData.forEach((b: any) => {
+      if (b.book && b.book !== "N/A" && b.book !== "None") {
+        set.add(b.book.trim());
+      }
+    });
+    ["Sangita Raga-Kalpadruma", "Raag Sarita", "Kramik Pustak Malika"].forEach((bk) => set.add(bk));
     return Array.from(set).filter(Boolean).sort();
   }, [baseData]);
 
@@ -1045,6 +1059,7 @@ export default function Home() {
         allLays={allLays}
         allComposers={allComposers}
         allTraditions={allTraditions}
+        allBooks={allBooks}
         maxExistingId={maxExistingId}
         onClose={() => setIsAddOpen(false)}
         onSuccess={handleBandishModalSuccess}
@@ -1062,6 +1077,7 @@ export default function Home() {
         allLays={allLays}
         allComposers={allComposers}
         allTraditions={allTraditions}
+        allBooks={allBooks}
         onClose={() => {
           const prev = editingBandish;
           setEditingBandish(null);

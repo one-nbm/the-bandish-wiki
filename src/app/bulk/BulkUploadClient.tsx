@@ -12,6 +12,9 @@ interface NormalizedBandish {
   taal?: string;
   lay?: string[];
   composer?: string;
+  tradition?: string;
+  book?: string | null;
+  is_published?: boolean;
   lyrics?: {
     english?: string;
     devanagari?: string;
@@ -42,6 +45,7 @@ const SAMPLE_PAYLOAD: NormalizedBandish[] = [
     lay: ["Madhyalay"],
     composer: "unknown",
     tradition: "Gwalior",
+    book: "Raag Sarita",
     lyrics: {
       english: "jhananan jhan jhananan jhan baaje paayaliya\npiyaa se milan chali aaj kaminiya",
       devanagari: "झनणन झन झनणन झन बाजे पायलिया\nपिया से मिलन चली आज कामिनिया"
@@ -154,6 +158,10 @@ export default function BulkUploadClient() {
         lay,
         composer: item.composer ? String(item.composer).trim() : "unknown",
         tradition: item.tradition ? String(item.tradition).trim() : "N/A",
+        book: item.book && typeof item.book === "string" && item.book.trim() && item.book.trim() !== "N/A"
+          ? item.book.trim()
+          : null,
+        is_published: item.is_published === false ? false : true,
         lyrics: item.lyrics && typeof item.lyrics === "object" ? {
           english: item.lyrics.english || "",
           devanagari: item.lyrics.devanagari || ""
@@ -757,8 +765,13 @@ export default function BulkUploadClient() {
                               className="hover:bg-m3-surface/60 dark:hover:bg-m3-surface-dark/40 transition-colors"
                             >
                               <td className="py-3.5 px-4 font-mono text-gray-400 text-xs">{index + 1}</td>
-                              <td className="py-3.5 px-4 font-bold text-gray-900 dark:text-white max-w-[200px] truncate">
-                                {item.bandish.title}
+                              <td className="py-3.5 px-4 font-bold text-gray-900 dark:text-white max-w-[200px]">
+                                <div className="truncate">{item.bandish.title}</div>
+                                {item.bandish.is_published === false && (
+                                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-500/20 dark:border-amber-400/20 uppercase tracking-wider mt-0.5">
+                                    <span className="material-symbols-rounded text-[11px]">lock</span> Admin Only
+                                  </span>
+                                )}
                               </td>
                               <td className="py-3.5 px-4 text-m3-secondary dark:text-m3-secondary-dark font-medium">
                                 {item.bandish.raag}
@@ -776,6 +789,12 @@ export default function BulkUploadClient() {
                                 {item.bandish.tradition && item.bandish.tradition !== "N/A" && (
                                   <div className="text-[11px] text-m3-tertiary dark:text-m3-tertiary-dark font-medium">
                                     {item.bandish.tradition} Gharana
+                                  </div>
+                                )}
+                                {item.bandish.book && (
+                                  <div className="text-[10px] text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1 mt-0.5">
+                                    <span className="material-symbols-rounded text-[11px]">menu_book</span>
+                                    {item.bandish.book}
                                   </div>
                                 )}
                               </td>
