@@ -243,9 +243,20 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-gray-900 dark:text-white text-lg">{b.title}</h3>
                       {b.is_published === false && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 dark:bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-500/20 dark:border-amber-400/20 uppercase tracking-wider">
-                          <span className="material-symbols-rounded text-[11px]">lock</span> Admin
-                        </span>
+                        <div className="group/admin relative flex items-center shrink-0">
+                          <div
+                            className="w-6 h-6 flex items-center justify-center rounded-full text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 dark:border-amber-400/20 cursor-default"
+                            aria-label="Admin Only (Unpublished Draft)"
+                          >
+                            <span className="material-symbols-rounded text-[0.95rem]">lock</span>
+                          </div>
+                          {/* Tooltip */}
+                          <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 opacity-0 group-hover/admin:opacity-100 transition-opacity duration-200 z-20">
+                            <div className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-[11px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap border border-gray-800 dark:border-gray-200">
+                              Admin Only Draft
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{b.taal} • {b.composer}</p>

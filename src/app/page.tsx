@@ -5,8 +5,7 @@ import Link from "next/link";
 import Fuse from "fuse.js";
 import { createClient } from "@/utils/supabase/client";
 import { useTheme } from "./ThemeProvider";
-import { M3LoadingIndicator } from "@alerix/m3-loading-indicator/react";
-import { checkIsEditor, getUserRole, UserRole } from "./actions";
+import { getUserRole, UserRole } from "./actions";
 import WelcomeScreen from "@/components/WelcomeScreen";
 import { BandishCard } from "@/components/BandishCard";
 import { BandishModal } from "@/components/BandishModal";
@@ -22,11 +21,14 @@ const KB_SCROLL_TOP_GAP = 36;
 const KB_SCROLL_BOTTOM_GAP = 24;
 const KB_SCROLL_DURATION = 0.4;
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+// Incremental grid rendering: only a window of cards is mounted so hover/style/paint cost stays flat as the library grows
+const RENDER_BATCH = 36;
+const RENDER_PREFETCH_MARGIN = 12;
 // Flat keycap used by the keyboard hints (borders only, no shadows)
 const KBD_CAP_CLASS = "inline-flex items-center justify-center min-w-[1.15rem] h-[1.15rem] px-1 rounded border border-m3-surface-high dark:border-m3-surface-high-dark bg-white dark:bg-m3-surface-dark font-sans text-[0.65rem] leading-none text-gray-700 dark:text-gray-300";
 
 export default function Home() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { isDarkMode, toggleDarkMode } = useTheme();
 
   // --- 1. SEARCH & FILTER STATES ---
@@ -43,12 +45,9 @@ export default function Home() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [hasStartedBrowsing, setHasStartedBrowsing] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-
-  useEffect(() => {
-    if (query.trim() !== "" || activeFilters.length > 0 || showFavoritesOnly) {
-      setHasSearched(true);
-    }
-  }, [query, activeFilters, showFavoritesOnly]);
+  if (!hasSearched && (query.trim() !== "" || activeFilters.length > 0 || showFavoritesOnly)) {
+    setHasSearched(true);
+  }
 
   // Prevent hover thrashing / scroll choppiness on bandish cards while scrolling
   useEffect(() => {
@@ -133,7 +132,21 @@ export default function Home() {
     lenisRef.current = lenis;
   }, [lenis]);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [enableGlur, setEnableGlur] = useState(true);
+  const [enableGlur, setEnableGlur] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      const savedGlur = localStorage.getItem("wiki-glur");
+      return savedGlur !== null ? savedGlur === "true" : true;
+    } catch {
+      return true;
+    }
+  });
+  const [renderLimit, setRenderLimit] = useState(RENDER_BATCH);
+  const renderLimitRef = useRef(RENDER_BATCH);
+  const [sentinelEl, setSentinelEl] = useState<HTMLDivElement | null>(null);
+  useEffect(() => {
+    renderLimitRef.current = renderLimit;
+  }, [renderLimit]);
 
   // --- 5. EFFECTS ---
   useEffect(() => {
@@ -176,20 +189,17 @@ export default function Home() {
         } else {
           // fallback to local storage if no user metadata yet
           const savedFavs = localStorage.getItem("wiki-favorites");
-          if (savedFavs) { try { setFavorites(JSON.parse(savedFavs)); } catch (e) { } }
+          if (savedFavs) { try { setFavorites(JSON.parse(savedFavs)); } catch { } }
         }
       } else {
         setIsSignedIn(false);
         const savedFavs = localStorage.getItem("wiki-favorites");
-        if (savedFavs) { try { setFavorites(JSON.parse(savedFavs)); } catch (e) { } }
+        if (savedFavs) { try { setFavorites(JSON.parse(savedFavs)); } catch { } }
       }
     };
 
-    const savedGlur = localStorage.getItem("wiki-glur");
-    if (savedGlur !== null) setEnableGlur(savedGlur === "true");
-
     fetchUserAndFavorites();
-  }, []);
+  }, [supabase]);
 
   // Auto-dismiss toast notification
   useEffect(() => {
@@ -267,6 +277,34 @@ export default function Home() {
     }
     return preSearchData;
   }, [preSearchData, deferredQuery, fuseBandishes]);
+
+  // Restart from the first batch only when the *result set definition* changes (search / filters / favorites view).
+  // Keyed on a string, not array identity, so toggling a favorite never collapses the grid and jumps the scroll.
+  const gridResetKey = `${deferredQuery}|${showFavoritesOnly}|${activeFilters.map((f) => `${f.key}:${f.value}`).join(",")}`;
+  const [prevGridResetKey, setPrevGridResetKey] = useState(gridResetKey);
+  if (prevGridResetKey !== gridResetKey) {
+    setPrevGridResetKey(gridResetKey);
+    setRenderLimit(RENDER_BATCH);
+  }
+
+  const hasMoreCards = processedData.length > renderLimit;
+  const visibleData = useMemo(
+    () => (processedData.length > renderLimit ? processedData.slice(0, renderLimit) : processedData),
+    [processedData, renderLimit]
+  );
+
+  // Load the next batch well before the user reaches the end of the rendered cards
+  useEffect(() => {
+    if (!hasMoreCards || !sentinelEl) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setRenderLimit((limit) => limit + RENDER_BATCH);
+      },
+      { rootMargin: "0px 0px 1600px 0px" }
+    );
+    observer.observe(sentinelEl);
+    return () => observer.disconnect();
+  }, [hasMoreCards, sentinelEl, renderLimit]);
 
   const bandishCount = processedData.length;
   const uniqueRaagsCount = new Set(processedData.map((b) => b.raag)).size;
@@ -510,6 +548,11 @@ export default function Home() {
       }
 
       activateCard(String(data[nextIndex].id), nextEl);
+
+      // Keep cards rendered ahead of the highlighted one so Arrow keys never run off the end of the mounted window
+      if (nextIndex >= renderLimitRef.current - RENDER_PREFETCH_MARGIN) {
+        setRenderLimit((limit) => Math.max(limit, nextIndex + RENDER_BATCH));
+      }
     };
 
     const handleResetBrowsing = () => {
@@ -662,6 +705,7 @@ export default function Home() {
     }
 
     return (
+      <>
       <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
         {suggestedRaag && (
           <div className="group relative bg-m3-secondary/10 dark:bg-m3-secondary-dark/10 p-6 md:p-8 rounded-[1.5rem] border border-m3-secondary/20 flex flex-col items-start break-inside-avoid mb-4 transition duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:scale-[1.01] transform-gpu">
@@ -703,7 +747,7 @@ export default function Home() {
         )}
 
         <AnimatePresence mode="popLayout">
-          {processedData.map((bandish, index) => (
+          {visibleData.map((bandish, index) => (
             <BandishCard
               key={bandish.id}
               bandish={bandish}
@@ -720,6 +764,8 @@ export default function Home() {
           ))}
         </AnimatePresence>
       </div>
+      {hasMoreCards && <div ref={setSentinelEl} aria-hidden="true" className="h-px w-full" />}
+      </>
     );
   };
 
