@@ -56,7 +56,7 @@ export const BandishCard = memo(({
           {bandish.is_published === false && (
             <div className="group/admin relative flex items-center">
               <div
-                className="w-8 h-8 flex items-center justify-center rounded-full text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 dark:border-amber-400/20 transition-all duration-200 cursor-default"
+                className="flex items-center text-gray-400 dark:text-gray-500 px-1.5 h-8 rounded-full transition-all duration-200 cursor-default"
                 aria-label="Admin Only (Unpublished Draft)"
               >
                 <span className="material-symbols-rounded text-[1.1rem]">lock</span>

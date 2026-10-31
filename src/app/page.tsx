@@ -141,6 +141,15 @@ export default function Home() {
       return true;
     }
   });
+  const [showUnpublished, setShowUnpublished] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      const saved = localStorage.getItem("wiki-admin-show-unpublished");
+      return saved !== null ? saved === "true" : true;
+    } catch {
+      return true;
+    }
+  });
   const [renderLimit, setRenderLimit] = useState(RENDER_BATCH);
   const renderLimitRef = useRef(RENDER_BATCH);
   const [sentinelEl, setSentinelEl] = useState<HTMLDivElement | null>(null);
@@ -247,6 +256,9 @@ export default function Home() {
   // --- 7. DATA PROCESSING ---
   const preSearchData = useMemo(() => {
     let data = baseData;
+    if (isAdmin && !showUnpublished) {
+      data = data.filter((bandish) => bandish.is_published !== false);
+    }
     if (showFavoritesOnly) data = data.filter((bandish) => favorites.includes(bandish.id));
     if (activeFilters.length > 0) {
       data = data.filter((bandish) => activeFilters.every((filter) => {
@@ -267,7 +279,7 @@ export default function Home() {
       }));
     }
     return data;
-  }, [baseData, showFavoritesOnly, favorites, activeFilters]);
+  }, [baseData, isAdmin, showUnpublished, showFavoritesOnly, favorites, activeFilters]);
 
   const fuseBandishes = useMemo(() => new Fuse(preSearchData, { keys: ["title", "raag", "composer", "taal", "lay"], threshold: 0.4 }), [preSearchData]);
 
@@ -280,7 +292,7 @@ export default function Home() {
 
   // Restart from the first batch only when the *result set definition* changes (search / filters / favorites view).
   // Keyed on a string, not array identity, so toggling a favorite never collapses the grid and jumps the scroll.
-  const gridResetKey = `${deferredQuery}|${showFavoritesOnly}|${activeFilters.map((f) => `${f.key}:${f.value}`).join(",")}`;
+  const gridResetKey = `${deferredQuery}|${showFavoritesOnly}|${showUnpublished}|${activeFilters.map((f) => `${f.key}:${f.value}`).join(",")}`;
   const [prevGridResetKey, setPrevGridResetKey] = useState(gridResetKey);
   if (prevGridResetKey !== gridResetKey) {
     setPrevGridResetKey(gridResetKey);
@@ -888,11 +900,38 @@ export default function Home() {
 
                       {/* Meta/Summary Row - Distilled & Bilaterally Balanced */}
                       <div className="flex flex-row items-center justify-between px-2 pt-1 text-xs md:text-sm">
-                        <p className="text-gray-500 dark:text-gray-400 font-medium">
-                          <span className="font-bold text-gray-900 dark:text-white">{bandishCount}</span> bandish{bandishCount !== 1 ? "es" : ""}
-                          <span className="mx-2 opacity-30">·</span>
-                          <span className="font-bold text-gray-900 dark:text-white">{uniqueRaagsCount}</span> raag{uniqueRaagsCount !== 1 ? "s" : ""}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-gray-500 dark:text-gray-400 font-medium">
+                            <span className="font-bold text-gray-900 dark:text-white">{bandishCount}</span> bandish{bandishCount !== 1 ? "es" : ""}
+                            <span className="mx-2 opacity-30">·</span>
+                            <span className="font-bold text-gray-900 dark:text-white">{uniqueRaagsCount}</span> raag{uniqueRaagsCount !== 1 ? "s" : ""}
+                          </p>
+
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = !showUnpublished;
+                                setShowUnpublished(next);
+                                try {
+                                  localStorage.setItem("wiki-admin-show-unpublished", String(next));
+                                } catch {}
+                              }}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border transition-all duration-200 cursor-pointer ${
+                                showUnpublished
+                                  ? "bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 border-m3-surface-high dark:border-m3-surface-high-dark hover:border-m3-primary dark:hover:border-m3-primary-dark"
+                                  : "bg-transparent text-gray-400 dark:text-gray-500 border border-dashed border-gray-400/40 dark:border-gray-600/40 hover:text-gray-600 dark:hover:text-gray-300"
+                              }`}
+                              title={showUnpublished ? "Admin: Click to hide unpublished compositions" : "Admin: Click to show unpublished compositions"}
+                              aria-pressed={showUnpublished}
+                            >
+                              <span className="material-symbols-rounded text-[13px]">
+                                {showUnpublished ? "lock_open" : "lock"}
+                              </span>
+                              <span>{showUnpublished ? "Unpublished: Shown" : "Unpublished: Hidden"}</span>
+                            </button>
+                          )}
+                        </div>
 
                         <div className="flex items-center gap-2">
                           {bandishCount > 0 && (
@@ -1212,6 +1251,28 @@ export default function Home() {
                 <span className="material-symbols-rounded text-[1.25rem] transition-all duration-300" style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
                 <span>{showFavoritesOnly ? "Favorites Only" : "All Bandishes"}</span>
               </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !showUnpublished;
+                    setShowUnpublished(next);
+                    try {
+                      localStorage.setItem("wiki-admin-show-unpublished", String(next));
+                    } catch {}
+                  }}
+                  className={`w-full group flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold border transition-all duration-300 ${
+                    showUnpublished
+                      ? "bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20"
+                      : "bg-m3-surface dark:bg-m3-surface-dark text-gray-400 dark:text-gray-500 border-m3-surface-high dark:border-m3-surface-high-dark opacity-75 hover:bg-m3-surface/80"
+                  }`}
+                >
+                  <span className="material-symbols-rounded text-[1.25rem]">
+                    {showUnpublished ? "lock_open" : "lock"}
+                  </span>
+                  <span>{showUnpublished ? "Hide Unpublished" : "Show Unpublished"}</span>
+                </button>
+              )}
               <button onClick={() => { const next = !enableGlur; setEnableGlur(next); localStorage.setItem("wiki-glur", String(next)); }} className="w-full group flex items-center justify-center gap-2 bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
                 <span className="material-symbols-rounded text-[1.25rem]">{enableGlur ? "blur_on" : "blur_off"}</span>
                 <span>{enableGlur ? "Disable Header Blur" : "Enable Header Blur"}</span>

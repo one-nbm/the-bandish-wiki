@@ -25,7 +25,7 @@ export default async function EditorPage() {
   ] = await Promise.all([
     supabase
       .from("bandishes")
-      .select("id, title, raag, taal, composer, lay, tradition", { count: "exact" })
+      .select("id, title, raag, taal, composer, lay, tradition, is_published", { count: "exact" })
       .eq("contributor", contributorName)
       .order("title", { ascending: true }),
     supabase
@@ -35,7 +35,7 @@ export default async function EditorPage() {
       .order("name", { ascending: true }),
     supabase
       .from("bandishes")
-      .select("id, title, raag, taal, composer, lay, tradition", { count: "exact" })
+      .select("id, title, raag, taal, composer, lay, tradition, is_published", { count: "exact" })
       .order("title", { ascending: true }),
     supabase
       .from("raags")

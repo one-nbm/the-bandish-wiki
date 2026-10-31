@@ -245,10 +245,10 @@ export default async function RaagPage({ params }: { params: Promise<{ slug: str
                       {b.is_published === false && (
                         <div className="group/admin relative flex items-center shrink-0">
                           <div
-                            className="w-6 h-6 flex items-center justify-center rounded-full text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 dark:border-amber-400/20 cursor-default"
+                            className="flex items-center text-gray-400 dark:text-gray-500 transition-all duration-200 cursor-default"
                             aria-label="Admin Only (Unpublished Draft)"
                           >
-                            <span className="material-symbols-rounded text-[0.95rem]">lock</span>
+                            <span className="material-symbols-rounded text-[1.1rem]">lock</span>
                           </div>
                           {/* Tooltip */}
                           <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 opacity-0 group-hover/admin:opacity-100 transition-opacity duration-200 z-20">

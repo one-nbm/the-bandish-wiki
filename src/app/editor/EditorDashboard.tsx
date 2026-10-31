@@ -21,6 +21,7 @@ interface ContributedBandish {
   composer?: string;
   lay?: string[];
   tradition?: string;
+  is_published?: boolean;
 }
 
 interface ContributedRaag {
@@ -76,10 +77,24 @@ export default function EditorDashboard({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 20;
 
-  // Reset pagination to page 1 on search or tab change
-  useEffect(() => {
+  // Show unpublished drafts state (admins only)
+  const [showUnpublished, setShowUnpublished] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      const saved = localStorage.getItem("wiki-admin-show-unpublished");
+      return saved !== null ? saved === "true" : true;
+    } catch {
+      return true;
+    }
+  });
+
+  // Reset pagination to page 1 on search, tab change, or unpublished toggle
+  const currentFilterKey = `${searchQuery}|${activeTab}|${showUnpublished}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(currentFilterKey);
+  if (prevFilterKey !== currentFilterKey) {
+    setPrevFilterKey(currentFilterKey);
     setCurrentPage(1);
-  }, [searchQuery, activeTab]);
+  }
 
   // Graph View Category State
   const [bandishCategory, setBandishCategory] = useState<"raag" | "taal" | "tradition">("raag");
@@ -92,7 +107,10 @@ export default function EditorDashboard({
     const userRaagMap: Record<string, number> = {};
     const userTaalMap: Record<string, number> = {};
     const userTraditionMap: Record<string, number> = {};
-    userBandishes.forEach((b) => {
+    const effectiveUserBandishes = userRole === "admin" && !showUnpublished
+      ? userBandishes.filter((b) => b.is_published !== false)
+      : userBandishes;
+    effectiveUserBandishes.forEach((b) => {
       const r = b.raag?.trim() || "Unknown";
       userRaagMap[r] = (userRaagMap[r] || 0) + 1;
       const t = b.taal?.trim() || "Unspecified";
@@ -121,7 +139,7 @@ export default function EditorDashboard({
       userSamayMap,
       userVadiMap
     };
-  }, [userBandishes, userRaags]);
+  }, [userBandishes, userRaags, userRole, showUnpublished]);
 
   const supabase = createClient();
   const router = useRouter();
@@ -147,18 +165,22 @@ export default function EditorDashboard({
     }
   };
 
-  // Filtered lists based on search query
+  // Filtered lists based on search query and admin unpublished filter
   const filteredBandishes = useMemo(() => {
-    if (!searchQuery.trim()) return userBandishes;
+    let list = userBandishes;
+    if (userRole === "admin" && !showUnpublished) {
+      list = list.filter((b) => b.is_published !== false);
+    }
+    if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase();
-    return userBandishes.filter(
+    return list.filter(
       (b) =>
         b.title.toLowerCase().includes(q) ||
         b.raag.toLowerCase().includes(q) ||
         (b.composer && b.composer.toLowerCase().includes(q)) ||
         (b.tradition && b.tradition.toLowerCase().includes(q))
     );
-  }, [userBandishes, searchQuery]);
+  }, [userBandishes, searchQuery, userRole, showUnpublished]);
 
   const filteredRaags = useMemo(() => {
     if (!searchQuery.trim()) return userRaags;
@@ -217,13 +239,37 @@ export default function EditorDashboard({
     };
   }, [activeTab, bandishCategory, raagCategory]);
 
-  // Active bandishes and raags based on dataset scope toggle
+  // Published vs Unpublished metrics
+  const bandishMetrics = useMemo(() => {
+    const userPublished = userBandishes.filter((b) => b.is_published !== false).length;
+    const userDrafts = userBandishes.filter((b) => b.is_published === false).length;
+
+    const allPublished = allBandishes.filter((b) => b.is_published !== false).length;
+    const allDrafts = allBandishes.filter((b) => b.is_published === false).length;
+
+    const currentPublished = datasetScope === "all" ? allPublished : userPublished;
+    const currentDrafts = datasetScope === "all" ? allDrafts : userDrafts;
+    const currentTotal = datasetScope === "all" ? allBandishes.length : userBandishes.length;
+
+    return {
+      userPublished,
+      userDrafts,
+      allPublished,
+      allDrafts,
+      currentPublished,
+      currentDrafts,
+      currentTotal
+    };
+  }, [userBandishes, allBandishes, datasetScope]);
+
+  // Active bandishes and raags based on dataset scope toggle & unpublished filter
   const activeBandishes = useMemo(() => {
-    if (datasetScope === "all" && allBandishes.length > 0) {
-      return allBandishes;
+    let list = datasetScope === "all" && allBandishes.length > 0 ? allBandishes : userBandishes;
+    if (userRole === "admin" && !showUnpublished) {
+      list = list.filter((b) => b.is_published !== false);
     }
-    return userBandishes;
-  }, [datasetScope, allBandishes, userBandishes]);
+    return list;
+  }, [datasetScope, allBandishes, userBandishes, userRole, showUnpublished]);
 
   const activeRaags = useMemo(() => {
     if (datasetScope === "all" && allRaags.length > 0) {
@@ -565,6 +611,20 @@ export default function EditorDashboard({
             <p className="text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5 sm:mt-1">
               Bandishes Authored
             </p>
+            {userRole === "admin" && (
+              <div className="flex items-center gap-1.5 mt-1.5 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{bandishMetrics.userPublished} published</span>
+                {bandishMetrics.userDrafts > 0 && (
+                  <>
+                    <span className="opacity-40">·</span>
+                    <span className="text-gray-400 dark:text-gray-500 flex items-center gap-0.5 font-semibold">
+                      <span className="material-symbols-rounded text-[12px]">lock</span>
+                      {bandishMetrics.userDrafts} draft{bandishMetrics.userDrafts !== 1 ? "s" : ""}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           <div className="mt-2.5 pt-2 border-t border-gray-100 dark:border-white/5 flex items-center justify-between text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-m3-primary dark:group-hover:text-m3-primary-dark transition-colors">
             <span>{activeTab === "bandishes" ? "Showing in table" : "Tap to view list"}</span>
@@ -685,12 +745,24 @@ export default function EditorDashboard({
             <span className="text-xs font-bold uppercase tracking-wider text-m3-secondary dark:text-m3-secondary-dark block">
               {activeTab === "bandishes" ? "Repertoire Breakdown" : "Canonical Scale Distribution"}
             </span>
-            <div className="mt-1.5">
+            <div className="mt-1.5 flex items-baseline gap-3 flex-wrap">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
                 {activeTab === "bandishes"
                   ? `${activeBandishes.length} ${activeBandishes.length === 1 ? "Bandish" : "Bandishes"}`
                   : `${activeRaags.length} ${activeRaags.length === 1 ? "Raag" : "Raags"}`}
               </h2>
+              {activeTab === "bandishes" && userRole === "admin" && (
+                <div className="flex items-center gap-2 text-xs font-semibold px-2.5 py-1 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-gray-600 dark:text-gray-400">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                    {bandishMetrics.currentPublished} Published
+                  </span>
+                  <span className="opacity-40">·</span>
+                  <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400 font-bold">
+                    <span className="material-symbols-rounded text-[13px]">lock</span>
+                    {bandishMetrics.currentDrafts} Unpublished
+                  </span>
+                </div>
+              )}
             </div>
             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
               {activeTab === "bandishes"
@@ -753,6 +825,32 @@ export default function EditorDashboard({
                 <span>Entire Database</span>
               </button>
             </div>
+
+            {/* Admin Unpublished Toggle Switch */}
+            {userRole === "admin" && activeTab === "bandishes" && (
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !showUnpublished;
+                  setShowUnpublished(next);
+                  try {
+                    localStorage.setItem("wiki-admin-show-unpublished", String(next));
+                  } catch {}
+                }}
+                className={`px-3.5 py-2 rounded-full text-xs font-bold border transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
+                  showUnpublished
+                    ? "bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 border-m3-surface-high dark:border-m3-surface-high-dark hover:border-m3-primary dark:hover:border-m3-primary-dark"
+                    : "bg-transparent text-gray-400 dark:text-gray-500 border border-dashed border-gray-400/50 dark:border-gray-600/50 hover:text-gray-600 dark:hover:text-gray-300"
+                }`}
+                title={showUnpublished ? "Admin: Click to hide unpublished bandishes from stats and table" : "Admin: Click to include unpublished bandishes in stats and table"}
+                aria-pressed={showUnpublished}
+              >
+                <span className="material-symbols-rounded text-sm">
+                  {showUnpublished ? "lock_open" : "lock"}
+                </span>
+                <span>{showUnpublished ? "Drafts: Shown" : "Drafts: Hidden"}</span>
+              </button>
+            )}
 
             {/* Category Toggle Pills with Spring Transition */}
             {activeTab === "bandishes" ? (
@@ -1400,12 +1498,22 @@ export default function EditorDashboard({
                         className="hover:bg-m3-surface/60 dark:hover:bg-m3-surface-dark/40 transition-colors"
                       >
                         <td className="py-3.5 px-4 font-bold text-gray-900 dark:text-white max-w-[220px] truncate">
-                          <Link
-                            href={`/bandish/${b.id}`}
-                            className="hover:text-m3-primary dark:hover:text-m3-primary-dark transition-colors"
-                          >
-                            {b.title}
-                          </Link>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {b.is_published === false && (
+                              <span
+                                className="material-symbols-rounded text-gray-400 dark:text-gray-500 text-sm shrink-0"
+                                title="Unpublished Draft (Admin Only)"
+                              >
+                                lock
+                              </span>
+                            )}
+                            <Link
+                              href={`/bandish/${b.id}`}
+                              className="hover:text-m3-primary dark:hover:text-m3-primary-dark transition-colors truncate"
+                            >
+                              {b.title}
+                            </Link>
+                          </div>
                         </td>
                         <td className="py-3.5 px-4 text-m3-secondary dark:text-m3-secondary-dark font-medium whitespace-nowrap">
                           {b.raag}
