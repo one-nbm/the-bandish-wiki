@@ -901,7 +901,7 @@ export default function Home() {
                       {/* Meta/Summary Row - Distilled & Bilaterally Balanced */}
                       <div className="flex flex-row items-center justify-between px-2 pt-1 text-xs md:text-sm">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-gray-500 dark:text-gray-400 font-medium">
+                          <p className="text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
                             <span className="font-bold text-gray-900 dark:text-white">{bandishCount}</span> bandish{bandishCount !== 1 ? "es" : ""}
                             <span className="mx-2 opacity-30">·</span>
                             <span className="font-bold text-gray-900 dark:text-white">{uniqueRaagsCount}</span> raag{uniqueRaagsCount !== 1 ? "s" : ""}
@@ -910,6 +910,8 @@ export default function Home() {
                           {isAdmin && (
                             <button
                               type="button"
+                              role="switch"
+                              aria-checked={showUnpublished}
                               onClick={() => {
                                 const next = !showUnpublished;
                                 setShowUnpublished(next);
@@ -923,12 +925,21 @@ export default function Home() {
                                   : "bg-transparent text-gray-400 dark:text-gray-500 border border-dashed border-gray-400/40 dark:border-gray-600/40 hover:text-gray-600 dark:hover:text-gray-300"
                               }`}
                               title={showUnpublished ? "Admin: Click to hide unpublished compositions" : "Admin: Click to show unpublished compositions"}
-                              aria-pressed={showUnpublished}
                             >
-                              <span className="material-symbols-rounded text-[13px]">
-                                {showUnpublished ? "lock_open" : "lock"}
-                              </span>
-                              <span>{showUnpublished ? "Unpublished: Shown" : "Unpublished: Hidden"}</span>
+                              <div
+                                className={`w-5 h-3 rounded-full transition-colors relative flex items-center p-0.5 ${
+                                  showUnpublished
+                                    ? "bg-m3-primary dark:bg-m3-primary-dark"
+                                    : "bg-gray-300 dark:bg-gray-600"
+                                }`}
+                              >
+                                <div
+                                  className={`w-2 h-2 rounded-full bg-white dark:bg-gray-900 transition-transform duration-200 ${
+                                    showUnpublished ? "translate-x-2" : "translate-x-0"
+                                  }`}
+                                />
+                              </div>
+                              <span className="whitespace-nowrap">{showUnpublished ? "Drafts on" : "Drafts off"}</span>
                             </button>
                           )}
                         </div>

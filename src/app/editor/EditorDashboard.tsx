@@ -741,30 +741,67 @@ export default function EditorDashboard({
       <div className="bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark p-6 sm:p-8 rounded-[2.5rem] animate-page-enter animate-page-delay-2">
         {/* Header with Google Health Top Metric Hierarchy & Scope Switcher */}
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 mb-6">
-          <div>
+          <div className="min-w-0">
             <span className="text-xs font-bold uppercase tracking-wider text-m3-secondary dark:text-m3-secondary-dark block">
               {activeTab === "bandishes" ? "Repertoire Breakdown" : "Canonical Scale Distribution"}
             </span>
-            <div className="mt-1.5 flex items-baseline gap-3 flex-wrap">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
+
+            {/* Title & Admin Metrics/Switch Row */}
+            <div className="mt-1.5 flex flex-wrap items-center gap-3">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tracking-tight whitespace-nowrap">
                 {activeTab === "bandishes"
                   ? `${activeBandishes.length} ${activeBandishes.length === 1 ? "Bandish" : "Bandishes"}`
                   : `${activeRaags.length} ${activeRaags.length === 1 ? "Raag" : "Raags"}`}
               </h2>
+
+              {/* Admin Metrics Pill with Interactive Sliding Switch */}
               {activeTab === "bandishes" && userRole === "admin" && (
-                <div className="flex items-center gap-2 text-xs font-semibold px-2.5 py-1 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-gray-600 dark:text-gray-400">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-xs">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap">
                     {bandishMetrics.currentPublished} Published
                   </span>
-                  <span className="opacity-40">·</span>
-                  <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400 font-bold">
+                  <span className="text-gray-300 dark:text-gray-700">·</span>
+                  <span className="text-gray-500 dark:text-gray-400 font-bold whitespace-nowrap flex items-center gap-1">
                     <span className="material-symbols-rounded text-[13px]">lock</span>
-                    {bandishMetrics.currentDrafts} Unpublished
+                    {bandishMetrics.currentDrafts} Drafts
                   </span>
+                  <span className="text-gray-300 dark:text-gray-700">·</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={showUnpublished}
+                    onClick={() => {
+                      const next = !showUnpublished;
+                      setShowUnpublished(next);
+                      try {
+                        localStorage.setItem("wiki-admin-show-unpublished", String(next));
+                      } catch {}
+                    }}
+                    className="flex items-center gap-1.5 font-bold cursor-pointer transition-colors text-gray-600 dark:text-gray-300 hover:text-m3-primary dark:hover:text-m3-primary-dark"
+                    title={showUnpublished ? "Click to hide unpublished bandishes from stats and table" : "Click to include unpublished bandishes in stats and table"}
+                  >
+                    <span className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 font-semibold whitespace-nowrap">
+                      {showUnpublished ? "Shown" : "Hidden"}
+                    </span>
+                    <div
+                      className={`w-7 h-4 rounded-full transition-colors relative flex items-center p-0.5 ${
+                        showUnpublished
+                          ? "bg-m3-primary dark:bg-m3-primary-dark"
+                          : "bg-gray-300 dark:bg-gray-700"
+                      }`}
+                    >
+                      <div
+                        className={`w-3 h-3 rounded-full bg-white dark:bg-gray-900 transition-transform duration-200 ${
+                          showUnpublished ? "translate-x-3" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </button>
                 </div>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xl">
               {activeTab === "bandishes"
                 ? datasetScope === "user"
                   ? "Distribution across your authored compositions, rhythmic cycles (taals), and gharanas."
@@ -825,32 +862,6 @@ export default function EditorDashboard({
                 <span>Entire Database</span>
               </button>
             </div>
-
-            {/* Admin Unpublished Toggle Switch */}
-            {userRole === "admin" && activeTab === "bandishes" && (
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !showUnpublished;
-                  setShowUnpublished(next);
-                  try {
-                    localStorage.setItem("wiki-admin-show-unpublished", String(next));
-                  } catch {}
-                }}
-                className={`px-3.5 py-2 rounded-full text-xs font-bold border transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
-                  showUnpublished
-                    ? "bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 border-m3-surface-high dark:border-m3-surface-high-dark hover:border-m3-primary dark:hover:border-m3-primary-dark"
-                    : "bg-transparent text-gray-400 dark:text-gray-500 border border-dashed border-gray-400/50 dark:border-gray-600/50 hover:text-gray-600 dark:hover:text-gray-300"
-                }`}
-                title={showUnpublished ? "Admin: Click to hide unpublished bandishes from stats and table" : "Admin: Click to include unpublished bandishes in stats and table"}
-                aria-pressed={showUnpublished}
-              >
-                <span className="material-symbols-rounded text-sm">
-                  {showUnpublished ? "lock_open" : "lock"}
-                </span>
-                <span>{showUnpublished ? "Drafts: Shown" : "Drafts: Hidden"}</span>
-              </button>
-            )}
 
             {/* Category Toggle Pills with Spring Transition */}
             {activeTab === "bandishes" ? (
@@ -1244,9 +1255,16 @@ export default function EditorDashboard({
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
                 Total Repertory
               </span>
-              <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                {bandishAnalytics.totalBandishes}
-              </span>
+              <div className="flex items-baseline justify-between gap-1 flex-wrap">
+                <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                  {bandishAnalytics.totalBandishes}
+                </span>
+                {userRole === "admin" && (
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    {bandishMetrics.currentPublished} pub · {bandishMetrics.currentDrafts} draft
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
