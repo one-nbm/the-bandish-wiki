@@ -630,7 +630,7 @@ export default function Home() {
     baseData.forEach((b) => {
       if (b.taal) set.add(b.taal.trim());
     });
-    ["Tintal", "Teentaal", "Ektaal", "Jhaptal", "Rupak", "Keherwa", "Dadra", "Tilwada", "Dhamar", "Deepchandi", "Ada Chautal", "Chautal", "Roopak"].forEach((t) => set.add(t));
+    ["Tintaal", "Ektaal", "Jhaptaal", "Rupak", "Tilwada", "Jhoomra", "Deepchandi", "Ada Chautala", "Dhamar", "Chautal", "Keherwa", "Dadra"].forEach((t) => set.add(t));
     return Array.from(set).filter(Boolean).sort();
   }, [baseData]);
 
@@ -1240,31 +1240,197 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- VIEW OPTIONS MODAL --- */}
+      {/* --- M3 EXPRESSIVE FLOATING QUICK SETTINGS (NO OUTER CELL) --- */}
       <AnimatePresence>
         {isViewOptionsOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6" onClick={() => setIsViewOptionsOpen(false)}>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="absolute inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm"></motion.div>
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6"
+            onClick={() => setIsViewOptionsOpen(false)}
+          >
+            {/* Backdrop: Ambient blurred scrim */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="relative w-full max-w-[22rem] bg-m3-surface-container dark:bg-m3-surface-container-dark rounded-3xl border border-m3-surface-high dark:border-m3-surface-high-dark overflow-hidden flex flex-col gap-3 p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="absolute inset-0 bg-black/50 dark:bg-black/75 backdrop-blur-md"
+            />
+
+            {/* Floating Stack of M3 Expressive Capsules (No Outer Cell/Box) */}
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.045,
+                    delayChildren: 0.02
+                  }
+                },
+                exit: {
+                  opacity: 0,
+                  transition: {
+                    staggerChildren: 0.03,
+                    staggerDirection: -1
+                  }
+                }
+              }}
+              className="relative w-full max-w-[21.5rem] flex flex-col gap-2.5 z-10 select-none"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="relative flex items-center bg-m3-surface dark:bg-m3-surface-dark p-1 rounded-full border border-m3-surface-high dark:border-m3-surface-high-dark mx-auto w-[220px]">
-                <div className={`absolute top-1 bottom-1 w-[105px] rounded-full bg-m3-primary dark:bg-m3-primary-dark transition-transform duration-500 ease-out ${language === "english" ? "translate-x-0" : "translate-x-[107px]"}`} />
-                <button onClick={() => setLanguage("english")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "english" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>English</button>
-                <button onClick={() => setLanguage("devanagari")} className={`relative z-10 w-[105px] py-1.5 text-sm font-bold transition-colors duration-300 ${language === "devanagari" ? "text-white dark:text-gray-900" : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 rounded-full"}`}>Devanagari</button>
-              </div>
-              <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`w-full group flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold border transition-all duration-300 ${showFavoritesOnly ? "bg-m3-error dark:bg-m3-error-dark text-white dark:text-gray-900 border-transparent" : "bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20"}`}>
-                <span className="material-symbols-rounded text-[1.25rem] transition-all duration-300" style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
-                <span>{showFavoritesOnly ? "Favorites Only" : "All Bandishes"}</span>
-              </button>
-              {isAdmin && (
+              {/* Header Badge */}
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 10, scale: 0.96 },
+                  visible: {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    transition: { type: "spring", stiffness: 300, damping: 28 }
+                  },
+                  exit: { opacity: 0, y: -6, scale: 0.96, transition: { duration: 0.15 } }
+                }}
+                className="flex items-center justify-between px-3.5 pb-1 text-xs font-bold uppercase tracking-wider text-white"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="material-symbols-rounded text-base text-purple-300 dark:text-m3-primary-dark">tune</span>
+                  <span className="font-extrabold tracking-wider text-white">Settings & Preferences</span>
+                </div>
                 <button
                   type="button"
+                  onClick={() => setIsViewOptionsOpen(false)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center bg-white text-gray-900 hover:bg-white/90 active:scale-95 dark:bg-white/20 dark:text-white dark:hover:bg-white/30 transition-all cursor-pointer"
+                  title="Close settings"
+                  aria-label="Close settings"
+                >
+                  <span className="material-symbols-rounded text-base">close</span>
+                </button>
+              </motion.div>
+
+              {/* 1. Language Segmented Capsule */}
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 10, scale: 0.96 },
+                  visible: {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    transition: { type: "spring", stiffness: 300, damping: 28 }
+                  },
+                  exit: { opacity: 0, y: -6, scale: 0.96, transition: { duration: 0.15 } }
+                }}
+                className="p-1 rounded-full bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark backdrop-blur-xl flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2 pl-3">
+                  <span className="material-symbols-rounded text-lg text-m3-primary dark:text-m3-primary-dark">translate</span>
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Script</span>
+                </div>
+                <div className="relative flex items-center p-0.5 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high/60 dark:border-m3-surface-high-dark/60">
+                  <div
+                    className={`absolute top-0.5 bottom-0.5 w-[84px] rounded-full bg-m3-primary dark:bg-m3-primary-dark transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                      language === "english" ? "translate-x-0" : "translate-x-[84px]"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setLanguage("english")}
+                    className={`relative z-10 w-[84px] py-1 text-xs font-bold rounded-full transition-colors duration-200 cursor-pointer ${
+                      language === "english"
+                        ? "text-white dark:text-gray-900"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLanguage("devanagari")}
+                    className={`relative z-10 w-[84px] py-1 text-xs font-bold rounded-full transition-colors duration-200 cursor-pointer ${
+                      language === "devanagari"
+                        ? "text-white dark:text-gray-900"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    देवनागरी
+                  </button>
+                </div>
+              </motion.div>
+
+              {/* 2. Favorites Capsule */}
+              <motion.button
+                type="button"
+                variants={{
+                  hidden: { opacity: 0, y: 10, scale: 0.96 },
+                  visible: {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    transition: { type: "spring", stiffness: 300, damping: 28 }
+                  },
+                  exit: { opacity: 0, y: -6, scale: 0.96, transition: { duration: 0.15 } }
+                }}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                className={`group w-full p-2.5 sm:p-3 rounded-2xl sm:rounded-full border transition-all duration-300 flex items-center justify-between text-left cursor-pointer backdrop-blur-xl bg-white dark:bg-m3-surface-container-dark ${
+                  showFavoritesOnly
+                    ? "border-rose-500/40 dark:border-rose-500/40"
+                    : "border-m3-surface-high dark:border-m3-surface-high-dark hover:border-rose-400/50"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                      showFavoritesOnly
+                        ? "bg-rose-500 text-white"
+                        : "bg-rose-500/10 dark:bg-rose-500/20 text-rose-500 dark:text-rose-400 group-hover:scale-105"
+                    }`}
+                  >
+                    <span
+                      className="material-symbols-rounded text-lg transition-transform duration-300"
+                      style={{ fontVariationSettings: showFavoritesOnly ? '"FILL" 1' : '"FILL" 0' }}
+                    >
+                      favorite
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-tight">
+                      {showFavoritesOnly ? "Favorites Only" : "All Bandishes"}
+                    </p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                      {favorites.length} saved composition{favorites.length !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`w-8 h-4 rounded-full transition-colors relative flex items-center p-0.5 ${
+                  showFavoritesOnly ? "bg-rose-500" : "bg-gray-300 dark:bg-gray-700"
+                }`}>
+                  <div className={`w-3 h-3 rounded-full bg-white dark:bg-gray-900 transition-transform duration-200 ${
+                    showFavoritesOnly ? "translate-x-4" : "translate-x-0"
+                  }`} />
+                </div>
+              </motion.button>
+
+              {/* 3. Admin Unpublished Capsule (Admins Only) */}
+              {isAdmin && (
+                <motion.button
+                  type="button"
+                  variants={{
+                    hidden: { opacity: 0, y: 10, scale: 0.96 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                      transition: { type: "spring", stiffness: 300, damping: 28 }
+                    },
+                    exit: { opacity: 0, y: -6, scale: 0.96, transition: { duration: 0.15 } }
+                  }}
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.99 }}
                   onClick={() => {
                     const next = !showUnpublished;
                     setShowUnpublished(next);
@@ -1272,26 +1438,144 @@ export default function Home() {
                       localStorage.setItem("wiki-admin-show-unpublished", String(next));
                     } catch {}
                   }}
-                  className={`w-full group flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold border transition-all duration-300 ${
+                  className={`group w-full p-2.5 sm:p-3 rounded-2xl sm:rounded-full border transition-all duration-300 flex items-center justify-between text-left cursor-pointer backdrop-blur-xl bg-white dark:bg-m3-surface-container-dark ${
                     showUnpublished
-                      ? "bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20"
-                      : "bg-m3-surface dark:bg-m3-surface-dark text-gray-400 dark:text-gray-500 border-m3-surface-high dark:border-m3-surface-high-dark opacity-75 hover:bg-m3-surface/80"
+                      ? "border-amber-500/40 dark:border-amber-500/40"
+                      : "border-m3-surface-high dark:border-m3-surface-high-dark opacity-90 hover:opacity-100"
                   }`}
                 >
-                  <span className="material-symbols-rounded text-[1.25rem]">
-                    {showUnpublished ? "lock_open" : "lock"}
-                  </span>
-                  <span>{showUnpublished ? "Hide Unpublished" : "Show Unpublished"}</span>
-                </button>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                        showUnpublished
+                          ? "bg-amber-500 text-gray-950 font-bold"
+                          : "bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                      }`}
+                    >
+                      <span className="material-symbols-rounded text-lg">
+                        {showUnpublished ? "lock_open" : "lock"}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-tight">
+                        {showUnpublished ? "Unpublished Shown" : "Unpublished Hidden"}
+                      </p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                        Admin-only drafts & archival entries
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className={`w-8 h-4 rounded-full transition-colors relative flex items-center p-0.5 ${
+                    showUnpublished ? "bg-amber-500" : "bg-gray-300 dark:bg-gray-700"
+                  }`}>
+                    <div className={`w-3 h-3 rounded-full bg-white dark:bg-gray-900 transition-transform duration-200 ${
+                      showUnpublished ? "translate-x-4" : "translate-x-0"
+                    }`} />
+                  </div>
+                </motion.button>
               )}
-              <button onClick={() => { const next = !enableGlur; setEnableGlur(next); localStorage.setItem("wiki-glur", String(next)); }} className="w-full group flex items-center justify-center gap-2 bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
-                <span className="material-symbols-rounded text-[1.25rem]">{enableGlur ? "blur_on" : "blur_off"}</span>
-                <span>{enableGlur ? "Disable Header Blur" : "Enable Header Blur"}</span>
-              </button>
-              <button onClick={toggleDarkMode} className="w-full group flex items-center justify-center gap-2 bg-m3-surface dark:bg-m3-surface-dark text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-full text-sm font-bold border border-m3-surface-high dark:border-m3-surface-high-dark hover:bg-m3-primary/15 dark:hover:bg-m3-primary-dark/20 transition-all duration-300">
-                <span className={`material-symbols-rounded text-[1.25rem] transition-transform duration-500 ease-in-out ${isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"}`}>{isDarkMode ? "light_mode" : "dark_mode"}</span>
-                <span>{isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
-              </button>
+
+              {/* 4. Header Blur Capsule */}
+              <motion.button
+                type="button"
+                variants={{
+                  hidden: { opacity: 0, y: 10, scale: 0.96 },
+                  visible: {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    transition: { type: "spring", stiffness: 300, damping: 28 }
+                  },
+                  exit: { opacity: 0, y: -6, scale: 0.96, transition: { duration: 0.15 } }
+                }}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => {
+                  const next = !enableGlur;
+                  setEnableGlur(next);
+                  try {
+                    localStorage.setItem("wiki-glur", String(next));
+                  } catch {}
+                }}
+                className={`group w-full p-2.5 sm:p-3 rounded-2xl sm:rounded-full border transition-all duration-300 flex items-center justify-between text-left cursor-pointer backdrop-blur-xl bg-white dark:bg-m3-surface-container-dark ${
+                  enableGlur
+                    ? "border-m3-primary/40 dark:border-m3-primary-dark/40"
+                    : "border-m3-surface-high dark:border-m3-surface-high-dark hover:border-m3-primary/30"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                      enableGlur
+                        ? "bg-m3-primary dark:bg-m3-primary-dark text-white dark:text-gray-900"
+                        : "bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
+                    <span className="material-symbols-rounded text-lg">
+                      {enableGlur ? "blur_on" : "blur_off"}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-tight">
+                      Header Glass Blur
+                    </p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                      {enableGlur ? "Smooth progressive glassmorphism" : "Solid header background"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`w-8 h-4 rounded-full transition-colors relative flex items-center p-0.5 ${
+                  enableGlur ? "bg-m3-primary dark:bg-m3-primary-dark" : "bg-gray-300 dark:bg-gray-700"
+                }`}>
+                  <div className={`w-3 h-3 rounded-full bg-white dark:bg-gray-900 transition-transform duration-200 ${
+                    enableGlur ? "translate-x-4" : "translate-x-0"
+                  }`} />
+                </div>
+              </motion.button>
+
+              {/* 5. Dark Mode Capsule */}
+              <motion.button
+                type="button"
+                variants={{
+                  hidden: { opacity: 0, y: 10, scale: 0.96 },
+                  visible: {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    transition: { type: "spring", stiffness: 300, damping: 28 }
+                  },
+                  exit: { opacity: 0, y: -6, scale: 0.96, transition: { duration: 0.15 } }
+                }}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={toggleDarkMode}
+                className="group w-full p-2.5 sm:p-3 rounded-2xl sm:rounded-full bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark backdrop-blur-xl flex items-center justify-between text-left cursor-pointer transition-all duration-300 hover:border-m3-primary/40 dark:hover:border-m3-primary-dark/40"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-indigo-500/10 dark:bg-amber-400/15 text-indigo-600 dark:text-amber-300 flex items-center justify-center">
+                    <span className={`material-symbols-rounded text-lg transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                      isDarkMode ? "rotate-[360deg]" : "group-hover:rotate-45"
+                    }`}>
+                      {isDarkMode ? "dark_mode" : "light_mode"}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white leading-tight">
+                      {isDarkMode ? "Dark Theme" : "Light Theme"}
+                    </p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                      {isDarkMode ? "Tap to switch to light mode" : "Tap to switch to dark mode"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="px-2.5 py-1 rounded-full bg-m3-surface dark:bg-m3-surface-dark border border-m3-surface-high/60 dark:border-m3-surface-high-dark/60 text-[11px] font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                  <span>{isDarkMode ? "Dark" : "Light"}</span>
+                  <span className="material-symbols-rounded text-xs text-gray-400">chevron_right</span>
+                </div>
+              </motion.button>
             </motion.div>
           </div>
         )}

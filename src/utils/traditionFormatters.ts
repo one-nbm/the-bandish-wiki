@@ -129,3 +129,50 @@ export function stripArtistTitles(name: string): string {
 
   return cleaned;
 }
+
+/**
+ * Canonical dictionary mapping common variants to standard archival spelling.
+ */
+export const CANONICAL_TAAL_MAP: Record<string, string> = {
+  "tintal": "Tintaal",
+  "teentaal": "Tintaal",
+  "teen taal": "Tintaal",
+  "tin taal": "Tintaal",
+  "tintaal": "Tintaal",
+  "ektal": "Ektaal",
+  "ek taal": "Ektaal",
+  "ektaal": "Ektaal",
+  "jhaptal": "Jhaptaal",
+  "jhap taal": "Jhaptaal",
+  "jhaptaal": "Jhaptaal",
+  "jhoomraa": "Jhoomra",
+  "jhumra": "Jhoomra",
+  "jhumraa": "Jhoomra",
+  "jhoomra": "Jhoomra",
+  "tilwada": "Tilwada",
+  "tilvada": "Tilwada",
+  "rupak": "Rupak",
+  "roopak": "Rupak",
+  "deepchandi": "Deepchandi",
+  "dipchandi": "Deepchandi",
+  "ada chautal": "Ada Chautala",
+  "ada chautala": "Ada Chautala",
+  "adha chautal": "Ada Chautala",
+  "dhamar": "Dhamar",
+  "chautal": "Chautal",
+  "keherwa": "Keherwa",
+  "dadra": "Dadra"
+};
+
+/**
+ * Normalizes a taal string to its canonical archival spelling:
+ * E.g., "Tintal" -> "Tintaal", "Ektal" -> "Ektaal", "Jhaptal" -> "Jhaptaal"
+ */
+export function normalizeTaal(val: string | null | undefined): string {
+  if (!val) return "Tintaal";
+  const trimmed = val.trim();
+  if (!trimmed) return "Tintaal";
+  const lower = trimmed.toLowerCase();
+  return CANONICAL_TAAL_MAP[lower] || trimmed;
+}
+

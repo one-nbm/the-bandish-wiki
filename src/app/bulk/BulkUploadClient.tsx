@@ -4,6 +4,7 @@ import { useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { bulkAddBandishesSecurely } from "@/app/actions";
 import BulkGuide from "./BulkGuide";
+import { normalizeTaal } from "@/utils/traditionFormatters";
 
 interface NormalizedBandish {
   id: string;
@@ -41,7 +42,7 @@ const SAMPLE_PAYLOAD: NormalizedBandish[] = [
     id: "c09a4db1-8f0d-44dc-aa1d-4314f2a2f161",
     title: "Jhananan Jhan Jhananan Jhan Baaje",
     raag: "Deshkar",
-    taal: "Tintal Madhyalay",
+    taal: "Tintaal",
     lay: ["Madhyalay"],
     composer: "unknown",
     tradition: "Gwalior",
@@ -65,7 +66,7 @@ const SAMPLE_PAYLOAD: NormalizedBandish[] = [
     id: "a18b3ec2-9e1e-45fa-bb2e-5425f3b3f272",
     title: "Eri Aali Piya Bina",
     raag: "Yaman",
-    taal: "Tintal Madhyalay",
+    taal: "Tintaal",
     lay: ["Madhyalay"],
     composer: "Sadarang",
     tradition: "Kirana",
@@ -154,7 +155,7 @@ export default function BulkUploadClient() {
         id,
         title: item.title ? String(item.title).trim() : `Untitled #${idx + 1}`,
         raag: item.raag ? String(item.raag).trim() : "Unknown",
-        taal: item.taal ? String(item.taal).trim() : "Tintal",
+        taal: normalizeTaal(item.taal),
         lay,
         composer: item.composer ? String(item.composer).trim() : "unknown",
         tradition: item.tradition ? String(item.tradition).trim() : "N/A",
@@ -508,7 +509,7 @@ export default function BulkUploadClient() {
                           handleProceedToPreview();
                         }
                       }}
-                      placeholder={`[\n  {\n    "title": "Example Composition",\n    "raag": "Yaman",\n    "taal": "Tintal",\n    "lay": ["Madhyalay"]\n  }\n]`}
+                      placeholder={`[\n  {\n    "title": "Example Composition",\n    "raag": "Yaman",\n    "taal": "Tintaal",\n    "lay": ["Madhyalay"]\n  }\n]`}
                       className="w-full bg-m3-surface dark:bg-m3-surface-dark text-gray-900 dark:text-white px-6 py-5 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-m3-primary dark:focus:ring-m3-primary-dark transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400 min-h-[260px] font-mono text-sm resize-y m3-scrollbar leading-relaxed"
                       data-lenis-prevent="true"
                       onWheel={(e: React.WheelEvent) => e.stopPropagation()}

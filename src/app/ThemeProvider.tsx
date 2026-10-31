@@ -16,23 +16,55 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Check the browser's memory when the app first loads!
+  // Check the browser's memory and initial class when the app first loads!
   useEffect(() => {
     const savedTheme = localStorage.getItem("wiki-theme");
-    if (savedTheme === "dark") {
+    const isDark =
+      savedTheme === "dark" ||
+      (savedTheme === null && document.documentElement.classList.contains("dark"));
+
+    if (isDark) {
       setIsDarkMode(true);
+      document.documentElement.classList.add("dark");
+      document.documentElement.style.colorScheme = "dark";
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove("dark");
+      document.documentElement.style.colorScheme = "light";
     }
     setMounted(true);
   }, []);
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => {
-      const newTheme = !prev;
-      localStorage.setItem("wiki-theme", newTheme ? "dark" : "light");
-      return newTheme;
+      const nextTheme = !prev;
+      try {
+        localStorage.setItem("wiki-theme", nextTheme ? "dark" : "light");
+      } catch {}
+
+      // Apply synchronously to html tag immediately so Tailwind dark: rules update in current frame
+      if (nextTheme) {
+        document.documentElement.classList.add("dark");
+        document.documentElement.style.colorScheme = "dark";
+      } else {
+        document.documentElement.classList.remove("dark");
+        document.documentElement.style.colorScheme = "light";
+      }
+
+      return nextTheme;
     });
   };
 
+  useEffect(() => {
+    if (!mounted) return;
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.style.colorScheme = "dark";
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.style.colorScheme = "light";
+    }
+  }, [isDarkMode, mounted]);
 
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>

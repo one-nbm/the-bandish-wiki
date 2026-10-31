@@ -56,8 +56,8 @@ export function BandishModal({ bandish, isAdmin, userRole, onClose, onEdit }: Ba
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{
-          duration: isPresent ? 0.4 : 0.2,
-          ease: isPresent ? [0.34, 1.56, 0.64, 1] : "easeInOut"
+          duration: isPresent ? 0.35 : 0.2,
+          ease: isPresent ? [0.16, 1, 0.3, 1] : "easeInOut"
         }}
         className="relative w-full max-w-3xl max-h-[90vh] bg-white dark:bg-m3-surface-container-dark rounded-[2.5rem] border border-gray-100 dark:border-m3-surface-high-dark overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}

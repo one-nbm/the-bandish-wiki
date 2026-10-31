@@ -12,7 +12,7 @@ import {
   submitBandishContribution,
   submitBandishEdit
 } from "@/app/actions";
-import { normalizeTradition, normalizeLayArray } from "@/utils/traditionFormatters";
+import { normalizeTradition, normalizeLayArray, normalizeTaal } from "@/utils/traditionFormatters";
 
 interface BandishFormModalProps {
   isOpen: boolean;
@@ -211,7 +211,7 @@ export default function BandishFormModal({
     const payload: any = {
       title: formTitle.trim(),
       raag: formRaag.trim(),
-      taal: formTaal.trim(),
+      taal: normalizeTaal(formTaal),
       lay: normalizeLayArray(formLay),
       composer: formComposer.trim(),
       tradition: normalizeTradition(formTradition),
@@ -378,9 +378,9 @@ export default function BandishFormModal({
                   value={formTaal}
                   onChange={setFormTaal}
                   suggestions={allTaals}
-                  placeholder="e.g. Tintal"
+                  placeholder="e.g. Tintaal"
                   required
-                  quickPills={["Tintal", "Ektaal", "Jhaptal", "Rupak", "Keherwa", "Dadra"]}
+                  quickPills={["Tintaal", "Ektaal", "Jhaptaal", "Rupak", "Tilwada", "Keherwa", "Dadra"]}
                 />
                 <FormCombobox
                   label="Lay (Comma Separated)"
