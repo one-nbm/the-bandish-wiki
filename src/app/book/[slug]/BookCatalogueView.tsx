@@ -59,10 +59,11 @@ export function BookCatalogueView({
           // If bandishes currently does not contain private ones, query all matching bandishes
           const hasPrivate = bandishes.some((b) => b.is_published === false);
           if (!hasPrivate) {
+            const cleanBookPrefix = bookTitle.split(",")[0].trim();
             const { data } = await supabase
               .from("bandishes")
               .select("id, title, raag, taal, composer, tradition, lyrics, youtube_renditions, is_published, lay, book")
-              .ilike("book", bookTitle);
+              .ilike("book", `${cleanBookPrefix}%`);
             if (!isCancelled && data && data.length > 0) {
               setBandishes(data);
             }

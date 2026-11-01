@@ -200,7 +200,7 @@ export default function BulkUploadClient() {
     }
   };
 
-  // Step 2: Commit Upload
+  // Step 2: Commit Upload in client chunks (bypasses 1MB Server Action payload limit)
   const handleBulkUpload = async () => {
     if (!passcode.trim()) {
       setPasscodeError(true);
@@ -212,23 +212,45 @@ export default function BulkUploadClient() {
     setIsSubmitting(true);
     setStatus(null);
 
-    try {
-      const payloadToUpload = validatedItems.map((v) => v.bandish);
-      const response = await bulkAddBandishesSecurely(payloadToUpload, passcode);
+    const BATCH_SIZE = 100;
+    const payloadToUpload = validatedItems.map((v) => v.bandish);
+    const totalItems = payloadToUpload.length;
+    const totalBatches = Math.ceil(totalItems / BATCH_SIZE);
+    let successfulCount = 0;
 
-      if (response.success) {
-        setUploadedCount(payloadToUpload.length);
-        setCommittedPayloadCopy(JSON.stringify(payloadToUpload, null, 2));
-        setActiveStep("success");
-        setStatus({ message: `Success! Added ${payloadToUpload.length} bandishes.`, type: "success" });
-      } else {
-        if (response.error?.toLowerCase().includes("passcode")) {
-          setPasscodeError(true);
+    try {
+      for (let b = 0; b < totalBatches; b++) {
+        const start = b * BATCH_SIZE;
+        const chunk = payloadToUpload.slice(start, start + BATCH_SIZE);
+
+        setStatus({
+          message: `Uploading batch ${b + 1} of ${totalBatches} (${successfulCount} / ${totalItems} committed)...`,
+          type: "success",
+        });
+
+        const response = await bulkAddBandishesSecurely(chunk, passcode);
+
+        if (!response.success) {
+          if (response.error?.toLowerCase().includes("passcode")) {
+            setPasscodeError(true);
+          }
+          setStatus({
+            message: `Upload failed at batch ${b + 1} (item ${start + 1}): ${response.error}`,
+            type: "error",
+          });
+          setIsSubmitting(false);
+          return;
         }
-        setStatus({ message: `Upload failed: ${response.error}`, type: "error" });
+
+        successfulCount += chunk.length;
       }
+
+      setUploadedCount(totalItems);
+      setCommittedPayloadCopy(JSON.stringify(payloadToUpload, null, 2));
+      setActiveStep("success");
+      setStatus({ message: `Success! Added all ${totalItems} bandishes.`, type: "success" });
     } catch (err: any) {
-      setStatus({ message: `Unexpected error: ${err.message}`, type: "error" });
+      setStatus({ message: `Unexpected error at item ${successfulCount + 1}: ${err.message}`, type: "error" });
     } finally {
       setIsSubmitting(false);
     }

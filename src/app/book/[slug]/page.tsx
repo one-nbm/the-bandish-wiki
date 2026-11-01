@@ -76,10 +76,11 @@ export default async function BookDetailPage({ params }: PageProps) {
   const isAdmin = role === "admin";
 
   // Query all bandishes matching this book in Supabase to determine the true statistics
+  const cleanBookPrefix = book.title.split(",")[0].trim();
   const { data: allBandishesData } = await supabase
     .from("bandishes")
     .select("id, title, raag, taal, composer, tradition, lyrics, youtube_renditions, is_published, lay, book")
-    .ilike("book", book.title);
+    .ilike("book", `${cleanBookPrefix}%`);
 
   const allBandishes = allBandishesData || [];
 

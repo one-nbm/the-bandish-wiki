@@ -349,13 +349,17 @@ export async function bulkAddBandishesSecurely(bandishesArray: any[], passcode: 
     return { success: false, error: "Invalid Admin Passcode" };
   }
 
-  const { error: dbError } = await supabaseAdmin
-    .from('bandishes')
-    .insert(bandishesArray);
+  const BATCH_SIZE = 100;
+  for (let i = 0; i < bandishesArray.length; i += BATCH_SIZE) {
+    const chunk = bandishesArray.slice(i, i + BATCH_SIZE);
+    const { error: dbError } = await supabaseAdmin
+      .from('bandishes')
+      .insert(chunk);
 
-  if (dbError) {
-    console.error("Bulk insert error:", dbError);
-    return { success: false, error: "Failed to bulk upload to database." };
+    if (dbError) {
+      console.error(`Bulk insert error at batch ${i}-${i + chunk.length}:`, dbError);
+      return { success: false, error: `Failed to bulk upload at item ${i}: ${dbError.message}` };
+    }
   }
 
   return { success: true };

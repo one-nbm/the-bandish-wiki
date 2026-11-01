@@ -630,7 +630,7 @@ export default function Home() {
     baseData.forEach((b) => {
       if (b.taal) set.add(b.taal.trim());
     });
-    ["Tintaal", "Ektaal", "Jhaptaal", "Rupak", "Tilwada", "Jhoomra", "Deepchandi", "Ada Chautala", "Dhamar", "Chautal", "Keherwa", "Dadra"].forEach((t) => set.add(t));
+    ["Tintaal", "Ektaal", "Jhaptaal", "Rupak", "Tilwada", "Jhoomra", "Deepchandi", "Ada Chautaal", "Dhamar", "Chautaal", "Keherwa", "Dadra"].forEach((t) => set.add(t));
     return Array.from(set).filter(Boolean).sort();
   }, [baseData]);
 

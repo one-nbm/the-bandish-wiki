@@ -410,6 +410,18 @@ export function getBookBySlug(slug: string, fallbackTitle?: string): BookMetadat
     return CURATED_BOOKS[normalizedSlug];
   }
 
+  // Handle book volumes and editions mapping to curated treatises (e.g. "sangita-raga-kalpadruma-vol-1")
+  const baseCuratedSlug = Object.keys(CURATED_BOOKS).find(
+    (curatedKey) => normalizedSlug.startsWith(curatedKey)
+  );
+  if (baseCuratedSlug) {
+    return {
+      ...CURATED_BOOKS[baseCuratedSlug],
+      slug: normalizedSlug,
+      title: fallbackTitle || CURATED_BOOKS[baseCuratedSlug].title,
+    };
+  }
+
   // Dynamic deterministic generation for any uncatalogued book added in Supabase
   const displayTitle = fallbackTitle || slug
     .split("-")

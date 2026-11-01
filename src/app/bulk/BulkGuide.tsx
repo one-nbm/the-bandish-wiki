@@ -34,7 +34,7 @@ const TOP_LEVEL_SNIPPET = `[
   {
     "title": "Jhananana Jhananana Jhana Jhana",
     "raag": "Deepak",
-    "taal": "Ada Chautala",
+    "taal": "Ada Chautaal",
     "lay": ["Drut"],
     "composer": "unknown",
     "tradition": "Gwalior",

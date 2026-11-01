@@ -135,6 +135,7 @@ export function stripArtistTitles(name: string): string {
  */
 export const CANONICAL_TAAL_MAP: Record<string, string> = {
   "tintal": "Tintaal",
+  "teental": "Tintaal",
   "teentaal": "Tintaal",
   "teen taal": "Tintaal",
   "tin taal": "Tintaal",
@@ -155,11 +156,14 @@ export const CANONICAL_TAAL_MAP: Record<string, string> = {
   "roopak": "Rupak",
   "deepchandi": "Deepchandi",
   "dipchandi": "Deepchandi",
-  "ada chautal": "Ada Chautala",
-  "ada chautala": "Ada Chautala",
-  "adha chautal": "Ada Chautala",
+  "ada chautal": "Ada Chautaal",
+  "ada chautala": "Ada Chautaal",
+  "ada chautaal": "Ada Chautaal",
+  "adha chautal": "Ada Chautaal",
+  "adha chautala": "Ada Chautaal",
   "dhamar": "Dhamar",
-  "chautal": "Chautal",
+  "chautal": "Chautaal",
+  "chautaal": "Chautaal",
   "keherwa": "Keherwa",
   "dadra": "Dadra"
 };
