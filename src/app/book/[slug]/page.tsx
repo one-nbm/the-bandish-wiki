@@ -8,6 +8,8 @@ import { getBookBySlug, getAllKnownBookSlugs, slugifyBookTitle, getBookGlowColor
 import { Book3D } from "@/components/Book3D";
 import { BookScrollReset } from "@/components/BookScrollReset";
 import { BookCatalogueView } from "./BookCatalogueView";
+import { BookComposerPills } from "@/components/BookComposerPills";
+import { fetchAllBandishes } from "@/utils/supabase/fetchAll";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -77,12 +79,13 @@ export default async function BookDetailPage({ params }: PageProps) {
 
   // Query all bandishes matching this book in Supabase to determine the true statistics
   const cleanBookPrefix = book.title.split(",")[0].trim();
-  const { data: allBandishesData } = await supabase
-    .from("bandishes")
-    .select("id, title, raag, taal, composer, tradition, lyrics, youtube_renditions, is_published, lay, book")
-    .ilike("book", `${cleanBookPrefix}%`);
-
-  const allBandishes = allBandishesData || [];
+  const allBandishes = await fetchAllBandishes((from, to, countExact) => {
+    return supabase
+      .from("bandishes")
+      .select("id, title, raag, taal, composer, tradition, lyrics, youtube_renditions, is_published, lay, book", countExact ? { count: 'exact' } : undefined)
+      .ilike("book", `${cleanBookPrefix}%`)
+      .range(from, to);
+  });
 
   // If there are no bandishes and it's not a known curated book, trigger 404
   const isKnownCurated = Boolean(getAllKnownBookSlugs().includes(slugifyBookTitle(slug)));
@@ -106,13 +109,18 @@ export default async function BookDetailPage({ params }: PageProps) {
   const uniqueTaals = Array.from(new Set(allBandishes.map((b) => b.taal).filter(Boolean)));
   const composerCounts: Record<string, number> = {};
   allBandishes.forEach((b) => {
-    if (b.composer && b.composer.toLowerCase() !== "unknown") {
-      composerCounts[b.composer] = (composerCounts[b.composer] || 0) + 1;
+    const comp = b.composer?.trim();
+    if (
+      comp &&
+      comp.toLowerCase() !== "unknown" &&
+      comp.toLowerCase() !== "n/a" &&
+      comp.toLowerCase() !== "none"
+    ) {
+      composerCounts[comp] = (composerCounts[comp] || 0) + 1;
     }
   });
-  const topComposers = Object.entries(composerCounts)
+  const allComposers = Object.entries(composerCounts)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
     .map(([name]) => name);
 
   // Schema.org Structured Data
@@ -190,7 +198,11 @@ export default async function BookDetailPage({ params }: PageProps) {
             Books
           </span>
           <span className="text-gray-300 dark:text-gray-700">/</span>
-          <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate max-w-[200px]">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            Books
+          </span>
+          <span className="text-gray-300 dark:text-gray-700">/</span>
+          <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate max-w-[320px]">
             {book.title}
           </span>
         </div>
@@ -208,12 +220,16 @@ export default async function BookDetailPage({ params }: PageProps) {
             {/* Title & Devanagari Script */}
             <div>
               <h1
-                className="text-4xl sm:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight"
-                style={{ fontVariationSettings: '"wght" 900, "wdth" 140, "ROND" 40' }}
+                className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-[1.15]"
+                style={{ fontVariationSettings: '"wght" 900, "wdth" 125, "ROND" 40' }}
               >
                 {book.title}
               </h1>
-
+              {book.originalTitleDevanagari && (
+                <p className="text-base sm:text-lg font-bold text-gray-500 dark:text-gray-400 mt-1.5 tracking-wide">
+                  {book.originalTitleDevanagari}
+                </p>
+              )}
             </div>
 
             {/* Author & Publisher Credits */}
@@ -301,20 +317,36 @@ export default async function BookDetailPage({ params }: PageProps) {
                   Purchase & Reference Copies
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {book.purchaseLinks.map((link, idx) => (
-                    <a
-                      key={`purchase-${idx}`}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 hover:border-m3-primary dark:hover:border-m3-primary-dark hover:-translate-y-0.5 transition-all cursor-pointer"
-                    >
-                      <span className="material-symbols-rounded text-base text-amber-500 dark:text-amber-400">
-                        open_in_new
-                      </span>
-                      <span>{link.label}</span>
-                    </a>
-                  ))}
+                  {book.purchaseLinks.map((link, idx) => {
+                    const isPdfOrArchive =
+                      link.url.includes("archive.org") ||
+                      link.vendor === "archive" ||
+                      link.label.toLowerCase().includes("pdf");
+                    return (
+                      <a
+                        key={`purchase-${idx}`}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`group inline-flex items-center gap-2 px-3.5 py-2 rounded-full border text-xs sm:text-sm font-bold hover:-translate-y-0.5 transition-all cursor-pointer ${
+                          isPdfOrArchive
+                            ? "bg-amber-500/10 dark:bg-amber-400/15 text-amber-900 dark:text-amber-200 border-amber-500/40 hover:border-amber-500"
+                            : "bg-white dark:bg-m3-surface-container-dark border-m3-surface-high dark:border-m3-surface-high-dark text-gray-800 dark:text-gray-200 hover:border-m3-primary dark:hover:border-m3-primary-dark"
+                        }`}
+                      >
+                        <span
+                          className={`material-symbols-rounded text-base ${
+                            isPdfOrArchive
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-amber-500 dark:text-amber-400"
+                          }`}
+                        >
+                          {isPdfOrArchive ? "picture_as_pdf" : "open_in_new"}
+                        </span>
+                        <span>{link.label}</span>
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -347,22 +379,16 @@ export default async function BookDetailPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* Featured Composers in this book */}
-          {topComposers.length > 0 && (
+          {/* Composers in this book */}
+          {allComposers.length > 0 && (
             <div className="w-full">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block mb-2.5">
-                Featured Composers in this Collection
+                Composers in this Collection ({allComposers.length})
               </span>
-              <div className="flex flex-wrap gap-2">
-                {topComposers.map((composer) => (
-                  <span
-                    key={composer}
-                    className="px-3.5 py-1.5 rounded-full bg-m3-tertiary/10 dark:bg-m3-tertiary-dark/10 text-m3-tertiary dark:text-m3-tertiary-dark text-xs font-bold"
-                  >
-                    {composer} ({composerCounts[composer]})
-                  </span>
-                ))}
-              </div>
+              <BookComposerPills
+                composers={allComposers}
+                composerCounts={composerCounts}
+              />
             </div>
           )}
         </section>

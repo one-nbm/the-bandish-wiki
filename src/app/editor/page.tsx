@@ -1,6 +1,7 @@
 import { getUserRole, getPendingContributions, getMyContributions } from "@/app/actions";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { fetchAllBandishes } from "@/utils/supabase/fetchAll";
 import EditorDashboard from "./EditorDashboard";
 
 export default async function EditorPage() {
@@ -33,10 +34,13 @@ export default async function EditorPage() {
       .select("id, name, slug, thaat, samay, vadi, samvadi", { count: "exact" })
       .eq("contributor", contributorName)
       .order("name", { ascending: true }),
-    supabase
-      .from("bandishes")
-      .select("id, title, raag, taal, composer, lay, tradition, is_published", { count: "exact" })
-      .order("title", { ascending: true }),
+    fetchAllBandishes((from, to, countExact) =>
+      supabase
+        .from("bandishes")
+        .select("id, title, raag, taal, composer, lay, tradition, is_published", countExact ? { count: "exact" } : undefined)
+        .order("title", { ascending: true })
+        .range(from, to)
+    ),
     supabase
       .from("raags")
       .select("id, name, slug, thaat, samay, vadi, samvadi", { count: "exact" })
@@ -50,7 +54,7 @@ export default async function EditorPage() {
   const userRaags = userRaagsRes.data || [];
   const raagCount = userRaagsRes.count || 0;
 
-  const allBandishes = allBandishesRes.data || [];
+  const allBandishes = allBandishesRes || [];
   const allRaags = allRaagsRes.data || [];
 
   const pendingContributions = (pendingContributionsRes as any).data || [];

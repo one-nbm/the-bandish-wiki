@@ -15,6 +15,7 @@ import { ReactLenis, useLenis } from 'lenis/react';
 import { LENIS_OPTIONS } from '@/components/SmoothScrolling';
 import { stepCardIndex, pickFirstVisibleIndex, pickHorizontalNeighbor, computeScrollDelta } from "@/lib/cardNavigation";
 import { normalizeLayItem } from "@/utils/traditionFormatters";
+import { fetchAllBandishes } from "@/utils/supabase/fetchAll";
 
 // Keyboard navigation: breathing room kept between a highlighted card and the sticky header / viewport bottom
 const KB_SCROLL_TOP_GAP = 36;
@@ -165,14 +166,17 @@ export default function Home() {
       const isAdministrator = role === "admin";
       setIsAdmin(isAdministrator);
 
-      let query = supabase.from('bandishes').select('*');
-      if (!isAdministrator) {
-        query = query.neq('is_published', false);
-      }
+      const data = await fetchAllBandishes((from, to, countExact) => {
+        let q = supabase
+          .from('bandishes')
+          .select('*', countExact ? { count: 'exact' } : undefined);
+        if (!isAdministrator) {
+          q = q.neq('is_published', false);
+        }
+        return q.range(from, to);
+      });
 
-      const { data, error } = await query;
-      if (error) { console.error("Error fetching data:", error); return; }
-      if (data) {
+      if (data && data.length > 0) {
         const shuffled = [...data];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));

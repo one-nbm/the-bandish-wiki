@@ -4,6 +4,10 @@ import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { BandishCard } from "@/components/BandishCard";
 import { getUserRole, UserRole } from "@/app/actions";
 import { createClient } from "@/utils/supabase/client";
+import { fetchAllBandishes } from "@/utils/supabase/fetchAll";
+
+// Incremental grid rendering: only a window of cards is mounted to prevent multi-column masonry layout freeze
+const RENDER_BATCH = 36;
 
 interface BookCatalogueViewProps {
   initialBandishes: any[];
@@ -34,7 +38,36 @@ export function BookCatalogueView({
   const [language, setLanguage] = useState<string>("english");
   const [favorites, setFavorites] = useState<string[]>([]);
 
+  // Chunked rendering state
+  const [renderLimit, setRenderLimit] = useState(RENDER_BATCH);
+  const [sentinelEl, setSentinelEl] = useState<HTMLDivElement | null>(null);
+
   const supabase = useMemo(() => createClient(), []);
+
+  // Reset chunk window back to initial batch whenever search query or filters mutate
+  useEffect(() => {
+    setRenderLimit(RENDER_BATCH);
+  }, [searchQuery, activeRaag, activeTaal, activeComposer, visibilityFilter]);
+
+  // Synchronize composer selection from external pills (e.g. book header)
+  useEffect(() => {
+    const handleComposerSelect = (e: Event) => {
+      const customEvent = e as CustomEvent<string | null>;
+      setActiveComposer(customEvent.detail ?? null);
+    };
+
+    window.addEventListener("select-book-composer", handleComposerSelect);
+    return () => {
+      window.removeEventListener("select-book-composer", handleComposerSelect);
+    };
+  }, []);
+
+  // Broadcast active composer change so external pill components stay synchronized
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("book-composer-changed", { detail: activeComposer })
+    );
+  }, [activeComposer]);
 
   // Keep bandishes in sync if initialBandishes prop updates
   useEffect(() => {
@@ -60,10 +93,13 @@ export function BookCatalogueView({
           const hasPrivate = bandishes.some((b) => b.is_published === false);
           if (!hasPrivate) {
             const cleanBookPrefix = bookTitle.split(",")[0].trim();
-            const { data } = await supabase
-              .from("bandishes")
-              .select("id, title, raag, taal, composer, tradition, lyrics, youtube_renditions, is_published, lay, book")
-              .ilike("book", `${cleanBookPrefix}%`);
+            const data = await fetchAllBandishes((from, to, countExact) => {
+              return supabase
+                .from("bandishes")
+                .select("id, title, raag, taal, composer, tradition, lyrics, youtube_renditions, is_published, lay, book", countExact ? { count: 'exact' } : undefined)
+                .ilike("book", `${cleanBookPrefix}%`)
+                .range(from, to);
+            });
             if (!isCancelled && data && data.length > 0) {
               setBandishes(data);
             }
@@ -203,6 +239,28 @@ export function BookCatalogueView({
     });
   }, [bandishes, searchQuery, activeRaag, activeTaal, activeComposer, isAdmin, visibilityFilter]);
 
+  const hasMore = filteredBandishes.length > renderLimit;
+  const visibleBandishes = useMemo(() => {
+    return filteredBandishes.length > renderLimit
+      ? filteredBandishes.slice(0, renderLimit)
+      : filteredBandishes;
+  }, [filteredBandishes, renderLimit]);
+
+  // Load the next batch smoothly before the user reaches the bottom
+  useEffect(() => {
+    if (!hasMore || !sentinelEl) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setRenderLimit((prev) => prev + RENDER_BATCH);
+        }
+      },
+      { rootMargin: "0px 0px 1200px 0px" }
+    );
+    observer.observe(sentinelEl);
+    return () => observer.disconnect();
+  }, [hasMore, sentinelEl, renderLimit]);
+
   const hasActiveFilters = Boolean(searchQuery || activeRaag || activeTaal || activeComposer || visibilityFilter !== "all");
 
   const clearFilters = () => {
@@ -224,7 +282,7 @@ export function BookCatalogueView({
   const actualTotalCount = bandishes.length;
 
   return (
-    <section className="w-full mt-16 pt-12 border-t border-gray-200 dark:border-gray-800 animate-page-enter">
+    <section id="book-catalogue-section" className="w-full mt-16 pt-12 border-t border-gray-200 dark:border-gray-800 animate-page-enter scroll-mt-24">
       {/* Catalogue Header & Controls Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
@@ -442,22 +500,46 @@ export function BookCatalogueView({
 
       {/* Compositions Grid */}
       {filteredBandishes.length > 0 ? (
-        <div className="columns-1 md:columns-2 lg:columns-3 gap-4 [column-fill:_balance]">
-          {filteredBandishes.map((bandish, index) => (
-            <BandishCard
-              key={bandish.id}
-              bandish={bandish}
-              index={index}
-              isFavorited={favorites.includes(bandish.id)}
-              language={language}
-              isSearching={Boolean(searchQuery)}
-              disableEntranceAnimation={true}
-              linkDirectly={true}
-              onToggleFavorite={handleToggleFavorite}
-              onToggleFilter={handleToggleFilter}
-            />
-          ))}
-        </div>
+        <>
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-4 [column-fill:_balance]">
+            {visibleBandishes.map((bandish, index) => (
+              <BandishCard
+                key={bandish.id}
+                bandish={bandish}
+                index={index}
+                isFavorited={favorites.includes(bandish.id)}
+                language={language}
+                isSearching={Boolean(searchQuery)}
+                disableEntranceAnimation={true}
+                linkDirectly={true}
+                onToggleFavorite={handleToggleFavorite}
+                onToggleFilter={handleToggleFilter}
+              />
+            ))}
+          </div>
+
+          {/* Incremental Chunk Loading Sentinel & Manual Fallback */}
+          {hasMore && (
+            <div
+              ref={setSentinelEl}
+              className="w-full py-10 flex flex-col items-center justify-center gap-3 mt-4"
+            >
+              <div className="flex items-center gap-2.5 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                <span className="w-4 h-4 border-2 border-m3-primary/30 dark:border-m3-primary-dark/30 border-t-m3-primary dark:border-t-m3-primary-dark rounded-full animate-spin" />
+                <span>
+                  Loading more compositions... ({visibleBandishes.length} of {filteredBandishes.length} shown)
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRenderLimit((prev) => prev + RENDER_BATCH)}
+                className="px-4 py-2 rounded-full text-xs font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark hover:border-m3-primary/50 dark:hover:border-m3-primary-dark/50 transition-colors cursor-pointer"
+              >
+                Load next {Math.min(RENDER_BATCH, filteredBandishes.length - visibleBandishes.length)} bandishes
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         /* Empty Search State */
         <div className="flex flex-col items-center justify-center p-12 text-center rounded-3xl bg-white/50 dark:bg-m3-surface-container-dark/50 border border-m3-surface-high dark:border-m3-surface-high-dark">

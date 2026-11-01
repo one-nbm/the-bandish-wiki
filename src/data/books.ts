@@ -1,7 +1,7 @@
 export interface BookPurchaseLink {
   label: string;
   url: string;
-  vendor: "amazon" | "chaukhambha" | "exoticindia" | "publisher" | "general";
+  vendor: "amazon" | "chaukhambha" | "exoticindia" | "publisher" | "archive" | "general";
   isAvailable: boolean;
 }
 
@@ -88,12 +88,12 @@ export const CURATED_BOOKS: Record<string, BookMetadata> = {
 
   "sangita-raga-kalpadruma": {
     slug: "sangita-raga-kalpadruma",
-    title: "Sangita Raga-Kalpadruma",
-    originalTitleDevanagari: "सङ्गीत राग कल्पद्रुम",
+    title: "Sangita Raga-Kalpadruma, Vol. 1",
+    originalTitleDevanagari: "सङ्गीत राग कल्पद्रुम (भाग १)",
     authors: ["Krishnanand Vyas Deva"],
     publisher: "Calcutta (Kolkata) / Sangeet Natak Akademi",
     publicationYear: "1842",
-    volumes: "3 Volumes",
+    volumes: "Vol. 1 (of 3 Volumes)",
     language: "Braj Bhasha, Sanskrit, Hindi, Bengali",
     notationSystem: "Traditional Archival Lyrics & Metric Classifications",
     description:
@@ -112,6 +112,59 @@ export const CURATED_BOOKS: Record<string, BookMetadata> = {
       glowColor: "#10B981", // Saturated emerald green aura
     },
     purchaseLinks: [
+      {
+        label: "Internet Archive (Free Vol. 1 PDF)",
+        url: "https://archive.org/details/in.ernet.dli.2015.553648",
+        vendor: "archive",
+        isAvailable: true,
+      },
+      {
+        label: "Exotic India Art",
+        url: "https://www.exoticindiaart.com/book/search/?q=Sangita+Raga+Kalpadruma",
+        vendor: "exoticindia",
+        isAvailable: true,
+      },
+      {
+        label: "Amazon (Rare Reprint Editions)",
+        url: "https://www.amazon.in/s?k=Sangita+Raga+Kalpadruma",
+        vendor: "amazon",
+        isAvailable: true,
+      },
+    ],
+  },
+
+  "sangita-raga-kalpadruma-vol-1": {
+    slug: "sangita-raga-kalpadruma-vol-1",
+    title: "Sangita Raga-Kalpadruma, Vol. 1",
+    originalTitleDevanagari: "सङ्गीत राग कल्पद्रुम (भाग १)",
+    authors: ["Krishnanand Vyas Deva"],
+    publisher: "Calcutta (Kolkata) / Sangeet Natak Akademi",
+    publicationYear: "1842",
+    volumes: "Vol. 1 (of 3 Volumes)",
+    language: "Braj Bhasha, Sanskrit, Hindi, Bengali",
+    notationSystem: "Traditional Archival Lyrics & Metric Classifications",
+    description:
+      "A monumental encyclopedic masterpiece compiled by Krishnanand Vyas Deva in 1842. It serves as one of the largest treasuries of traditional Dhrupad, Dhamar, Sadra, and early Khayal bandishes from historic court masters (Tansen, Baiju Bawra, Swami Haridas).",
+    historicalSignificance:
+      "Cited by musicologists worldwide as a primary archival monument bridging ancient Prabandha traditions to modern Khayal practice.",
+    citation: "Sangeet Natak Akademi Archives & The Asiatic Society (Calcutta)",
+    coverTheme: {
+      primaryBg: "linear-gradient(135deg, #1A2E26 0%, #0E1A15 100%)", // Antique imperial emerald
+      spineBg: "#0C1713",
+      pagesBg: "#FFF7EB",
+      goldTrim: "#E5C158",
+      textColor: "#F4F8F5",
+      subtextColor: "#C5D8CD",
+      accentBadge: "#E5C158",
+      glowColor: "#10B981",
+    },
+    purchaseLinks: [
+      {
+        label: "Internet Archive (Free Vol. 1 PDF)",
+        url: "https://archive.org/details/in.ernet.dli.2015.553648",
+        vendor: "archive",
+        isAvailable: true,
+      },
       {
         label: "Exotic India Art",
         url: "https://www.exoticindiaart.com/book/search/?q=Sangita+Raga+Kalpadruma",
