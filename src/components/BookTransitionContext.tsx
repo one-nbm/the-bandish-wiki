@@ -42,33 +42,51 @@ const bookFlightTiming = {
 
 // Compute dynamic hero destination coordinates based on responsive viewport bounds
 function getTargetPosition() {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || typeof document === "undefined") {
     return { x: 203, y: 276 };
   }
-  const vw = window.innerWidth;
-  if (vw >= 1152) {
+
+  // 1. Direct real-DOM measurement if the destination page element is already in the document
+  const liveEl = document.getElementById("hero-book-3d-viewport");
+  if (liveEl) {
+    const rect = liveEl.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      return {
+        x: rect.left + (rect.width - targetWidth) / 2,
+        y: rect.top + (rect.height - targetHeight) / 2,
+      };
+    }
+  }
+
+  // 2. CSS-accurate clientWidth measurement (excluding scrollbar to match mx-auto perfectly)
+  const clientW = document.documentElement.clientWidth || window.innerWidth;
+  if (clientW >= 1152) {
     // Desktop full container: centered max-w-6xl container (left col-span-5)
-    const containerLeft = (vw - 1152) / 2;
+    // Centering is calculated from clientWidth (which excludes the scrollbar),
+    // eliminating the 3.5-4px offset previously caused by window.innerWidth.
+    const containerLeft = (clientW - 1152) / 2;
     return {
       x: containerLeft + 139,
       y: 276,
     };
-  } else if (vw >= 1024) {
-    // Desktop compact (1024 - 1151px)
+  } else if (clientW >= 1024) {
+    // Desktop compact (1024 - 1151px): content width = clientW - 96px padding
+    const contentW = clientW - 96;
+    const col5W = (contentW - 528) * (5 / 12) + 192;
     return {
-      x: 112,
+      x: 48 + (col5W - targetWidth) / 2,
       y: 296,
     };
-  } else if (vw >= 768) {
+  } else if (clientW >= 768) {
     // Tablet: Centered
     return {
-      x: (vw - targetWidth) / 2,
+      x: (clientW - targetWidth) / 2,
       y: 223,
     };
   } else {
     // Mobile: Centered
     return {
-      x: (vw - targetWidth) / 2,
+      x: (clientW - targetWidth) / 2,
       y: 163,
     };
   }
@@ -82,6 +100,7 @@ export function BookTransitionProvider({ children }: { children: React.ReactNode
   const pathname = usePathname();
   const [activeTransition, setActiveTransition] = useState<TransitionData | null>(null);
   const [flightDone, setFlightDone] = useState(false);
+  const [liveTargetPos, setLiveTargetPos] = useState<{ x: number; y: number } | null>(null);
   const handoffTimerRef = useRef<NodeJS.Timeout | null>(null);
   const safetyTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -96,6 +115,7 @@ export function BookTransitionProvider({ children }: { children: React.ReactNode
     ({ book, startRect, url }: TransitionData) => {
       clearTimers();
       setFlightDone(false);
+      setLiveTargetPos(null);
       setActiveTransition({ book, startRect, url });
 
       // Trigger client-side navigation immediately. In production the destination is a
@@ -112,6 +132,33 @@ export function BookTransitionProvider({ children }: { children: React.ReactNode
     [router]
   );
 
+  // Continuously poll for the real-DOM anchor as soon as the target page mounts
+  // so Framer Motion glides with subpixel precision directly to the real Book3D position
+  useEffect(() => {
+    if (!activeTransition) {
+      setLiveTargetPos(null);
+      return;
+    }
+
+    let animId: number;
+    const checkLiveAnchor = () => {
+      const el = document.getElementById("hero-book-3d-viewport");
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const exactX = rect.left + (rect.width - targetWidth) / 2;
+          const exactY = rect.top + (rect.height - targetHeight) / 2;
+          setLiveTargetPos({ x: exactX, y: exactY });
+          return;
+        }
+      }
+      animId = requestAnimationFrame(checkLiveAnchor);
+    };
+
+    animId = requestAnimationFrame(checkLiveAnchor);
+    return () => cancelAnimationFrame(animId);
+  }, [activeTransition, pathname]);
+
   // Hand off to the real Book3D only when BOTH the flight finished AND the destination route
   // is actually on screen. Two rAFs let the new page paint before the proxy unmounts (zero gap).
   useEffect(() => {
@@ -125,6 +172,7 @@ export function BookTransitionProvider({ children }: { children: React.ReactNode
         clearTimers();
         setActiveTransition(null);
         setFlightDone(false);
+        setLiveTargetPos(null);
       });
     });
     return () => {
@@ -141,7 +189,8 @@ export function BookTransitionProvider({ children }: { children: React.ReactNode
   const book = activeTransition?.book;
   const startRect = activeTransition?.startRect;
 
-  const targetPos = getTargetPosition();
+  // Use live subpixel measured coordinates if the destination page has mounted, otherwise accurate clientWidth formula
+  const targetPos = liveTargetPos || getTargetPosition();
   const startScale = startRect ? startRect.width / targetWidth : 0.156;
   const startX = startRect ? startRect.left + startRect.width / 2 - targetWidth / 2 : 0;
   const startY = startRect ? startRect.top + startRect.height / 2 - targetHeight / 2 : 0;

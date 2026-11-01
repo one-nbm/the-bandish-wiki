@@ -172,6 +172,7 @@ export function Book3D({ book, className = "" }: Book3DProps) {
     >
       {/* 3D Scene Viewport with Accessible Keyboard Navigation */}
       <div
+        id="hero-book-3d-viewport"
         tabIndex={0}
         role="region"
         aria-label={`Interactive 3D model of ${book.title}. Drag with pointer or use arrow keys to rotate 360 degrees.`}
