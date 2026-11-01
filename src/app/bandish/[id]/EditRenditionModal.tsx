@@ -203,8 +203,9 @@ export default function EditRenditionModal({ bandish, index }: { bandish: any; i
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-xs font-bold text-m3-primary dark:text-m3-primary-dark uppercase tracking-wider">Compositions Included</label>
-                    <button type="button" onClick={() => setFormBandishes([...formBandishes, ""])} className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark hover:underline flex items-center gap-1">
-                      <span className="material-symbols-rounded text-[1rem]">add</span> Add Bandish
+                    <button type="button" onClick={() => setFormBandishes([...formBandishes, ""])} className="group/add text-xs font-bold text-m3-primary dark:text-m3-primary-dark inline-flex items-center gap-1 cursor-pointer">
+                      <span className="material-symbols-rounded text-[1rem]">add</span>
+                      <span className="group-hover/add:underline">Add Bandish</span>
                     </button>
                   </div>
                   <div className="space-y-3">

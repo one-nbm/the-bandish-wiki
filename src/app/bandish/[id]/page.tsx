@@ -10,6 +10,8 @@ import type { Metadata } from "next";
 import { getUserRole } from "@/app/actions";
 import { getRecommendedBandishes } from "@/lib/recommendations";
 import { formatGharanaDisplay } from "@/utils/traditionFormatters";
+import { BookLinkButton } from "@/components/BookLinkButton";
+import { getBookBySlug, slugifyBookTitle } from "@/data/books";
 
 export async function generateStaticParams() {
   const { createClient } = await import("@supabase/supabase-js");
@@ -165,6 +167,10 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
     raagToThaatMap,
     3
   );
+
+  const bookMetadata = bandish.book && bandish.book.trim()
+    ? getBookBySlug(slugifyBookTitle(bandish.book), bandish.book)
+    : null;
 
   return (
     <main className="min-h-screen bg-transparent relative">
@@ -386,20 +392,8 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
             </h3>
           </div>
 
-          {bandish.book && bandish.book.trim() ? (
-            <div className="inline-flex items-center gap-3.5 px-5 py-3.5 rounded-2xl bg-m3-surface-container dark:bg-m3-surface-container-dark border border-m3-surface-high dark:border-m3-surface-high-dark">
-              <span className="material-symbols-rounded text-amber-500 dark:text-amber-400 text-[1.5rem] shrink-0">
-                auto_stories
-              </span>
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">
-                  Found In
-                </span>
-                <span className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-                  {bandish.book}
-                </span>
-              </div>
-            </div>
+          {bandish.book && bandish.book.trim() && bookMetadata ? (
+            <BookLinkButton bookTitle={bandish.book} book={bookMetadata} />
           ) : (
             <p className="text-gray-500 italic">N/A</p>
           )}
@@ -444,10 +438,10 @@ export default async function BandishPage({ params }: { params: Promise<{ id: st
                       <div className="flex flex-wrap items-center gap-2 mb-4 text-xs font-semibold">
                         <Link
                           href={`/raag/${recRaagSlug}`}
-                          className="relative z-20 inline-flex items-center gap-1 text-m3-secondary dark:text-m3-secondary-dark hover:underline font-bold"
+                          className="group/raag relative z-20 inline-flex items-center gap-1 text-m3-secondary dark:text-m3-secondary-dark font-bold"
                         >
-                          {rec.raag}
-                          <span className="material-symbols-rounded text-[0.8rem]">arrow_outward</span>
+                          <span className="group-hover/raag:underline">{rec.raag}</span>
+                          <span className="material-symbols-rounded text-[0.8rem] transition-transform duration-200 group-hover/raag:translate-x-0.5 group-hover/raag:-translate-y-0.5">arrow_outward</span>
                         </Link>
                         {rec.composer && rec.composer.toLowerCase() !== "unknown" && (
                           <>

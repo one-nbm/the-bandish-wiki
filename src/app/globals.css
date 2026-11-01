@@ -72,6 +72,26 @@ input, textarea, select {
   animation-delay: 0.15s;
 }
 
+@keyframes bookContentEnter {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-book-content {
+  animation: bookContentEnter 0.65s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  will-change: opacity, transform;
+}
+
+@keyframes bookPageFade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.animate-book-page-fade {
+  animation: bookPageFade 0.95s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  will-change: opacity;
+}
+
 /* --- SCROLLING HOVER SUPPRESSION ---
    Targeted specifically to .bandish-card to eliminate hover churn,
    CSS transition oscillation, and multi-column repaints while scrolling.

@@ -257,9 +257,10 @@ export default function WelcomeScreen({ query, setQuery, onStartBrowsing, totalB
             </span>
             <Link
               href="/raags"
-              className="text-xs font-bold text-m3-primary dark:text-m3-primary-dark hover:underline"
+              className="group/raags text-xs font-bold text-m3-primary dark:text-m3-primary-dark inline-flex items-center gap-1"
             >
-              Browse all {totalRaags || 42} raags →
+              <span className="group-hover/raags:underline">Browse all {totalRaags || 42} raags</span>
+              <span className="inline-block transition-transform duration-200 group-hover/raags:translate-x-1">→</span>
             </Link>
           </div>
           <div className="flex flex-wrap gap-2">

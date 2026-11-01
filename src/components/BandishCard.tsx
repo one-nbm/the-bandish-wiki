@@ -161,10 +161,10 @@ export const BandishCard = memo(({
               handleClick();
             }
           }}
-          className="mt-2 pt-2 flex items-center text-m3-primary dark:text-m3-primary-dark text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:underline"
+          className="group/link mt-2 pt-2 inline-flex items-center text-m3-primary dark:text-m3-primary-dark text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200"
         >
-          <span>Read Full Bandish</span>
-          <span className="material-symbols-rounded text-[1.2rem] ml-1">arrow_forward</span>
+          <span className="group-hover/link:underline">Read Full Bandish</span>
+          <span className="material-symbols-rounded text-[1.2rem] ml-1 transition-transform duration-200 group-hover/link:translate-x-1">arrow_forward</span>
         </Link>
       </div>
     </motion.div>

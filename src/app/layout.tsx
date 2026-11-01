@@ -6,6 +6,7 @@ import { GoogleAnalytics } from '@next/third-parties/google';
 import AuthButton from "@/components/AuthButton";
 import Navbar from "@/components/Navbar";
 import SmoothScrolling from "@/components/SmoothScrolling";
+import { BookTransitionProvider } from "@/components/BookTransitionContext";
 import "./globals.css";
 
 const googleSans = Google_Sans_Flex({
@@ -79,7 +80,9 @@ export default function RootLayout({
               <AuthButton />
             </Navbar>
 
-            {children}
+            <BookTransitionProvider>
+              {children}
+            </BookTransitionProvider>
             <SpeedInsights />
           </SmoothScrolling>
         </ThemeProvider>

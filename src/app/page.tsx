@@ -835,7 +835,7 @@ export default function Home() {
                     </div>
                   )}
                   {!enableGlur && (
-                    <div className="absolute inset-x-0 top-0 bottom-0 pointer-events-none z-[-1] bg-m3-surface-container dark:bg-m3-surface-container-dark" />
+                    <div className="absolute inset-0 pointer-events-none z-0 bg-m3-surface-container dark:bg-m3-surface-dark border-b border-m3-surface-high/30 dark:border-m3-surface-high-dark/40" />
                   )}
                   <div className="relative z-10 pt-3 pb-2 md:pt-5 md:pb-3 max-w-7xl mx-auto px-4 sm:px-8 md:px-16 lg:px-24">
                     <div className="flex flex-col gap-2 md:gap-3 mb-1 md:mb-2">
