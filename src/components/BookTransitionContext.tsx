@@ -166,6 +166,13 @@ export function BookTransitionProvider({ children }: { children: React.ReactNode
     const targetPath = activeTransition.url.split("?")[0];
     if (pathname !== targetPath) return;
 
+    // Ensure the destination book page is strictly at top (0, 0)
+    if (typeof window !== "undefined" && window.scrollY !== 0) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+    }
+
     let raf2 = 0;
     const raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {

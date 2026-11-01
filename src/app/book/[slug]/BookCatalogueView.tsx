@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
 import { BandishCard } from "@/components/BandishCard";
-import { BandishModal } from "@/components/BandishModal";
 import { getUserRole, UserRole } from "@/app/actions";
 import { createClient } from "@/utils/supabase/client";
 
@@ -35,8 +33,6 @@ export function BookCatalogueView({
   const [visibilityFilter, setVisibilityFilter] = useState<"all" | "public" | "private">("all");
   const [language, setLanguage] = useState<string>("english");
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [selectedBandish, setSelectedBandish] = useState<any | null>(null);
-  const [selectedRect, setSelectedRect] = useState<DOMRect | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -125,11 +121,6 @@ export function BookCatalogueView({
     });
   }, [supabase]);
 
-  // Handle card selection
-  const handleSelectBandish = useCallback((bandish: any, rect: DOMRect) => {
-    setSelectedBandish(bandish);
-    setSelectedRect(rect);
-  }, []);
 
   // Handle filter pill clicks
   const handleToggleFilter = useCallback((key: string, value: string) => {
@@ -456,12 +447,11 @@ export function BookCatalogueView({
               key={bandish.id}
               bandish={bandish}
               index={index}
-              isSelected={selectedBandish?.id === bandish.id}
               isFavorited={favorites.includes(bandish.id)}
               language={language}
               isSearching={Boolean(searchQuery)}
               disableEntranceAnimation={true}
-              onSelect={handleSelectBandish}
+              linkDirectly={true}
               onToggleFavorite={handleToggleFavorite}
               onToggleFilter={handleToggleFilter}
             />
@@ -489,19 +479,7 @@ export function BookCatalogueView({
         </div>
       )}
 
-      {/* Composition Detail Modal */}
-      <AnimatePresence>
-        {selectedBandish && (
-          <BandishModal
-            bandish={selectedBandish}
-            sourceRect={selectedRect}
-            isAdmin={isAdmin}
-            userRole={role}
-            onClose={() => setSelectedBandish(null)}
-            onEdit={() => { }}
-          />
-        )}
-      </AnimatePresence>
+
     </section>
   );
 }

@@ -1,39 +1,51 @@
 import React, { memo, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export const BandishCard = memo(({
   bandish,
   index,
-  isSelected,
+  isSelected = false,
   isFavorited,
   language,
   isSearching,
   disableEntranceAnimation,
+  linkDirectly = false,
   onSelect,
   onToggleFavorite,
   onToggleFilter,
 }: {
   bandish: any;
   index: number;
-  isSelected: boolean;
+  isSelected?: boolean;
   isFavorited: boolean;
   language: string;
   isSearching?: boolean;
   disableEntranceAnimation?: boolean;
-  onSelect: (bandish: any, rect: DOMRect) => void;
+  linkDirectly?: boolean;
+  onSelect?: (bandish: any, rect: DOMRect) => void;
   onToggleFavorite: (e: React.MouseEvent, id: string) => void;
   onToggleFilter: (key: string, value: string) => void;
 }) => {
+  const router = useRouter();
   const cardRef = useRef<HTMLDivElement>(null);
   const renditionCount = bandish.youtube_renditions?.length ?? 0;
+  const bandishUrl = `/bandish/${bandish.id}`;
 
-  const handleClick = useCallback(() => {
-    if (cardRef.current) {
+  const handleClick = useCallback((e?: React.MouseEvent) => {
+    if (linkDirectly) {
+      if (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0)) {
+        return;
+      }
+      router.push(bandishUrl);
+      return;
+    }
+    if (cardRef.current && onSelect) {
       const rect = cardRef.current.getBoundingClientRect();
       onSelect(bandish, rect);
     }
-  }, [bandish, onSelect]);
+  }, [bandish, bandishUrl, linkDirectly, onSelect, router]);
 
   return (
     <motion.div
@@ -108,11 +120,13 @@ export const BandishCard = memo(({
         <div className="flex justify-between items-start mb-3 pr-28 md:pr-36">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">
             <Link
-              href={`/bandish/${bandish.id}`}
+              href={bandishUrl}
               onClick={(e) => {
-                if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
-                  e.preventDefault();
-                  handleClick();
+                if (!linkDirectly) {
+                  if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
+                    e.preventDefault();
+                    handleClick();
+                  }
                 }
               }}
               className="hover:text-m3-primary dark:hover:text-m3-primary-dark transition-colors focus:outline-none"
@@ -154,11 +168,13 @@ export const BandishCard = memo(({
           {language === "english" ? bandish.lyrics.english : (bandish.lyrics.devanagari || "Devanagari lyrics not available")}
         </p>
         <Link
-          href={`/bandish/${bandish.id}`}
+          href={bandishUrl}
           onClick={(e) => {
-            if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
-              e.preventDefault();
-              handleClick();
+            if (!linkDirectly) {
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) {
+                e.preventDefault();
+                handleClick();
+              }
             }
           }}
           className="group/link mt-2 pt-2 inline-flex items-center text-m3-primary dark:text-m3-primary-dark text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -177,6 +193,7 @@ export const BandishCard = memo(({
     prevProps.isFavorited === nextProps.isFavorited &&
     prevProps.language === nextProps.language &&
     prevProps.isSearching === nextProps.isSearching &&
-    prevProps.disableEntranceAnimation === nextProps.disableEntranceAnimation
+    prevProps.disableEntranceAnimation === nextProps.disableEntranceAnimation &&
+    prevProps.linkDirectly === nextProps.linkDirectly
   );
 });

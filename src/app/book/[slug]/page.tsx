@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getUserRole } from "@/app/actions";
 import { getBookBySlug, getAllKnownBookSlugs, slugifyBookTitle, getBookGlowColor } from "@/data/books";
 import { Book3D } from "@/components/Book3D";
+import { BookScrollReset } from "@/components/BookScrollReset";
 import { BookCatalogueView } from "./BookCatalogueView";
 
 interface PageProps {
@@ -154,6 +155,9 @@ export default async function BookDetailPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-transparent relative transition-colors duration-500 animate-book-page-fade">
+      {/* Scroll Reset Controller to ensure book pages never remember scroll position */}
+      <BookScrollReset />
+
       {/* Schema.org Structured Data */}
       <script
         type="application/ld+json"
@@ -199,21 +203,6 @@ export default async function BookDetailPage({ params }: PageProps) {
 
           {/* Right Column: Book Intel, Stats, Authors & Purchase Hub */}
           <div className="lg:col-span-7 flex flex-col gap-5">
-            {/* Badges Bar */}
-            {book.notationSystem && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-m3-surface-high dark:bg-m3-surface-high-dark text-gray-700 dark:text-gray-300 text-xs font-semibold">
-                  <span className="material-symbols-rounded text-xs">music_note</span>
-                  {book.notationSystem}
-                </span>
-                {book.edition && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 dark:bg-amber-400/10 text-amber-700 dark:text-amber-400 text-xs font-semibold">
-                    <span className="material-symbols-rounded text-xs">auto_stories</span>
-                    {book.edition}
-                  </span>
-                )}
-              </div>
-            )}
 
             {/* Title & Devanagari Script */}
             <div>
@@ -223,11 +212,7 @@ export default async function BookDetailPage({ params }: PageProps) {
               >
                 {book.title}
               </h1>
-              {book.originalTitleDevanagari && (
-                <p className="text-xl sm:text-2xl font-bold text-m3-primary dark:text-m3-primary-dark mt-1">
-                  {book.originalTitleDevanagari}
-                </p>
-              )}
+
             </div>
 
             {/* Author & Publisher Credits */}
