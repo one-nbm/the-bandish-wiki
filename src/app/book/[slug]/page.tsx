@@ -67,11 +67,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function BookDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const supabase = await createClient();
-  const role = await getUserRole();
-  const isAdmin = role === "admin";
-
   const book = getBookBySlug(slug);
+
+  // Run auth/role lookup and the database query concurrently: in production this server
+  // render gates the whole navigation, so sequential round-trips directly delay the page.
+  const [supabase, role] = await Promise.all([createClient(), getUserRole()]);
+  const isAdmin = role === "admin";
 
   // Query all bandishes matching this book in Supabase to determine the true statistics
   const { data: allBandishesData } = await supabase

@@ -163,12 +163,6 @@ export function Book3D({ book, className = "" }: Book3DProps) {
   const bookDepth = 31.5;
   const halfDepth = bookDepth / 2;
 
-  const handleResetPose = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    dragRotateY.set(-26);
-    dragRotateX.set(10);
-  };
-
   return (
     <div
       ref={containerRef}
@@ -533,25 +527,6 @@ export function Book3D({ book, className = "" }: Book3DProps) {
             <div className="absolute left-0 inset-y-0 w-4 bg-gradient-to-r from-black/25 to-transparent pointer-events-none" />
           </div>
         </motion.div>
-      </div>
-
-      {/* Rotation Hint & Camera Reset Affordance */}
-      <div className="mt-3 flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 dark:bg-m3-surface-container-dark/70 border border-m3-surface-high dark:border-m3-surface-high-dark text-[11px] font-medium text-gray-500 dark:text-gray-400 select-none">
-          <span className="material-symbols-rounded text-xs text-m3-primary dark:text-m3-primary-dark">
-            360
-          </span>
-          <span>Drag or use arrow keys to rotate</span>
-        </span>
-        <button
-          type="button"
-          onClick={handleResetPose}
-          title="Reset to default view"
-          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/70 dark:bg-m3-surface-container-dark/70 border border-m3-surface-high dark:border-m3-surface-high-dark text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:border-m3-primary dark:hover:border-m3-primary-dark transition-all cursor-pointer"
-        >
-          <span className="material-symbols-rounded text-xs">restart_alt</span>
-          <span>Reset</span>
-        </button>
       </div>
     </div>
   );

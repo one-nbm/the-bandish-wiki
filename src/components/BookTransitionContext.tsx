@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookMetadata } from "@/data/books";
 
@@ -74,34 +74,68 @@ function getTargetPosition() {
   }
 }
 
+// Hard ceiling so the overlay can never get stuck if navigation fails or is cancelled
+const MAX_WAIT_MS = 8000;
+
 export function BookTransitionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [activeTransition, setActiveTransition] = useState<TransitionData | null>(null);
+  const [flightDone, setFlightDone] = useState(false);
   const handoffTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const safetyTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const clearTimers = () => {
+    if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
+    if (safetyTimerRef.current) clearTimeout(safetyTimerRef.current);
+    handoffTimerRef.current = null;
+    safetyTimerRef.current = null;
+  };
 
   const startBookTransition = useCallback(
     ({ book, startRect, url }: TransitionData) => {
-      if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
-
+      clearTimers();
+      setFlightDone(false);
       setActiveTransition({ book, startRect, url });
 
-      // Trigger client-side navigation immediately; Next.js swaps routes cleanly in background
+      // Trigger client-side navigation immediately. In production the destination is a
+      // dynamic server render (auth + database), so it can take far longer than the flight.
       router.push(url);
 
-      // At the exact moment the 3D book completes its flight (1.0s),
-      // cleanly unmount overlay and atomically hand off to real Book3D with ZERO opacity dip
-      handoffTimerRef.current = setTimeout(() => {
-        setActiveTransition(null);
-      }, TRANSITION_DURATION * 1000);
+      // The flight itself always takes exactly TRANSITION_DURATION; the book then rests at its
+      // destination pose until the new route has really committed.
+      handoffTimerRef.current = setTimeout(() => setFlightDone(true), TRANSITION_DURATION * 1000);
+
+      // Safety net: never leave the overlay stuck
+      safetyTimerRef.current = setTimeout(() => setActiveTransition(null), MAX_WAIT_MS);
     },
     [router]
   );
 
+  // Hand off to the real Book3D only when BOTH the flight finished AND the destination route
+  // is actually on screen. Two rAFs let the new page paint before the proxy unmounts (zero gap).
+  useEffect(() => {
+    if (!activeTransition || !flightDone) return;
+    const targetPath = activeTransition.url.split("?")[0];
+    if (pathname !== targetPath) return;
+
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        clearTimers();
+        setActiveTransition(null);
+        setFlightDone(false);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [activeTransition, flightDone, pathname]);
+
   // Clean up timers on unmount
   useEffect(() => {
-    return () => {
-      if (handoffTimerRef.current) clearTimeout(handoffTimerRef.current);
-    };
+    return () => clearTimers();
   }, []);
 
   const book = activeTransition?.book;
